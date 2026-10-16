@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Veil" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Brand Colors: Cyber-Visor Monochromatic (Zero Green, Zero Blue, Zero Purple) -->
+        <item name="colorPrimary">@color/md_theme_dark_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_dark_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_dark_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_dark_onPrimaryContainer</item>
+        <item name="colorPrimaryInverse">@color/md_theme_dark_inversePrimary</item>
+
+        <item name="colorSecondary">@color/md_theme_dark_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_dark_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_dark_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_dark_onSecondaryContainer</item>
+
+        <item name="colorTertiary">@color/md_theme_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_dark_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_dark_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_dark_onTertiaryContainer</item>
+
+        <!-- Surface & Window -->
+        <item name="android:windowBackground">@color/veil_canvas</item>
+        <item name="colorSurface">@color/veil_surface</item>
+        <item name="colorOnSurface">@color/veil_text_high</item>
+        <item name="colorSurfaceVariant">@color/veil_surface_card</item>
+        <item name="colorOnSurfaceVariant">@color/veil_text_medium</item>
+        <item name="colorOutline">@color/veil_hairline</item>
+        <item name="colorOutlineVariant">@color/veil_hairline_bright</item>
+
+        <!-- Status & Navigation Bars -->
+        <item name="android:statusBarColor">@color/veil_canvas</item>
+        <item name="android:navigationBarColor">@color/veil_canvas</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+
+        <!-- Global Component Styles (Eradicates Default Purple Material 3 Tonal Styles) -->
+        <item name="materialButtonStyle">@style/Widget.Veil.Button.Primary</item>
+        <item name="materialButtonOutlinedStyle">@style/Widget.Veil.Button.Secondary</item>
+        <item name="borderlessButtonStyle">@style/Widget.Veil.Button.Borderless</item>
+        <item name="chipStyle">@style/Widget.Veil.Chip</item>
+        <item name="cardViewStyle">@style/Widget.Veil.Card</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Veil.Dialog</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Veil.Dialog</item>
+        <item name="bottomSheetDialogTheme">@style/Theme.Veil.BottomSheetDialog</item>
+    </style>
+
+    <!-- VEIL Card: Stealth Cyber Chassis -->
+    <style name="Widget.Veil.Card" parent="Widget.Material3.CardView.Filled">
+        <item name="cardBackgroundColor">@color/veil_surface_card</item>
+        <item name="cardCornerRadius">8dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/veil_hairline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <!-- OFFICIAL VEIL LOGO CYBER-VISOR PRIMARY BUTTON -->
+    <!-- Modeled after the illuminated titanium white "V" cyber-visor shield in the official VEIL emblem -->
+    <style name="Widget.Veil.Button.Primary" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/veil_button_primary_bg</item>
+        <item name="android:textColor">@color/veil_button_primary_text</item>
+        <item name="iconTint">@color/veil_button_primary_text</item>
+        <item name="cornerRadius">6dp</item>
+        <item name="strokeColor">#E5E7EB</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+        <item name="elevation">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- OFFICIAL VEIL LOGO CYBER-CHASSIS SECONDARY BUTTON -->
+    <!-- Modeled after the stealth matte-carbon hooded facet armor plates of the VEIL emblem -->
+    <style name="Widget.Veil.Button.Secondary" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="backgroundTint">@color/veil_surface_card</item>
+        <item name="android:textColor">@color/veil_text_high</item>
+        <item name="iconTint">@color/veil_text_high</item>
+        <item name="cornerRadius">6dp</item>
+        <item name="strokeColor">@color/veil_button_secondary_border</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.03</item>
+        <item name="elevation">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- Borderless Cyber Text Button -->
+    <style name="Widget.Veil.Button.Borderless" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/veil_text_high</item>
+        <item name="iconTint">@color/veil_text_high</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.03</item>
+        <item name="cornerRadius">6dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <!-- Clean Outline Danger Button -->
+    <style name="Widget.Veil.Button.Danger" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="backgroundTint">@color/veil_accent_danger_dim</item>
+        <item name="android:textColor">@color/veil_accent_danger</item>
+        <item name="iconTint">@color/veil_accent_danger</item>
+        <item name="cornerRadius">6dp</item>
+        <item name="strokeColor">@color/veil_accent_danger_border</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="elevation">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- VEIL Cyber Chip: Stealth Carbon Plate (Replaces Purple M3 Chips) -->
+    <style name="Widget.Veil.Chip" parent="Widget.Material3.Chip.Assist">
+        <item name="chipBackgroundColor">@color/veil_surface_card</item>
+        <item name="chipStrokeColor">@color/veil_hairline_bright</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipCornerRadius">6dp</item>
+        <item name="android:textColor">@color/veil_text_high</item>
+    </style>
+
+    <!-- VEIL Dialog Theme (Guarantees Dialog Buttons NEVER Default to Purple) -->
+    <style name="ThemeOverlay.Veil.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">@color/veil_surface_card</item>
+        <item name="colorOnSurface">@color/veil_text_high</item>
+        <item name="colorOnSurfaceVariant">@color/veil_text_medium</item>
+        <item name="colorPrimary">@color/veil_button_primary_bg</item>
+        <item name="colorOnPrimary">@color/veil_button_primary_text</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.Veil.Button.Primary</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.Veil.Button.Secondary</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.Veil.Button.Borderless</item>
+    </style>
+
+    <!-- Next-Gen Material 3 Bottom Sheet Theme -->
+    <style name="Theme.Veil.BottomSheetDialog" parent="Theme.Material3.Dark.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.Veil.BottomSheet.Modal</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@color/veil_surface</item>
+    </style>
+
+    <style name="Widget.Veil.BottomSheet.Modal" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="backgroundTint">@color/veil_surface</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Veil.BottomSheet</item>
+    </style>
+
+    <style name="ShapeAppearance.Veil.BottomSheet" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerSizeTopLeft">24dp</item>
+        <item name="cornerSizeTopRight">24dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+</resources>

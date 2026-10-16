@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/veil_canvas"
+    android:fitsSystemWindows="true"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp">
+
+        <!-- Official VEIL Emblem Header -->
+        <ImageView
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:contentDescription="VEIL Emblem"
+            android:src="@drawable/ic_launcher_foreground" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="@font/orbitron"
+            android:letterSpacing="0.20"
+            android:text="VEIL"
+            android:textColor="@color/veil_brand_silver"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:letterSpacing="0.04"
+            android:text="@string/app_full_name"
+            android:textColor="@color/veil_text_medium"
+            android:textSize="10.5sp" />
+
+        <TextView
+            android:id="@+id/tvLockPrompt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="Touch fingerprint sensor or enter PIN"
+            android:textColor="@color/veil_text_medium"
+            android:textSize="11.5sp" />
+
+        <!-- PIN Display / Input Container -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilPassword"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="10dp"
+            android:maxWidth="280dp"
+            android:textColorHint="@color/veil_text_low"
+            app:boxBackgroundColor="@color/veil_surface_card"
+            app:boxStrokeColor="@color/veil_accent_secure"
+            app:hintTextColor="@color/veil_accent_secure"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="@color/veil_text_medium">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:hint="Enter PIN"
+                android:inputType="numberPassword"
+                android:maxLength="8"
+                android:letterSpacing="0.2"
+                android:maxLines="1"
+                android:textColor="@color/veil_text_high"
+                android:textSize="16sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Keypad Grid (3x4) with responsive button sizing -->
+        <GridLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:alignmentMode="alignMargins"
+            android:columnCount="3"
+            android:rowCount="4">
+
+            <!-- Row 1: 1, 2, 3 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKey1"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="66dp"
+                android:layout_height="54dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="1"
+                android:textSize="19sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKey2"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="66dp"
+                android:layout_height="54dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="2"
+                android:textSize="19sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKey3"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="66dp"
+                android:layout_height="54dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="3"
+                android:textSize="19sp" />
+
+            <!-- Row 2: 4, 5, 6 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKey4"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="66dp"
+                android:layout_height="54dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="4"
+                android:textSize="19sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKey5"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="66dp"
+                android:layout_height="54dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="5"
+                android:textSize="19sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKey6"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="66dp"
+                android:layout_height="54dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="6"
+                android:textSize="19sp" />
+
+            <!-- Row 3: 7, 8, 9 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKey7"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="66dp"
+                android:layout_height="54dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="7"
+                android:textSize="19sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKey8"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="66dp"
+                android:layout_height="54dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="8"
+                android:textSize="19sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKey9"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="66dp"
+                android:layout_height="54dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="9"
+                android:textSize="19sp" />
+
+            <!-- Row 4: Biometric Prompt, 0, Backspace -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKeyBiometric"
+                style="@style/Widget.Veil.Button.Primary"
+                android:layout_width="66dp"
+                android:layout_height="54dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:contentDescription="Biometric Authentication"
+                app:icon="@drawable/ic_fingerprint_biometric"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="24dp"
+                app:iconTint="@color/veil_button_primary_text" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKey0"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="66dp"
+                android:layout_height="54dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="0"
+                android:textSize="19sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKeyDelete"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="66dp"
+                android:layout_height="54dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="⌫"
+                android:textSize="19sp" />
+        </GridLayout>
+
+        <!-- Unlock Submit Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnUnlockSubmit"
+            style="@style/Widget.Veil.Button.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="12dp"
+            android:maxWidth="260dp"
+            android:text="Unlock VEIL"
+            app:icon="@drawable/ic_lock_closed"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconSize="16dp" />
+
+        <!-- Cancel / Exit Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnKeyCancel"
+            style="@style/Widget.Veil.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginTop="6dp"
+            android:text="Exit App"
+            android:textColor="@color/veil_text_low"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

@@ -1,0 +1,347 @@
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_sheet_veil"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="28dp">
+
+    <!-- Bottom Sheet Drag Handle -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_circle_icon"
+        android:backgroundTint="@color/veil_hairline_bright" />
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.08"
+                android:text="QUICK PROTECT TARGET"
+                android:textColor="@color/veil_text_high"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Intercept and disguise notifications from this WhatsApp sender"
+                android:textColor="@color/veil_text_medium"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_badge_disguised"
+            android:fontFamily="monospace"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:text="ACTIVE"
+            android:textColor="@color/veil_accent_secure"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="14dp"
+        android:background="@color/veil_hairline" />
+
+    <!-- WhatsApp Contact Name Field -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilContactName"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="WhatsApp Contact or Chat Name *"
+        android:textColorHint="@color/veil_text_medium"
+        app:boxBackgroundColor="@color/veil_surface_card"
+        app:boxCornerRadiusBottomEnd="8dp"
+        app:boxCornerRadiusBottomStart="8dp"
+        app:boxCornerRadiusTopEnd="8dp"
+        app:boxCornerRadiusTopStart="8dp"
+        app:boxStrokeColor="@color/veil_accent_secure"
+        app:boxStrokeWidth="1dp"
+        app:boxStrokeWidthFocused="1.5dp"
+        app:errorTextColor="@color/veil_accent_danger"
+        app:hintTextColor="@color/veil_accent_secure"
+        app:startIconDrawable="@drawable/ic_person_protect"
+        app:startIconTint="@color/veil_accent_secure">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etContactName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif"
+            android:inputType="textPersonName"
+            android:maxLines="1"
+            android:textColor="@color/veil_text_high"
+            android:textSize="14sp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Phone Number Field (Optional) -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilContactPhone"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:hint="Phone Number (Optional - High Confidence)"
+        android:textColorHint="@color/veil_text_medium"
+        app:boxBackgroundColor="@color/veil_surface_card"
+        app:boxCornerRadiusBottomEnd="8dp"
+        app:boxCornerRadiusBottomStart="8dp"
+        app:boxCornerRadiusTopEnd="8dp"
+        app:boxCornerRadiusTopStart="8dp"
+        app:boxStrokeColor="@color/veil_hairline_bright"
+        app:boxStrokeWidth="1dp"
+        app:boxStrokeWidthFocused="1.5dp"
+        app:hintTextColor="@color/veil_text_high"
+        app:startIconDrawable="@drawable/ic_phonebook_contacts"
+        app:startIconTint="@color/veil_text_medium">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etContactPhone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif"
+            android:inputType="phone"
+            android:maxLines="1"
+            android:textColor="@color/veil_text_high"
+            android:textSize="14sp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Independent Contact PIN Lock (Optional) -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilContactPin"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:hint="Independent Contact PIN (Optional)"
+        android:textColorHint="@color/veil_text_medium"
+        app:boxBackgroundColor="@color/veil_surface_card"
+        app:boxCornerRadiusBottomEnd="8dp"
+        app:boxCornerRadiusBottomStart="8dp"
+        app:boxCornerRadiusTopEnd="8dp"
+        app:boxCornerRadiusTopStart="8dp"
+        app:boxStrokeColor="@color/veil_hairline_bright"
+        app:boxStrokeWidth="1dp"
+        app:boxStrokeWidthFocused="1.5dp"
+        app:endIconMode="password_toggle"
+        app:endIconTint="@color/veil_text_medium"
+        app:helperText="Set a separate PIN required to open this contact's chats"
+        app:helperTextTextColor="@color/veil_text_low"
+        app:startIconDrawable="@drawable/ic_lock_closed"
+        app:startIconTint="@color/veil_text_medium">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etContactPin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif"
+            android:inputType="numberPassword"
+            android:maxLength="8"
+            android:maxLines="1"
+            android:textColor="@color/veil_text_high"
+            android:textSize="14sp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Decoy Persona Selector Label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:fontFamily="monospace"
+        android:letterSpacing="0.06"
+        android:text="ASSIGN DECOY IDENTITY"
+        android:textColor="@color/veil_text_medium"
+        android:textSize="11sp" />
+
+    <!-- Persona Chips Horizontal Scroll -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:clipToPadding="false"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupPersona"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPersonaDynamic"
+                style="@style/Widget.Veil.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="🎲 Dynamic • Auto-rotate Work, Calendar, Delivery, System" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPersonaWork"
+                style="@style/Widget.Veil.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🏢 Work • Professional" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPersonaCalendar"
+                style="@style/Widget.Veil.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📅 Calendar • Schedule" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPersonaDelivery"
+                style="@style/Widget.Veil.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📦 Delivery • Logistics" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPersonaSystem"
+                style="@style/Widget.Veil.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⚙️ System • Utilities" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPersonaStealth"
+                style="@style/Widget.Veil.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔒 Stealth • Silent" />
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
+    <!-- Disguise Preview Card -->
+    <com.google.android.material.card.MaterialCardView
+        style="@style/Widget.Veil.Card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        app:cardCornerRadius="8dp"
+        app:strokeColor="@color/veil_hairline">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:text="SYSTEM NOTIFICATION PREVIEW"
+                android:textColor="@color/veil_text_low"
+                android:textSize="9sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_veil_notification"
+                    app:tint="@color/veil_accent_secure" />
+
+                <TextView
+                    android:id="@+id/tvPreviewDecoyTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Work"
+                    android:textColor="@color/veil_text_high"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="• now"
+                    android:textColor="@color/veil_text_low"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvPreviewDecoyBody"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="2dp"
+                android:text="New message"
+                android:textColor="@color/veil_text_medium"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelQuickProtect"
+            style="@style/Widget.Veil.Button.Secondary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:minHeight="48dp"
+            android:minWidth="0dp"
+            android:paddingHorizontal="6dp"
+            android:text="Cancel"
+            android:textSize="13sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnConfirmQuickProtect"
+            style="@style/Widget.Veil.Button.Primary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:minHeight="48dp"
+            android:minWidth="0dp"
+            android:paddingHorizontal="6dp"
+            android:text="Engage Protection"
+            android:textSize="13sp" />
+    </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Hooded Phantom Hacker Outer Silhouette (Clean Neutral Charcoal) -->
+    <path
+        android:fillColor="#FF202226"
+        android:pathData="M54,24 L41,32 L32,46 L28,63 L31,77 L40,83 L68,83 L77,77 L80,63 L76,46 L67,32 Z" />
+
+    <!-- Hood Lateral Shading & Dimensional Facets -->
+    <path
+        android:fillColor="#FF17181C"
+        android:pathData="M54,24 L41,32 L32,46 L28,63 L31,77 L36,79 L34,62 L39,47 L47,35 Z" />
+
+    <path
+        android:fillColor="#FF2A2C32"
+        android:pathData="M54,24 L67,32 L76,46 L80,63 L77,77 L72,79 L74,62 L69,47 L61,35 Z" />
+
+    <!-- Hood Inner Cryptographic Void (Pure Dark) -->
+    <path
+        android:fillColor="#FF0E0E10"
+        android:pathData="M54,30 C43,30 35,42 34,56 C34,68 42,78 54,79 C66,78 74,68 74,56 C73,42 65,30 54,30 Z" />
+
+    <!-- Inner Mask Shadow Plate -->
+    <path
+        android:fillColor="#FF141518"
+        android:pathData="M54,37 L41,47 L44,65 L54,76 L64,65 L67,47 Z" />
+
+    <!-- Glowing Optic Slits (Clean Titanium Silver, No Green, No Blue) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M41,49 L49,52 L48,54 L40,51 Z" />
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M67,49 L59,52 L60,54 L68,51 Z" />
+
+    <!-- Optic Inner Aura Glow -->
+    <path
+        android:fillColor="#FFE5E7EB"
+        android:pathData="M42,50 L48,52.5 L47.5,53.5 L41.5,51 Z" />
+
+    <path
+        android:fillColor="#FFE5E7EB"
+        android:pathData="M66,50 L60,52.5 L60.5,53.5 L66.5,51 Z" />
+
+    <!-- Primary "V" Cyber Visor Shield (Illuminated Titanium White) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M44,57 L54,72 L64,57 L59.5,57 L54,66 L48.5,57 Z" />
+
+    <!-- Core Nexus at Apex of "V" -->
+    <path
+        android:fillColor="#FFD1D5DB"
+        android:pathData="M51,64 L54,69 L57,64 L54,62 Z" />
+
+    <!-- Forehead Cryptographic Cipher Node (Glitch Diamond) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,39 L56,42 L54,45 L52,42 Z" />
+
+    <path
+        android:fillColor="#FFD1D5DB"
+        android:pathData="M54,41 L55,42 L54,43 L53,42 Z" />
+
+</vector>

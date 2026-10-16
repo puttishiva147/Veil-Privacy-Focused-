@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/veil_canvas"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="28dp">
+
+        <!-- Top Header with VEIL Emblem -->
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_launcher_foreground" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:letterSpacing="0.15"
+            android:text="Set Up Security"
+            android:textColor="@color/veil_text_high"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:letterSpacing="0.05"
+            android:text="@string/app_full_name"
+            android:textColor="@color/veil_text_medium"
+            android:textSize="11sp" />
+
+        <!-- Step Indicator Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/pillStep1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="28dp"
+                android:paddingHorizontal="4dp"
+                android:paddingVertical="4dp"
+                android:background="@drawable/bg_button_cyber_primary"
+                android:gravity="center"
+                android:text="1. PIN"
+                android:textColor="@color/veil_button_primary_text"
+                android:textSize="10.5sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="4dp"
+                android:layout_height="2dp"
+                android:background="@color/veil_hairline" />
+
+            <TextView
+                android:id="@+id/pillStep2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="28dp"
+                android:paddingHorizontal="4dp"
+                android:paddingVertical="4dp"
+                android:background="@drawable/bg_button_cyber_secondary"
+                android:gravity="center"
+                android:text="2. Confirm"
+                android:textColor="@color/veil_text_low"
+                android:textSize="10.5sp" />
+
+            <View
+                android:layout_width="4dp"
+                android:layout_height="2dp"
+                android:background="@color/veil_hairline" />
+
+            <TextView
+                android:id="@+id/pillStep3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="28dp"
+                android:paddingHorizontal="4dp"
+                android:paddingVertical="4dp"
+                android:background="@drawable/bg_button_cyber_secondary"
+                android:gravity="center"
+                android:text="3. Bio"
+                android:textColor="@color/veil_text_low"
+                android:textSize="10.5sp" />
+
+            <View
+                android:layout_width="4dp"
+                android:layout_height="2dp"
+                android:background="@color/veil_hairline" />
+
+            <TextView
+                android:id="@+id/pillStep4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="28dp"
+                android:paddingHorizontal="4dp"
+                android:paddingVertical="4dp"
+                android:background="@drawable/bg_button_cyber_secondary"
+                android:gravity="center"
+                android:text="4. Done"
+                android:textColor="@color/veil_text_low"
+                android:textSize="10.5sp" />
+        </LinearLayout>
+
+        <!-- Dynamic Container for Steps -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp">
+
+            <!-- STEP 1: CREATE PASSWORD -->
+            <LinearLayout
+                android:id="@+id/step1Layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Create Master PIN"
+                    android:textColor="@color/veil_text_high"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingExtra="2dp"
+                    android:text="Choose a secure 4 to 8 digit numeric PIN to encrypt and lock your VEIL Protected Chats and notification layer."
+                    android:textColor="@color/veil_text_medium"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilCreatePassword"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:textColorHint="@color/veil_text_low"
+                    app:boxBackgroundColor="@color/veil_surface_card"
+                    app:boxStrokeColor="@color/veil_accent_secure"
+                    app:hintTextColor="@color/veil_accent_secure"
+                    app:passwordToggleEnabled="true"
+                    app:passwordToggleTint="@color/veil_text_medium">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etCreatePassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Enter 4-8 Digit PIN"
+                        android:inputType="numberPassword"
+                        android:maxLength="8"
+                        android:maxLines="1"
+                        android:textColor="@color/veil_text_high"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/tvStep1Error"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textColor="@color/veil_accent_danger"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_button_cyber_secondary"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Security Requirements:"
+                        android:textColor="@color/veil_text_high"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="• Minimum 4 numeric digits (up to 8 digits)"
+                        android:textColor="@color/veil_text_medium"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="• Stored with on-device cryptographic salting (SHA-256)"
+                        android:textColor="@color/veil_text_medium"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStep1Next"
+                    style="@style/Widget.Veil.Button.Primary"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="24dp"
+                    android:text="Continue to Confirmation" />
+            </LinearLayout>
+
+            <!-- STEP 2: CONFIRM PASSWORD -->
+            <LinearLayout
+                android:id="@+id/step2Layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Confirm Master PIN"
+                    android:textColor="@color/veil_text_high"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingExtra="2dp"
+                    android:text="Re-enter your PIN to ensure they match exactly."
+                    android:textColor="@color/veil_text_medium"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilConfirmPassword"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:textColorHint="@color/veil_text_low"
+                    app:boxBackgroundColor="@color/veil_surface_card"
+                    app:boxStrokeColor="@color/veil_accent_secure"
+                    app:hintTextColor="@color/veil_accent_secure"
+                    app:passwordToggleEnabled="true"
+                    app:passwordToggleTint="@color/veil_text_medium">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etConfirmPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Re-enter PIN"
+                        android:inputType="numberPassword"
+                        android:maxLength="8"
+                        android:maxLines="1"
+                        android:textColor="@color/veil_text_high"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/tvStep2Error"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textColor="@color/veil_accent_danger"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStep2Confirm"
+                    style="@style/Widget.Veil.Button.Primary"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="24dp"
+                    android:text="Confirm &amp; Proceed to Biometrics" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStep2Back"
+                    style="@style/Widget.Veil.Button.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="10dp"
+                    android:text="Back to Edit PIN" />
+            </LinearLayout>
+
+            <!-- STEP 3: BIOMETRIC SETUP -->
+            <LinearLayout
+                android:id="@+id/step3Layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Biometric Authentication"
+                    android:textColor="@color/veil_text_high"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingExtra="2dp"
+                    android:text="Enable Android fingerprint or face recognition for effortless, high-security unlocking of VEIL."
+                    android:textColor="@color/veil_text_medium"
+                    android:textSize="13sp" />
+
+                <!-- Biometric Hardware Status Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    app:cardBackgroundColor="@color/veil_surface_card"
+                    app:cardCornerRadius="10dp"
+                    app:strokeColor="@color/veil_hairline"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:id="@+id/ivBiometricStatusIcon"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:src="@drawable/ic_fingerprint_biometric"
+                                app:tint="@color/veil_accent_secure" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="12dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tvBiometricStatusTitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Checking Hardware..."
+                                    android:textColor="@color/veil_text_high"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvBiometricStatusDesc"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="Detecting Android biometric framework"
+                                    android:textColor="@color/veil_text_medium"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvBiometricTestResult"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:textColor="@color/veil_accent_secure"
+                            android:textSize="12sp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Action Button 1: Test / Enable Biometrics -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEnableBiometric"
+                    style="@style/Widget.Veil.Button.Primary"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="20dp"
+                    android:text="Test &amp; Enable Biometrics"
+                    app:icon="@drawable/ic_fingerprint_biometric"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconSize="20dp" />
+
+                <!-- Action Button 2: Open System Settings if not enrolled -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnOpenDeviceSettings"
+                    style="@style/Widget.Veil.Button.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="10dp"
+                    android:text="Open Android Security Settings"
+                    android:visibility="gone" />
+
+                <!-- Action Button 3: Skip / Password Only -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSkipBiometric"
+                    style="@style/Widget.Veil.Button.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="10dp"
+                    android:text="Continue with Password Only" />
+            </LinearLayout>
+
+            <!-- STEP 4: SETUP COMPLETE -->
+            <LinearLayout
+                android:id="@+id/step4Layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:src="@drawable/ic_launcher_foreground" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Security Setup Complete"
+                    android:textColor="@color/veil_text_high"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:lineSpacingExtra="2dp"
+                    android:text="Your security configuration has been verified and saved securely on this device.\n\nVEIL will now enforce this credential before granting access to Protected Chats."
+                    android:textColor="@color/veil_text_medium"
+                    android:textSize="13sp" />
+
+                <!-- Configuration Summary Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    app:cardBackgroundColor="@color/veil_surface_card"
+                    app:cardCornerRadius="10dp"
+                    app:strokeColor="@color/veil_hairline"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Configured Credentials:"
+                            android:textColor="@color/veil_text_high"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvSummaryPassword"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="• Master PIN: ✓ Configured (SHA-256 Salted)"
+                            android:textColor="@color/veil_accent_secure"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvSummaryBiometric"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="• Biometrics: ✓ Enabled"
+                            android:textColor="@color/veil_accent_secure"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="• Session Protection: ✓ Active"
+                            android:textColor="@color/veil_text_medium"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Final Action Button: Proceed to Unlock Screen -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFinishSetup"
+                    style="@style/Widget.Veil.Button.Primary"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="24dp"
+                    android:text="Proceed to Unlock Screen"
+                    app:icon="@drawable/ic_lock_closed"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconSize="18dp" />
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

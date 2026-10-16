@@ -1,0 +1,166 @@
+<resources>
+    <!-- Brand & System Identity -->
+    <string name="app_name">VEIL</string>
+    <string name="app_full_name">Variable Event Identity Layer</string>
+    <string name="app_tagline">Autonomous Notification Disguise Architecture</string>
+    <string name="app_version_name">VEIL Core • Production Release 3.8.0 (NEXRO Series)</string>
+
+    <!-- General Navigation & Actions -->
+    <string name="action_back">Back</string>
+    <string name="action_save">Save Rule</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="action_add">Add</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_enable">Enable</string>
+    <string name="action_disable">Disable</string>
+    <string name="action_open_settings">System Settings</string>
+    <string name="action_grant_permission">Grant Permission</string>
+    <string name="action_understand">Acknowledge</string>
+
+    <!-- Dashboard / System Status Console -->
+    <string name="dashboard_title">VEIL</string>
+    <string name="dashboard_subtitle">Variable Event Identity Layer</string>
+    <string name="dashboard_status_label">ENGINE STATUS</string>
+    <string name="dashboard_status_active">OPERATIONAL</string>
+    <string name="dashboard_status_inactive">STANDBY</string>
+    <string name="dashboard_status_unauthorized">ACCESS REQUIRED</string>
+    <string name="dashboard_telemetry_title">LOCAL TELEMETRY</string>
+    <string name="dashboard_notification_access_label">Notification Access Service</string>
+    <string name="dashboard_access_granted">AUTHORIZED</string>
+    <string name="dashboard_access_disabled">NOT AUTHORIZED</string>
+    <string name="dashboard_access_warning">Android requires NotificationListenerService permission for VEIL to observe and disguise notifications from target applications. Without this authorization, incoming alerts cannot be processed.</string>
+    <string name="dashboard_stat_contacts">Protected Filters</string>
+    <string name="dashboard_stat_events">Disguised Events</string>
+    <string name="dashboard_section_navigation">OPERATIONAL MODULES</string>
+    <string name="dashboard_action_contacts_title">Protected Filters</string>
+    <string name="dashboard_action_contacts_desc">Senders flagged for real-time notification disguise</string>
+    <string name="dashboard_action_learn_title">Sensor Detection</string>
+    <string name="dashboard_action_learn_desc">Capture sender identity from the next incoming event</string>
+    <string name="dashboard_action_inbox_title">Private Vault</string>
+    <string name="dashboard_action_inbox_desc">Encrypted log of disguised notifications (Double-tap to inspect)</string>
+    <string name="dashboard_action_test_title">Pipeline Diagnostic</string>
+    <string name="dashboard_action_test_desc">Execute local pipeline verification event</string>
+    <string name="dashboard_action_settings_title">System Configuration</string>
+    <string name="dashboard_action_settings_desc">Decoy pools, OEM notification controls, and data management</string>
+
+    <!-- Protected Contact / Selection Architecture -->
+    <string name="contact_card_header">PROTECTED CONTACT</string>
+    <string name="contact_no_selection">No contact selected</string>
+    <string name="contact_no_selection_desc">Choose the real contact whose incoming WhatsApp notifications and calls should be intercepted and disguised with decoys.</string>
+    <string name="contact_btn_select">Select Contact</string>
+    <string name="contact_btn_change">Change Contact</string>
+    <string name="contact_btn_remove">Remove Contact</string>
+    <string name="contact_btn_manual">Enter Number Manually</string>
+    <string name="contact_status_active">ARMED &amp; ACTIVE</string>
+    <string name="contact_status_disabled">PAUSED</string>
+    <string name="contact_permission_title">Contacts Access Required</string>
+    <string name="contact_permission_desc">Android requires Contacts permission to let you select a contact and their phone number. VEIL operates strictly on-device with zero telemetry.</string>
+    <string name="contact_manual_dialog_title">Add Contact Manually</string>
+    <string name="contact_manual_name_hint">Contact Name (as displayed in WhatsApp)</string>
+    <string name="contact_manual_phone_hint">Phone Number (e.g. +1 555-019-2834)</string>
+    <string name="contact_source_device">Device Contact</string>
+    <string name="contact_source_manual">Direct Entry</string>
+    <string name="contact_remove_confirm">Remove \"%1$s\" from VEIL protection? Subsequent WhatsApp notifications from this contact will appear undisguised.</string>
+
+    <!-- Protected Contacts / Rules Module -->
+    <string name="contacts_title">Protected Filters</string>
+    <string name="contacts_subtitle">Incoming notifications matching these identities will be intercepted and assigned random decoys.</string>
+    <string name="contacts_empty_title">No Protection Rules Configured</string>
+    <string name="contacts_empty_desc">Add sender names manually or use Sensor Detection to capture names directly from incoming WhatsApp messages.</string>
+    <string name="contacts_add_dialog_title">Add Protection Rule</string>
+    <string name="contacts_add_dialog_hint">Sender name or phone number as formatted in WhatsApp</string>
+    <string name="contacts_add_dialog_helper">Matching is case-insensitive, trims trailing whitespace, and normalizes space breaks.</string>
+    <string name="contacts_add_success">Protection rule activated</string>
+    <string name="contacts_already_exists">A protection rule for this identity already exists</string>
+    <string name="contacts_name_empty">Sender identifier cannot be empty</string>
+    <string name="contacts_delete_confirm">Remove \"%1$s\" from protection rules? Subsequent notifications from this sender will appear undisguised.</string>
+    <string name="contacts_learn_shortcut">Auto-Detect via Sensor ›</string>
+
+    <!-- Learn / Sensor Detection Module -->
+    <string name="learn_title">Sensor Detection</string>
+    <string name="learn_subtitle">Extract sender metadata directly from incoming notification payloads without manual entry</string>
+    <string name="learn_step_1">1. Activate sensor listener below.</string>
+    <string name="learn_step_2">2. Have the contact send a WhatsApp message to this device.</string>
+    <string name="learn_step_3">3. VEIL reads the sender name exposed by the Android OS.</string>
+    <string name="learn_step_4">4. Confirm identity to create an active protection rule.</string>
+    <string name="learn_btn_start">Activate Sensor</string>
+    <string name="learn_btn_stop">Deactivate Sensor</string>
+    <string name="learn_status_waiting">Listening for WhatsApp notification payload…</string>
+    <string name="learn_status_idle">Sensor inactive. Tap Activate to begin listening.</string>
+    <string name="learn_detected_label">DETECTED SENDER IDENTITY</string>
+    <string name="learn_not_identified">VEIL could not identify a valid sender payload in the received notification.</string>
+    <string name="learn_btn_confirm">Commit to Protection Rules</string>
+
+    <!-- Private Vault (Inbox) Module -->
+    <string name="inbox_title">Private Vault</string>
+    <string name="inbox_subtitle">Cryptographic local event log. Displays decoy identities by default.</string>
+    <string name="inbox_empty_title">Vault is Clear</string>
+    <string name="inbox_empty_desc">No protected events have been intercepted yet. Captured notifications will be archived here.</string>
+    <string name="inbox_tap_hint">Double-tap any card to reveal real identity. Double-tap again to conceal.</string>
+    <string name="inbox_revealed_badge">REVEALED</string>
+    <string name="inbox_disguised_badge">DISGUISED</string>
+    <string name="inbox_clear_all">Purge Vault</string>
+    <string name="inbox_clear_confirm">Permanently purge all records from the private vault? This operation is immediate and irreversible.</string>
+
+    <!-- Event Detail Module -->
+    <string name="detail_title">Event Inspection</string>
+    <string name="detail_hint">Double-tap container to toggle between Disguised and Real state</string>
+    <string name="detail_real_sender_label">ORIGINAL SENDER</string>
+    <string name="detail_real_message_label">ORIGINAL PAYLOAD</string>
+    <string name="detail_decoy_sender_label">DECOY SENDER</string>
+    <string name="detail_decoy_message_label">DISGUISED PAYLOAD</string>
+    <string name="detail_time_label">TIMESTAMP</string>
+    <string name="detail_source_label">SOURCE PACKAGE</string>
+    <string name="detail_delete_event">Purge Record</string>
+
+    <!-- Settings & System Configuration Module -->
+    <string name="settings_title">System Configuration</string>
+    <string name="settings_section_general">ENGINE CONTROLS</string>
+    <string name="settings_veil_enabled_title">VEIL Protection Engine</string>
+    <string name="settings_veil_enabled_desc">Master kill-switch for notification interception and disguise</string>
+    <string name="settings_hide_original_title">Dismiss Original Notification</string>
+    <string name="settings_hide_original_desc">Instructs NotificationListenerService to cancel the original WhatsApp alert. Note: Cancellation success depends on Android OS and OEM restrictions.</string>
+    <string name="settings_protected_calls_title">Intercept Call Alerts</string>
+    <string name="settings_protected_calls_desc">Applies identity disguise to incoming WhatsApp voice/video call notifications</string>
+    <string name="settings_section_decoys">DECOY DICTIONARIES</string>
+    <string name="settings_decoy_names_title">Decoy Senders (%1$d)</string>
+    <string name="settings_decoy_names_desc">Configured pool of synthetic sender identities</string>
+    <string name="settings_decoy_messages_title">Decoy Messages (%1$d)</string>
+    <string name="settings_decoy_messages_desc">Configured pool of synthetic message payloads</string>
+    <string name="settings_section_diagnostics">VERIFICATION &amp; AUDIT</string>
+    <string name="settings_diagnostics_title">Test Protection Pipeline</string>
+    <string name="settings_diagnostics_desc">Trigger a local simulated event to verify notification interception, decoy selection, and vault storage</string>
+    <string name="settings_section_privacy">DATA SECURITY</string>
+    <string name="settings_clear_history_title">Purge Event Vault</string>
+    <string name="settings_clear_history_desc">Erase all encrypted local event logs from device storage</string>
+    <string name="settings_privacy_policy_title">Privacy Architecture</string>
+    <string name="settings_privacy_policy_desc">Cryptographic model, permission constraints, and zero-telemetry architecture</string>
+    <string name="settings_about_title">System Architecture</string>
+    <string name="settings_about_desc">Package specifications, subsystem integrity, and lifecycle management</string>
+
+    <!-- Decoy Dictionary Editor -->
+    <string name="decoy_edit_names_title">Decoy Senders</string>
+    <string name="decoy_edit_messages_title">Decoy Messages</string>
+    <string name="decoy_edit_add_name_hint">Enter new synthetic sender identity…</string>
+    <string name="decoy_edit_add_message_hint">Enter new synthetic message payload…</string>
+    <string name="decoy_reset_defaults">Restore Default Pool</string>
+    <string name="decoy_reset_confirm">Reset this dictionary to standard factory entries?</string>
+
+    <!-- Privacy Architecture Dialog -->
+    <string name="privacy_title">VEIL Architectural Model</string>
+    <string name="privacy_point_1_title">1. Android NotificationListener API Only</string>
+    <string name="privacy_point_1_desc">VEIL inspects notifications strictly via the official Android NotificationListenerService framework. It does not tamper with app binaries, query WhatsApp internal databases, or require root permissions.</string>
+    <string name="privacy_point_2_title">2. Absolute Zero-Network Boundary</string>
+    <string name="privacy_point_2_desc">All rules, decoys, and event logs remain strictly on this device inside sandboxed storage. The application contains zero network request libraries, zero analytics SDKs, and zero telemetry.</string>
+    <string name="privacy_point_3_title">3. Nonce Decoy Generation</string>
+    <string name="privacy_point_3_desc">Decoy senders and messages are independently chosen per event from the user\'s local dictionary. There is never a persistent 1:1 mapping between real identities and decoys.</string>
+    <string name="privacy_point_4_title">4. Local Dual-State Interaction</string>
+    <string name="privacy_point_4_desc">Android system notifications cannot support custom third-party gesture detection. In-situ reveal operations are executed exclusively within VEIL\'s authenticated interface.</string>
+
+    <!-- Notification Channel -->
+    <string name="channel_veil_name">VEIL Disguised Alerts</string>
+    <string name="channel_veil_desc">Encrypted alert channel for disguised notification delivery</string>
+</resources>

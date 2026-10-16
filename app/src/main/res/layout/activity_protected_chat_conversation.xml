@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/veil_canvas"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Top Header Navigation Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/veil_surface"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_circle_icon"
+                android:contentDescription="@string/action_back"
+                android:padding="8dp"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="@color/veil_text_high" />
+
+            <!-- Header Profile Avatar with Indicator -->
+            <FrameLayout
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="6dp">
+
+                <FrameLayout
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_circle_icon">
+
+                    <TextView
+                        android:id="@+id/tvContactAvatarInitial"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="C"
+                        android:textColor="@color/veil_text_high"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/ivContactVeilLogo"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_gravity="center"
+                        android:padding="2dp"
+                        android:src="@drawable/ic_veil_visor_glyph"
+                        android:visibility="gone" />
+
+                    <ImageView
+                        android:id="@+id/ivContactAvatar"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="Contact Profile Photo"
+                        android:scaleType="centerCrop"
+                        android:visibility="gone" />
+                </FrameLayout>
+
+                <!-- Profile Icon Indicator Badge -->
+                <FrameLayout
+                    android:id="@+id/flContactProfileIndicator"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_gravity="bottom|end"
+                    android:background="@drawable/bg_circle_icon"
+                    android:backgroundTint="@color/veil_surface">
+
+                    <ImageView
+                        android:id="@+id/ivContactProfileIndicator"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="Protected Profile Indicator"
+                        android:src="@drawable/ic_shield_status"
+                        app:tint="@color/veil_accent_secure" />
+                </FrameLayout>
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvChatContactName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:text="Contact"
+                    android:textColor="@color/veil_text_high"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:id="@+id/viewLiveDot"
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:background="@drawable/bg_circle_icon"
+                        android:backgroundTint="@color/veil_accent_secure" />
+
+                    <TextView
+                        android:id="@+id/tvChatStatusSubtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:ellipsize="end"
+                        android:letterSpacing="0.04"
+                        android:singleLine="true"
+                        android:text="PROTECTED CHAT • LIVE REPLY ACTIVE"
+                        android:textColor="@color/veil_text_medium"
+                        android:textSize="9.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btnChatInfo"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_circle_icon"
+                android:contentDescription="Architecture Info"
+                android:padding="8dp"
+                android:src="@drawable/ic_shield_status"
+                app:tint="@color/veil_text_medium" />
+
+            <ImageButton
+                android:id="@+id/btnWhatsAppCall"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/bg_circle_icon"
+                android:contentDescription="WhatsApp Call"
+                android:padding="8dp"
+                android:src="@drawable/ic_phone_call"
+                app:tint="@color/veil_accent_secure" />
+
+            <ImageButton
+                android:id="@+id/btnOpenWhatsApp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/bg_circle_icon"
+                android:contentDescription="Open in WhatsApp"
+                android:padding="8dp"
+                android:src="@drawable/ic_radar_learn"
+                app:tint="@color/veil_text_high" />
+
+            <ImageButton
+                android:id="@+id/btnWipeChat"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/bg_circle_icon"
+                android:contentDescription="Wipe Conversation"
+                android:padding="8dp"
+                android:src="@drawable/ic_delete_trash"
+                app:tint="@color/veil_accent_danger" />
+        </LinearLayout>
+
+        <!-- Divider line -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/veil_hairline" />
+
+        <!-- Notification Reply Status Card Banner -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardReplyStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="14dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="6dp"
+            app:cardBackgroundColor="@color/veil_surface_card"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/veil_hairline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvReplyStatusTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="🟢 WhatsApp reply action ready"
+                        android:textColor="@color/veil_accent_secure"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvReplyDisclaimerPill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_badge_revealed"
+                        android:text="Android RemoteInput"
+                        android:textColor="@color/veil_text_monospace"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvReplyStatusDesc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:lineSpacingExtra="2dp"
+                    android:text="Active WhatsApp notification detected. Replies typed below will be handed over to WhatsApp via Android's notification reply mechanism."
+                    android:textColor="@color/veil_text_medium"
+                    android:textSize="11sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Live Call Banner (shown when WhatsApp call notification is active or ringing) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardLiveCallBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="14dp"
+            android:layout_marginBottom="6dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/veil_surface_card"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/veil_accent_secure"
+            app:strokeWidth="1.5dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_phone_call"
+                        app:tint="@color/veil_accent_secure" />
+
+                    <TextView
+                        android:id="@+id/tvLiveCallTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:text="Incoming WhatsApp Call"
+                        android:textColor="@color/veil_accent_secure"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAnswerCall"
+                        style="@style/Widget.Veil.Button.Primary"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="Answer Call"
+                        android:textSize="11.5sp"
+                        app:icon="@drawable/ic_phone_call"
+                        app:iconSize="14dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDeclineCall"
+                        style="@style/Widget.Veil.Button.Secondary"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="Decline"
+                        android:textColor="@color/veil_accent_danger"
+                        android:textSize="11.5sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Message List or Empty State Container -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <!-- Chronological Messages List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvMessages"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingVertical="8dp" />
+
+            <!-- Empty State when no messages captured yet -->
+            <LinearLayout
+                android:id="@+id/layoutEmptyMessages"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="28dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:src="@drawable/ic_launcher_foreground" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Protected Chat Stream"
+                    android:textColor="@color/veil_text_high"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:lineSpacingExtra="2dp"
+                    android:text="When this protected contact sends a message on WhatsApp, VEIL intercepts the incoming notification and safely stores the message here.\n\nVEIL never extracts old messages from WhatsApp's private database."
+                    android:textColor="@color/veil_text_medium"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Bottom Reply Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/veil_surface"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="8dp">
+
+            <ImageButton
+                android:id="@+id/btnAttachSticker"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_circle_icon"
+                android:contentDescription="Send Sticker or Media"
+                android:padding="8dp"
+                android:src="@drawable/ic_sticker_media"
+                app:tint="@color/veil_text_medium" />
+
+            <EditText
+                android:id="@+id/etReplyInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/bg_circle_icon"
+                android:hint="Type a reply..."
+                android:importantForAutofill="no"
+                android:inputType="textCapSentences|textMultiLine"
+                android:maxLines="4"
+                android:minHeight="42dp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:textColor="@color/veil_text_high"
+                android:textColorHint="@color/veil_text_low"
+                android:textSize="13.5sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSendReply"
+                style="@style/Widget.Veil.Button.Primary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="42dp"
+                android:layout_marginStart="6dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="12dp"
+                android:text="Send"
+                android:textSize="12.5sp"
+                app:icon="@drawable/ic_veil_visor_glyph"
+                app:iconGravity="textStart"
+                app:iconPadding="4dp"
+                app:iconSize="13dp"
+                app:iconTint="@color/veil_button_primary_text" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

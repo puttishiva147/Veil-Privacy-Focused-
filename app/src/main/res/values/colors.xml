@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- VEIL Clean Minimalist Monochromatic Dark Architecture (Zero Green, Zero Blue, Zero Purple) -->
+
+    <!-- Base Canvas & Structural Surfaces: Pure Neutral Charcoal & Graphite -->
+    <color name="veil_canvas">#0E0E10</color>
+    <color name="veil_surface">#141518</color>
+    <color name="veil_surface_card">#1A1B1F</color>
+    <color name="veil_surface_elevated">#22242A</color>
+    <color name="veil_surface_interactive">#2A2C34</color>
+    <color name="veil_hairline">#32353D</color>
+    <color name="veil_hairline_bright">#464954</color>
+
+    <!-- Typography: High-legibility, Neutral Crisp Whites & Grays -->
+    <color name="veil_text_high">#F9FAFB</color>
+    <color name="veil_text_medium">#A1A1AA</color>
+    <color name="veil_text_low">#71717A</color>
+    <color name="veil_text_monospace">#E4E4E7</color>
+
+    <!-- Clean Functional Accents: Pure Monochrome Titanium & Silver -->
+    <color name="veil_accent_secure">#F3F4F6</color>
+    <color name="veil_accent_secure_dim">#22242A</color>
+    <color name="veil_accent_secure_border">#444754</color>
+    <color name="veil_accent_cyan">#F3F4F6</color>
+    <color name="veil_brand_silver">#E6EDF5</color>
+
+    <!-- Official VEIL Cyber-Visor Button System -->
+    <color name="veil_button_primary_bg">#FFFFFF</color>
+    <color name="veil_button_primary_text">#0E0E10</color>
+    <color name="veil_button_secondary_bg">#1A1B1F</color>
+    <color name="veil_button_secondary_text">#F9FAFB</color>
+    <color name="veil_button_secondary_border">#383B46</color>
+
+    <!-- Warning / Setup Required: Architectural Warm Amber -->
+    <color name="veil_accent_amber">#F59E0B</color>
+    <color name="veil_accent_amber_dim">#261F12</color>
+    <color name="veil_accent_amber_border">#4D3A1B</color>
+
+    <!-- Destructive / Alert: Restrained Clean Crimson -->
+    <color name="veil_accent_danger">#EF4444</color>
+    <color name="veil_accent_danger_dim">#281414</color>
+    <color name="veil_accent_danger_border">#4C1D1D</color>
+
+    <!-- Neutral / Titanium Accent -->
+    <color name="veil_accent_titanium">#E4E4E7</color>
+    <color name="veil_accent_titanium_dim">#22242A</color>
+
+    <!-- Comprehensive Material 3 Token Overrides (Locks Out System Purple) -->
+    <color name="md_theme_dark_primary">#FFFFFF</color>
+    <color name="md_theme_dark_onPrimary">#0E0E10</color>
+    <color name="md_theme_dark_primaryContainer">#22242A</color>
+    <color name="md_theme_dark_onPrimaryContainer">#F9FAFB</color>
+    <color name="md_theme_dark_secondary">#E4E4E7</color>
+    <color name="md_theme_dark_onSecondary">#0E0E10</color>
+    <color name="md_theme_dark_secondaryContainer">#1A1B1F</color>
+    <color name="md_theme_dark_onSecondaryContainer">#F9FAFB</color>
+    <color name="md_theme_dark_tertiary">#E4E4E7</color>
+    <color name="md_theme_dark_onTertiary">#0E0E10</color>
+    <color name="md_theme_dark_tertiaryContainer">#1A1B1F</color>
+    <color name="md_theme_dark_onTertiaryContainer">#F9FAFB</color>
+    <color name="md_theme_dark_error">#EF4444</color>
+    <color name="md_theme_dark_errorContainer">#281414</color>
+    <color name="md_theme_dark_onError">#FFFFFF</color>
+    <color name="md_theme_dark_onErrorContainer">#F9FAFB</color>
+    <color name="md_theme_dark_background">#0E0E10</color>
+    <color name="md_theme_dark_onBackground">#F9FAFB</color>
+    <color name="md_theme_dark_surface">#141518</color>
+    <color name="md_theme_dark_onSurface">#F9FAFB</color>
+    <color name="md_theme_dark_surfaceVariant">#1A1B1F</color>
+    <color name="md_theme_dark_onSurfaceVariant">#A1A1AA</color>
+    <color name="md_theme_dark_outline">#32353D</color>
+    <color name="md_theme_dark_inverseOnSurface">#0E0E10</color>
+    <color name="md_theme_dark_inverseSurface">#F9FAFB</color>
+    <color name="md_theme_dark_inversePrimary">#0E0E10</color>
+    <color name="md_theme_dark_surfaceTint">#FFFFFF</color>
+    <color name="md_theme_dark_outlineVariant">#22242A</color>
+    <color name="md_theme_dark_scrim">#000000</color>
+
+    <!-- Utility Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+</resources>
