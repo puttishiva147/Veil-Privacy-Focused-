@@ -1,5 +1,10 @@
 # VEIL Changelog
 
+## 3.11.0
+- Apply the uploaded official VEIL logo to launcher and in-app branding.
+- Version code: 21 (previous release: 3.10.0 / 20).
+
+
 ## 3.10.0
 - Add a clear Android 13+ notification permission explanation dialog with Enable notifications and Not Now actions.
 - Only open the system permission prompt after the user chooses Enable; older Android versions and already-granted permission skip this prompt.
