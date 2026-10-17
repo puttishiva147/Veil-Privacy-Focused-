@@ -305,30 +305,22 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private fun showStickerAndMediaPicker() {
         val options = arrayOf(
-            "🔒 Send Privacy Sticker: « Encrypted »",
-            "🛡️ Send Privacy Sticker: « Shield Active »",
-            "👍 Send Quick Sticker: « Acknowledged »",
-            "👋 Send Quick Sticker: « Hello »",
-            "🖼️ Choose Photo or Sticker from Device"
+            "Choose image from device (shared as image)",
+            "Open WhatsApp to send a sticker"
         )
 
-        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
-        builder.setTitle("Send Sticker or Media")
-        builder.setItems(options) { _, which ->
-            when (which) {
-                0 -> handleSendReply("🔒 [VEIL Encrypted]")
-                1 -> handleSendReply("🛡️ [VEIL Shield Active]")
-                2 -> handleSendReply("👍 [Acknowledged]")
-                3 -> handleSendReply("👋 [Hello]")
-                4 -> {
-                    pickVisualMediaLauncher.launch(
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Send Sticker or Media")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> pickVisualMediaLauncher.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
+                    1 -> openWhatsAppChatDirectly()
                 }
             }
-        }
-        builder.setNegativeButton("Cancel", null)
-        builder.show()
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun shareMediaOrStickerToWhatsApp(imageUri: Uri) {
@@ -339,22 +331,10 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
                 setPackage("com.whatsapp")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            startActivity(Intent.createChooser(shareIntent, "Share Sticker to WhatsApp"))
+            startActivity(Intent.createChooser(shareIntent, "Share image to WhatsApp"))
 
-            // Log media event locally
-            lifecycleScope.launch(Dispatchers.IO) {
-                val outgoingEvent = ProtectedEvent(
-                    realSender = "You",
-                    realMessage = "🖼️ [Sticker / Media Shared]",
-                    isOutgoing = true,
-                    replyStatus = "SHARED_TO_WHATSAPP",
-                    conversationId = conversationId,
-                    timestamp = System.currentTimeMillis()
-                )
-                database.protectedEventDao().insert(outgoingEvent)
-            }
         } catch (_: Exception) {
-            Toast.makeText(this, "Could not open WhatsApp for sharing", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Could not share this image with WhatsApp", Toast.LENGTH_SHORT).show()
         }
     }
 
