@@ -84,7 +84,9 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         super.onNotificationRemoved(sbn)
-        // Keep reply action cached so user can still reply from Protected Chats
+        // Notification RemoteInput and call PendingIntents are valid only while their
+        // originating notification is active. Do not show stale reply/call controls.
+        sbn?.key?.let(NotificationReplyRegistry::removeByKey)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
