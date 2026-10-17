@@ -86,7 +86,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         super.onNotificationRemoved(sbn)
         // Notification RemoteInput and call PendingIntents are valid only while their
         // originating notification is active. Do not show stale reply/call controls.
-        sbn?.key?.let(NotificationReplyRegistry::removeByKey)
+        sbn?.key?.let(NotificationReplyRegistry::removeCallByKey)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
