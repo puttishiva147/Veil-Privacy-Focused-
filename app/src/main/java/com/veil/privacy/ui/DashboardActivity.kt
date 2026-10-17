@@ -150,12 +150,23 @@ class DashboardActivity : AppCompatActivity() {
         // Check App Lock
         checkAuthentication()
 
-        // Prompt for Android 13+ Notification Permission if missing
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (!PermissionUtils.hasPostNotificationsPermission(this)) {
+        // Explain why notifications are needed before opening the Android permission dialog.
+        showNotificationPermissionPrompt()
+    }
+
+    private fun showNotificationPermissionPrompt() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            PermissionUtils.hasPostNotificationsPermission(this)
+        ) return
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Enable notifications")
+            .setMessage("Allow VEIL Protection Shield to show protection alerts and notification status. You can change this anytime in Android Settings.")
+            .setPositiveButton("Enable notifications") { _, _ ->
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
-        }
+            .setNegativeButton("Not Now", null)
+            .show()
     }
 
     override fun onResume() {
