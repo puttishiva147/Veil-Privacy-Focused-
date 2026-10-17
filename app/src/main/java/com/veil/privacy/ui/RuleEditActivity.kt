@@ -353,14 +353,28 @@ class RuleEditActivity : AppCompatActivity() {
         )
 
         lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                if (editingRuleId > 0) {
-                    db.protectionRuleDao().update(rule)
-                } else {
-                    db.protectionRuleDao().insert(rule)
-                }
+            try {
+                withContext(Dispatchers.IO) {
+                    val normalizedPhone = ProtectionRule.normalizePhone(rule.contactPhoneNumber)
+                    val duplicateByPhone = if (normalizedPhone.isNotBlank()) {
+                        db.protectionRuleDao().findByNormalizedPhoneSync(normalizedPhone)
+                    } else null
+                    val duplicateByName = db.protectionRuleDao().findByNormalizedNameSync(
+                        ProtectionRule.normalizeName(rule.contactName)
+                    )
+                    val duplicate = listOfNotNull(duplicateByPhone, duplicateByName)
+                        .firstOrNull { it.id != editingRuleId }
+                    if (duplicate != null) {
+                        throw IllegalStateException("A protection rule already exists for this contact or number")
+                    }
 
-                // Also update selectedContactDao and protectedContactDao so all UI views remain synchronized
+                    if (editingRuleId > 0) {
+                        db.protectionRuleDao().update(rule)
+                    } else {
+                        db.protectionRuleDao().insert(rule)
+                    }
+
+                    // Also update selectedContactDao and protectedContactDao so all UI views remain synchronized
                 val selectedModel = SelectedContact(
                     contactId = selectedContactId,
                     displayName = selectedContactName,
@@ -380,15 +394,21 @@ class RuleEditActivity : AppCompatActivity() {
                     lockPinSalt = finalPinSalt,
                     isCustomLockEnabled = finalIsLock
                 )
-                db.protectedContactDao().insert(protectedModel)
-            }
+                    db.protectedContactDao().insert(protectedModel)
+                }
 
-            Toast.makeText(
-                this@RuleEditActivity,
-                "Protection rule saved for ${rule.contactName}",
-                Toast.LENGTH_SHORT
-            ).show()
-            finish()
+                Toast.makeText(
+                    this@RuleEditActivity,
+                    "Protection rule saved for ${rule.contactName}",
+                    Toast.LENGTH_SHORT
+                ).show()
+                finish()
+            } catch (error: Exception) {
+                val message = error.message
+                    ?.takeIf { it.contains("already exists", ignoreCase = true) }
+                    ?: "Could not save protection rule. Please try again."
+                Toast.makeText(this@RuleEditActivity, message, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
