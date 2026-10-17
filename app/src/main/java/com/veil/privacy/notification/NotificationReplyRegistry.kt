@@ -205,16 +205,22 @@ object NotificationReplyRegistry {
      * Removes cached action when Android cancels or removes the underlying notification.
      */
     fun removeByKey(notificationKey: String) {
-        val contactName = keyToContactMap.remove(notificationKey) ?: return
-        // A newer notification for this contact may already have replaced the cached token.
-        // Only clear a token if it belongs to the notification that Android actually removed.
-        liveActionsByContact.computeIfPresent(contactName) { _, action ->
-            if (action.notificationKey == notificationKey) null else action
-        }
-        liveCallsByContact.computeIfPresent(contactName) { _, call ->
-            if (call.notificationKey == notificationKey) null else call
-        }
-        Log.d(TAG, "Removed matching actions for key='$notificationKey', contact='$contactName'")
+        keyToContactMap.remove(notificationKey)
+        // A single notification can be registered under both its parsed sender and a configured
+        // rule name. Remove every matching entry, but preserve newer tokens for the same contact.
+        liveActionsByContact.entries.removeIf { it.value.notificationKey == notificationKey }
+        liveCallsByContact.entries.removeIf { it.value.notificationKey == notificationKey }
+        Log.d(TAG, "Removed matching actions for notification key='$notificationKey'")
+    }
+
+    /**
+     * Clears call controls when a call notification ends. Reply tokens are kept separately because
+     * VEIL may itself dismiss the original message notification after extracting its RemoteInput.
+     */
+    fun removeCallByKey(notificationKey: String) {
+        liveCallsByContact.entries.removeIf { it.value.notificationKey == notificationKey }
+        keyToContactMap.remove(notificationKey)
+        Log.d(TAG, "Removed call controls for notification key='$notificationKey'")
     }
 
     fun clearAll() {
