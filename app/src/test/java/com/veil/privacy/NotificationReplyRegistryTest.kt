@@ -85,6 +85,35 @@ class NotificationReplyRegistryTest {
     }
 
     @Test
+    fun removingCallNotificationClearsCallControlsButKeepsReplyToken() {
+        val remoteInput = RemoteInput.Builder("reply_key_stale_test").setLabel("Reply").build()
+        val replyIntent = PendingIntent.getBroadcast(
+            context, 51, Intent("com.whatsapp.REPLY_STALE_TEST"),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val callIntent = PendingIntent.getBroadcast(
+            context, 52, Intent("com.whatsapp.CALL_STALE_TEST"),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val replyAction = Notification.Action.Builder(null, "Reply", replyIntent)
+            .addRemoteInput(remoteInput).build()
+
+        NotificationReplyRegistry.register("Rahul", "same_notification_key", replyAction, remoteInput)
+        NotificationReplyRegistry.registerCall(
+            "Rahul", "same_notification_key", callIntent, callIntent
+        )
+
+        assertNotNull(NotificationReplyRegistry.getLiveCallAction("Rahul"))
+        assertNotNull(NotificationReplyRegistry.getLiveReplyAction("Rahul"))
+
+        NotificationReplyRegistry.removeCallByKey("same_notification_key")
+
+        assertNull(NotificationReplyRegistry.getLiveCallAction("Rahul"))
+        assertNotNull("Reply token should survive VEIL dismissing the source notification",
+            NotificationReplyRegistry.getLiveReplyAction("Rahul"))
+    }
+
+    @Test
     fun testRegisterAndLifecycle() {
         val remoteInput = RemoteInput.Builder("reply_key")
             .setLabel("Reply")
