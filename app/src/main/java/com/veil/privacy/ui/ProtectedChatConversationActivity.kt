@@ -261,6 +261,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         if (liveCall?.answerIntent != null) {
             try {
                 liveCall.answerIntent.send()
+                NotificationReplyRegistry.removeCallByKey(liveCall.notificationKey)
                 Toast.makeText(this, "Answer action sent to WhatsApp; call state is not confirmed by VEIL", Toast.LENGTH_LONG).show()
                 binding.cardLiveCallBanner.visibility = View.GONE
             } catch (_: Exception) {
@@ -278,6 +279,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         if (liveCall?.declineIntent != null) {
             try {
                 liveCall.declineIntent.send()
+                NotificationReplyRegistry.removeCallByKey(liveCall.notificationKey)
                 Toast.makeText(this, "Decline action sent to WhatsApp; call state is not confirmed by VEIL", Toast.LENGTH_LONG).show()
                 binding.cardLiveCallBanner.visibility = View.GONE
             } catch (_: Exception) {
@@ -313,7 +315,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private fun showStickerAndMediaPicker() {
         val options = arrayOf(
-            "Choose image from device (shared as image)",
+            "Choose photo or video from device",
             "Open WhatsApp to send a sticker"
         )
 
@@ -322,7 +324,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> pickVisualMediaLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
                     )
                     1 -> openWhatsAppChatDirectly()
                 }
@@ -333,17 +335,20 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private fun shareMediaOrStickerToWhatsApp(imageUri: Uri) {
         try {
+            val mimeType = contentResolver.getType(imageUri)?.takeIf { it.startsWith("image/") || it.startsWith("video/") }
+                ?: "image/*"
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/*"
+                type = mimeType
                 putExtra(Intent.EXTRA_STREAM, imageUri)
-                clipData = android.content.ClipData.newUri(contentResolver, "VEIL shared image", imageUri)
+                clipData = android.content.ClipData.newUri(contentResolver, "VEIL media", imageUri)
                 setPackage("com.whatsapp")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            startActivity(Intent.createChooser(shareIntent, "Share image to WhatsApp"))
-
+            startActivity(Intent.createChooser(shareIntent, "Share media to WhatsApp"))
+        } catch (_: android.content.ActivityNotFoundException) {
+            Toast.makeText(this, "WhatsApp is not installed or cannot accept this media", Toast.LENGTH_LONG).show()
         } catch (_: Exception) {
-            Toast.makeText(this, "Could not share this image with WhatsApp", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Could not share this media with WhatsApp", Toast.LENGTH_LONG).show()
         }
     }
 
