@@ -194,6 +194,34 @@ class VeilNotificationListener : BaseNotificationListenerService() {
                     )
                 }
             }
+            // Include contacts selected in Triggered/quick-protect as well as the newer
+            // protected-contact table. This keeps the listener aligned with the user's
+            // selected-contact list instead of silently ignoring those selections.
+            val selectedContacts = database.selectedContactDao().getEnabledContactsSync()
+            val knownPhones = rules.map { it.normalizedPhoneNumber }.filter { it.isNotBlank() }.toMutableSet()
+            val knownNames = rules.map { it.normalizedContactName }.filter { it.isNotBlank() }.toMutableSet()
+            for (contact in selectedContacts) {
+                val phone = contact.normalizedPhoneNumber
+                val name = com.veil.privacy.model.ProtectedContact.normalizeName(contact.displayName)
+                val alreadyCovered = (phone.isNotBlank() && phone in knownPhones) ||
+                    (name.isNotBlank() && name in knownNames)
+                if (!alreadyCovered) {
+                    rules.add(
+                        ProtectionRule(
+                            contactId = contact.contactId,
+                            contactName = contact.displayName,
+                            contactPhoneNumber = contact.selectedPhoneNumber,
+                            disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
+                            decoyIdentity = "Work",
+                            decoyMessage = "New message",
+                            isEnabled = contact.isEnabled,
+                            source = contact.source
+                        )
+                    )
+                    if (phone.isNotBlank()) knownPhones.add(phone)
+                    if (name.isNotBlank()) knownNames.add(name)
+                }
+            }
             rules
         }
 
@@ -246,22 +274,6 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             )
         }
 
-        // Stable event identification and deduplication: prevent duplicate notification events
-        val isDuplicate = withContext(Dispatchers.IO) {
-            val hasKey = !parsed.notificationKey.isNullOrBlank() &&
-                database.protectedEventDao().hasEventWithNotificationKey(parsed.notificationKey) > 0
-            val hasRecentContent = database.protectedEventDao().isRecentDuplicate(
-                conversationId = targetConversation,
-                realMessage = parsed.message,
-                minTimestamp = parsed.timestamp - 10000L
-            ) > 0
-            hasKey || hasRecentContent
-        }
-        if (isDuplicate) {
-            emitDiagnostic("DEDUP", "Ignored duplicate notification event (${parsed.notificationKey ?: targetConversation})")
-            return
-        }
-
         // 1. Dismiss original notification where Android permits
         if (preferences.isHideOriginalEnabled) {
             try {
@@ -280,6 +292,22 @@ class VeilNotificationListener : BaseNotificationListenerService() {
                 emitDiagnostic("SUPPRESS", "OEM restricted cancelNotification call", false)
             } catch (_: Exception) {
             }
+        }
+
+        // Stable event identification and deduplication: prevent duplicate notification events
+        val isDuplicate = withContext(Dispatchers.IO) {
+            val hasKey = !parsed.notificationKey.isNullOrBlank() &&
+                database.protectedEventDao().hasEventWithNotificationKey(parsed.notificationKey) > 0
+            val hasRecentContent = database.protectedEventDao().isRecentDuplicate(
+                conversationId = targetConversation,
+                realMessage = parsed.message,
+                minTimestamp = parsed.timestamp - 10000L
+            ) > 0
+            hasKey || hasRecentContent
+        }
+        if (isDuplicate) {
+            emitDiagnostic("DEDUP", "Ignored duplicate notification event (${parsed.notificationKey ?: targetConversation})")
+            return
         }
 
         // 2. Prepare protected event payload with dynamic decoy rotation or manual disguise

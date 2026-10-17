@@ -6,6 +6,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
+import android.view.KeyEvent
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
@@ -60,6 +62,36 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var rulesAdapter: ProtectionRuleAdapter
 
     private var currentTab: Int = TAB_CHATS
+
+    // Panic shortcut: three deliberate volume-down presses while VEIL is foreground.
+    private var panicPressCount = 0
+    private var lastPanicPressAt = 0L
+    private var panicTriggered = false
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN &&
+            event.action == KeyEvent.ACTION_DOWN &&
+            event.repeatCount == 0 &&
+            !panicTriggered
+        ) {
+            val now = SystemClock.elapsedRealtime()
+            if (now - lastPanicPressAt > 1_500L) panicPressCount = 0
+            lastPanicPressAt = now
+            panicPressCount++
+            if (panicPressCount >= 3) {
+                panicTriggered = true
+                VeilPrefs.isSessionUnlocked = false
+                VeilPrefs.lockAllContacts()
+                startActivity(Intent(this, AuthLockActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                })
+                return true
+            }
+            // Consume the first two presses so they don't change media volume.
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
 
     companion object {
         const val TAB_CHATS = 0
