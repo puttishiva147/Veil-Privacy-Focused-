@@ -261,14 +261,16 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         if (liveCall?.answerIntent != null) {
             try {
                 liveCall.answerIntent.send()
-                Toast.makeText(this, "Answering WhatsApp call...", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                openWhatsAppChatDirectly()
+                Toast.makeText(this, "Answer action sent to WhatsApp; call state is not confirmed by VEIL", Toast.LENGTH_LONG).show()
+                binding.cardLiveCallBanner.visibility = View.GONE
+            } catch (_: Exception) {
+                Toast.makeText(this, "Could not answer from this notification. Open WhatsApp to check the call.", Toast.LENGTH_LONG).show()
+                updateCallStatus()
             }
         } else {
-            openWhatsAppChatDirectly()
+            Toast.makeText(this, "No active answer action. Open WhatsApp to check the call.", Toast.LENGTH_LONG).show()
+            updateCallStatus()
         }
-        binding.cardLiveCallBanner.visibility = View.GONE
     }
 
     private fun handleDeclineIncomingCall() {
@@ -276,10 +278,16 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         if (liveCall?.declineIntent != null) {
             try {
                 liveCall.declineIntent.send()
-                Toast.makeText(this, "WhatsApp call declined", Toast.LENGTH_SHORT).show()
-            } catch (_: Exception) {}
+                Toast.makeText(this, "Decline action sent to WhatsApp; call state is not confirmed by VEIL", Toast.LENGTH_LONG).show()
+                binding.cardLiveCallBanner.visibility = View.GONE
+            } catch (_: Exception) {
+                Toast.makeText(this, "Could not decline from this notification", Toast.LENGTH_LONG).show()
+                updateCallStatus()
+            }
+        } else {
+            Toast.makeText(this, "No active decline action is available", Toast.LENGTH_LONG).show()
+            updateCallStatus()
         }
-        binding.cardLiveCallBanner.visibility = View.GONE
     }
 
     private fun handleInitiateCall() {
@@ -328,6 +336,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "image/*"
                 putExtra(Intent.EXTRA_STREAM, imageUri)
+                clipData = android.content.ClipData.newUri(contentResolver, "VEIL shared image", imageUri)
                 setPackage("com.whatsapp")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
@@ -382,14 +391,14 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
                     realSender = "You",
                     realMessage = replyText,
                     isOutgoing = true,
-                    replyStatus = "SENT_VIA_REMOTE_INPUT",
+                    replyStatus = "DISPATCHED_NOT_CONFIRMED",
                     conversationId = conversationId,
                     timestamp = System.currentTimeMillis()
                 )
                 database.protectedEventDao().insert(outgoingEvent)
             }
 
-            Toast.makeText(this, "Reply dispatched to $targetApp", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Reply action handed to $targetApp. Delivery/read status is not available to VEIL.", Toast.LENGTH_LONG).show()
         } else {
             Toast.makeText(this, "Failed to send: notification action token expired", Toast.LENGTH_LONG).show()
             updateReplyTokenStatus()
