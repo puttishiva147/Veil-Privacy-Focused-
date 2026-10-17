@@ -3,7 +3,7 @@
     <string name="app_name">VEIL</string>
     <string name="app_full_name">Variable Event Identity Layer</string>
     <string name="app_tagline">Autonomous Notification Disguise Architecture</string>
-    <string name="app_version_name">VEIL Core • Production Release 3.8.0 (NEXRO Series)</string>
+    <string name="app_version_name">VEIL Core • Production Release 3.9.0 (NEXRO Series)</string>
 
     <!-- General Navigation & Actions -->
     <string name="action_back">Back</string>
@@ -69,9 +69,9 @@
     <string name="contacts_title">Protected Filters</string>
     <string name="contacts_subtitle">Incoming notifications matching these identities will be intercepted and assigned random decoys.</string>
     <string name="contacts_empty_title">No Protection Rules Configured</string>
-    <string name="contacts_empty_desc">Add sender names manually or use Sensor Detection to capture names directly from incoming WhatsApp messages.</string>
+    <string name="contacts_empty_desc">Add contacts by name or phone number, or use Sensor Detection to identify an incoming sender.</string>
     <string name="contacts_add_dialog_title">Add Protection Rule</string>
-    <string name="contacts_add_dialog_hint">Sender name or phone number as formatted in WhatsApp</string>
+    <string name="contacts_add_dialog_hint">Contact name or phone number</string>
     <string name="contacts_add_dialog_helper">Matching is case-insensitive, trims trailing whitespace, and normalizes space breaks.</string>
     <string name="contacts_add_success">Protection rule activated</string>
     <string name="contacts_already_exists">A protection rule for this identity already exists</string>

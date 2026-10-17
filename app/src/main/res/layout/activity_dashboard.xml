@@ -54,17 +54,6 @@
                 android:textSize="10.5sp" />
         </LinearLayout>
 
-        <!-- Lock App Immediately Button -->
-        <ImageButton
-            android:id="@+id/btnLockApp"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:background="@drawable/bg_button_cyber_secondary"
-            android:contentDescription="Lock Protected Chats Immediately"
-            android:padding="8dp"
-            android:src="@drawable/ic_lock_closed"
-            app:tint="@color/veil_text_high" />
-
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnPanicMode"
             style="@style/Widget.Veil.Button.Secondary"
@@ -369,7 +358,7 @@
                         android:minWidth="0dp"
                         android:layout_marginTop="18dp"
                         android:paddingHorizontal="14dp"
-                        android:text="Protect a WhatsApp Contact"
+                        android:text="Protect a Contact"
                         android:textSize="12.5sp"
                         app:icon="@drawable/ic_veil_visor_glyph"
                         app:iconGravity="textStart"

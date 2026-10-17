@@ -336,14 +336,6 @@ class DashboardActivity : AppCompatActivity() {
             triggerPanicMode()
         }
 
-        binding.btnLockApp.setOnClickListener {
-            VeilPrefs.isSessionUnlocked = false
-            Toast.makeText(this, "🔒 Protected Chats Locked", Toast.LENGTH_SHORT).show()
-            switchTab(TAB_NOTIFICATIONS)
-            val intent = Intent(this, AuthLockActivity::class.java)
-            authLauncher.launch(intent)
-        }
-
         binding.btnQuickAddContact.setOnClickListener {
             openAddContactChooser()
         }
