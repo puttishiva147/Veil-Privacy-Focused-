@@ -205,12 +205,16 @@ object NotificationReplyRegistry {
      * Removes cached action when Android cancels or removes the underlying notification.
      */
     fun removeByKey(notificationKey: String) {
-        val contactName = keyToContactMap.remove(notificationKey)
-        if (contactName != null) {
-            liveActionsByContact.remove(contactName)
-            liveCallsByContact.remove(contactName)
-            Log.d(TAG, "Removed actions for key='$notificationKey', contact='$contactName'")
+        val contactName = keyToContactMap.remove(notificationKey) ?: return
+        // A newer notification for this contact may already have replaced the cached token.
+        // Only clear a token if it belongs to the notification that Android actually removed.
+        liveActionsByContact.computeIfPresent(contactName) { _, action ->
+            if (action.notificationKey == notificationKey) null else action
         }
+        liveCallsByContact.computeIfPresent(contactName) { _, call ->
+            if (call.notificationKey == notificationKey) null else call
+        }
+        Log.d(TAG, "Removed matching actions for key='$notificationKey', contact='$contactName'")
     }
 
     fun clearAll() {
