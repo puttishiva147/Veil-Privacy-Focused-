@@ -65,6 +65,19 @@
             android:src="@drawable/ic_lock_closed"
             app:tint="@color/veil_text_high" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPanicMode"
+            style="@style/Widget.Veil.Button.Secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:layout_marginStart="6dp"
+            android:minWidth="0dp"
+            android:paddingHorizontal="9dp"
+            android:text="PANIC"
+            android:textColor="@color/veil_accent_amber"
+            android:textSize="10sp"
+            android:contentDescription="Activate Panic Mode and lock protected chats" />
+
         <ImageButton
             android:id="@+id/btnQuickAddContact"
             android:layout_width="38dp"
