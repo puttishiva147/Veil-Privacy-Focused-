@@ -729,7 +729,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="Protect WhatsApp, Telegram, Signal, SMS/Messages, and Instagram"
+                                    android:text="Protect Number"
                                     android:textColor="@color/veil_text_medium"
                                     android:textSize="12sp" />
                             </LinearLayout>
