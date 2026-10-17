@@ -79,12 +79,7 @@ class DashboardActivity : AppCompatActivity() {
             lastPanicPressAt = now
             panicPressCount++
             if (panicPressCount >= 3) {
-                panicTriggered = true
-                VeilPrefs.isSessionUnlocked = false
-                VeilPrefs.lockAllContacts()
-                startActivity(Intent(this, AuthLockActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                })
+                triggerPanicMode()
                 return true
             }
             // Consume the first two presses so they don't change media volume.
@@ -165,6 +160,8 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        panicTriggered = false
+        panicPressCount = 0
         NotificationUtils.ensureListenerBound(this)
         updateNotificationListenerStatus()
         refreshChatThreads()
@@ -324,7 +321,21 @@ class DashboardActivity : AppCompatActivity() {
         binding.rvContactRules.adapter = rulesAdapter
     }
 
+    private fun triggerPanicMode() {
+        panicTriggered = true
+        VeilPrefs.isSessionUnlocked = false
+        VeilPrefs.lockAllContacts()
+        Toast.makeText(this, "VEIL Panic Mode: protected chats locked", Toast.LENGTH_SHORT).show()
+        startActivity(Intent(this, AuthLockActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        })
+    }
+
     private fun setupActions() {
+        binding.btnPanicMode.setOnClickListener {
+            triggerPanicMode()
+        }
+
         binding.btnLockApp.setOnClickListener {
             VeilPrefs.isSessionUnlocked = false
             Toast.makeText(this, "🔒 Protected Chats Locked", Toast.LENGTH_SHORT).show()
