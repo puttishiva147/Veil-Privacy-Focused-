@@ -1,5 +1,11 @@
 # VEIL Changelog
 
+## 4.5.1
+- Set the requested forest-green ON and charcoal OFF switch track/thumb colors for rule and system configuration switches.
+- Preserve the confirmation dialog shape while fixing destructive-button text/background contrast.
+- Disable redundant fitsSystemWindows handling on the dashboard root so the existing explicit system-bar inset handling can position the floating navigation correctly.
+- Version code: 35 (previous: 4.5.0 / 34).
+
 ## 4.5.0
 - Replace the dashboard header's V-shaped icon with a dedicated notification bell drawable while retaining the separate V brand/status asset.
 - Refine the three dashboard navigation tabs into a continuous floating capsule with equal-width tabs, rounded selected state, no internal borders, and zero button insets.
