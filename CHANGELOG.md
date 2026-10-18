@@ -1,5 +1,13 @@
 # VEIL Changelog
 
+## 3.15.2
+- Remove the unused REQUEST_IGNORE_BATTERY_OPTIMIZATIONS permission; repository search found no corresponding request flow or API use.
+- Mark the boot/package-replacement receiver non-exported; it only handles protected system broadcasts and does not need external app entry points.
+- Preserve Notification Listener functionality because it is the core, user-authorized feature; Google documents this sensitive capability as a potential source of Play Protect blocks for internet-sideloaded APKs. Panic Mode is not shown by repository evidence to cause the warning.
+- No AccessibilityService is declared or implemented. Do not enable a similarly named accessibility service for VEIL; the restricted-settings prompt cannot be attributed to a VEIL AccessibilityService in this source tree.
+- Version code: 27 (previous: 3.15.1 / 26).
+
+
 ## 3.15.1
 - Fix APK update compatibility by reusing a persistent debug signing key across GitHub Actions builds instead of generating a new certificate each run.
 - Note: the first APK signed with the persistent key cannot update an install signed by a previously discarded ephemeral key; uninstalling that old build may be required once.
