@@ -472,6 +472,50 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         updateAppLockStatusUI()
+        setupPanicTriggerControls()
+    }
+
+    private fun setupPanicTriggerControls() {
+        binding.switchPanicVolumeEnabled.isChecked = prefs.isPanicVolumeTriggerEnabled
+        binding.radioPanicVolumeUp.isChecked = prefs.panicVolumeKey == VeilPrefs.PANIC_VOLUME_UP
+        binding.radioPanicVolumeDown.isChecked = prefs.panicVolumeKey != VeilPrefs.PANIC_VOLUME_UP
+        binding.radioPanicPressTwo.isChecked = prefs.panicPressCount == 2
+        binding.radioPanicPressThree.isChecked = prefs.panicPressCount == 3
+        updatePanicTriggerStatus()
+
+        binding.switchPanicVolumeEnabled.setOnCheckedChangeListener { _, enabled ->
+            prefs.isPanicVolumeTriggerEnabled = enabled
+            panicTriggerSequence.reset()
+            updatePanicTriggerStatus()
+        }
+        binding.radioGroupPanicVolumeKey.setOnCheckedChangeListener { _, checkedId ->
+            if (checkedId == R.id.radioPanicVolumeUp) {
+                prefs.panicVolumeKey = VeilPrefs.PANIC_VOLUME_UP
+            } else if (checkedId == R.id.radioPanicVolumeDown) {
+                prefs.panicVolumeKey = VeilPrefs.PANIC_VOLUME_DOWN
+            }
+            panicTriggerSequence.reset()
+            updatePanicTriggerStatus()
+        }
+        binding.radioGroupPanicPressCount.setOnCheckedChangeListener { _, checkedId ->
+            if (checkedId == R.id.radioPanicPressTwo) prefs.panicPressCount = 2
+            else if (checkedId == R.id.radioPanicPressThree) prefs.panicPressCount = 3
+            panicTriggerSequence.reset()
+            updatePanicTriggerStatus()
+        }
+    }
+
+    private fun updatePanicTriggerStatus() {
+        val enabled = prefs.isPanicVolumeTriggerEnabled
+        val keyLabel = if (prefs.panicVolumeKey == VeilPrefs.PANIC_VOLUME_UP) "Volume Up" else "Volume Down"
+        binding.tvPanicTriggerStatus.text = if (enabled) {
+            "Enabled · $keyLabel × ${prefs.panicPressCount} while the VEIL dashboard is open"
+        } else {
+            "Disabled · physical-button activation is off"
+        }
+        binding.tvPanicTriggerStatus.setTextColor(
+            ContextCompat.getColor(this, if (enabled) R.color.veil_accent_secure else R.color.veil_text_medium)
+        )
     }
 
     private fun updateDecoyThemeUI() {

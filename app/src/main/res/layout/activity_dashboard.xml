@@ -1083,6 +1083,160 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- Security · Panic Mode hardware shortcut -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    app:cardBackgroundColor="@color/veil_surface_card"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="SECURITY · PANIC MODE"
+                            android:textColor="@color/veil_accent_secure"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Volume-button activation"
+                                    android:textColor="@color/veil_text_high"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="3dp"
+                                    android:text="Optional · works only while VEIL is in the foreground"
+                                    android:textColor="@color/veil_text_medium"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/switchPanicVolumeEnabled"
+                                android:layout_width="wrap_content"
+                                android:layout_height="48dp"
+                                android:contentDescription="Enable volume-button Panic Mode shortcut"
+                                app:thumbTint="@color/veil_switch_thumb"
+                                app:trackTint="@color/veil_switch_track" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="Activation key"
+                            android:textColor="@color/veil_text_high"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <RadioGroup
+                            android:id="@+id/radioGroupPanicVolumeKey"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <RadioButton
+                                android:id="@+id/radioPanicVolumeDown"
+                                android:layout_width="0dp"
+                                android:layout_height="48dp"
+                                android:layout_weight="1"
+                                android:buttonTint="@color/veil_switch_thumb"
+                                android:text="Volume Down"
+                                android:textColor="@color/veil_text_high"
+                                android:textSize="12sp" />
+
+                            <RadioButton
+                                android:id="@+id/radioPanicVolumeUp"
+                                android:layout_width="0dp"
+                                android:layout_height="48dp"
+                                android:layout_weight="1"
+                                android:buttonTint="@color/veil_switch_thumb"
+                                android:text="Volume Up"
+                                android:textColor="@color/veil_text_high"
+                                android:textSize="12sp" />
+                        </RadioGroup>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Press sequence"
+                            android:textColor="@color/veil_text_high"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <RadioGroup
+                            android:id="@+id/radioGroupPanicPressCount"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <RadioButton
+                                android:id="@+id/radioPanicPressTwo"
+                                android:layout_width="0dp"
+                                android:layout_height="48dp"
+                                android:layout_weight="1"
+                                android:buttonTint="@color/veil_switch_thumb"
+                                android:text="2 presses"
+                                android:textColor="@color/veil_text_high"
+                                android:textSize="12sp" />
+
+                            <RadioButton
+                                android:id="@+id/radioPanicPressThree"
+                                android:layout_width="0dp"
+                                android:layout_height="48dp"
+                                android:layout_weight="1"
+                                android:buttonTint="@color/veil_switch_thumb"
+                                android:text="3 presses"
+                                android:textColor="@color/veil_text_high"
+                                android:textSize="12sp" />
+                        </RadioGroup>
+
+                        <TextView
+                            android:id="@+id/tvPanicTriggerStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:textColor="@color/veil_text_medium"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:lineSpacingExtra="2dp"
+                            android:text="Test: return to the dashboard and press the selected key the chosen number of times within 1.5 seconds. Turn this off here to cancel. Android does not allow a regular app to intercept volume keys globally."
+                            android:textColor="@color/veil_text_medium"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
                 <!-- Technical Transparency Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
