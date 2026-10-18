@@ -1,5 +1,11 @@
 # VEIL Changelog
 
+## 4.3.0
+- Redesign dashboard navigation as a floating three-destination pill.
+- Add a top-right notification button with a live event-count badge.
+- Remove the standalone latest-notification preview card and retain existing screen actions.
+
+
 ## 4.2.1
 - Harden the dashboard's latest-notification preview with safe decoy fallbacks when decoy fields are empty; never display original sender or message data in this preview.
 
