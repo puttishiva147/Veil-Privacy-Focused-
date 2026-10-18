@@ -1,5 +1,9 @@
 # VEIL Changelog
 
+## 4.2.1
+- Harden the dashboard's latest-notification preview with safe decoy fallbacks when decoy fields are empty; never display original sender or message data in this preview.
+
+
 ## 4.2.0
 - Fix dashboard tab clipping and misalignment by centering tabs in scroll-container coordinates, clipping content to its bounds, and keeping tab widths/strokes stable when selection changes.
 - Replace duplicate dashboard add-chat buttons with a single bottom-right FAB on the Protected Chats tab; reserve list space so it does not cover chat rows.
