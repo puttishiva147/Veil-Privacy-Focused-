@@ -605,7 +605,8 @@
                             android:layout_alignParentEnd="true"
                             android:layout_centerVertical="true"
                             android:checked="false"
-                            app:trackTint="@color/veil_surface_interactive" />
+                            app:thumbTint="@color/veil_switch_thumb"
+                            app:trackTint="@color/veil_switch_track" />
                     </RelativeLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
