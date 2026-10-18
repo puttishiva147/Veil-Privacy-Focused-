@@ -636,6 +636,10 @@ class DashboardActivity : AppCompatActivity() {
 
                 // Tab 2 Notifications Log
                 notificationsAdapter.submitList(events)
+                val latestNotification = events.maxByOrNull { it.timestamp }
+                binding.tvLatestNotification.text = latestNotification?.let {
+                    "${it.decoySender}: ${it.decoyMessage}"
+                } ?: "No notifications yet"
                 binding.layoutEmptyNotifications.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
 
                 // Tab 1 Protected Chats Threads
