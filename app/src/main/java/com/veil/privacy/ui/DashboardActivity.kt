@@ -637,8 +637,11 @@ class DashboardActivity : AppCompatActivity() {
                 // Tab 2 Notifications Log
                 notificationsAdapter.submitList(events)
                 val latestNotification = events.maxByOrNull { it.timestamp }
-                binding.tvLatestNotification.text = latestNotification?.let {
-                    "${it.decoySender}: ${it.decoyMessage}"
+                binding.tvLatestNotification.text = latestNotification?.let { event ->
+                    // Never expose the original sender or payload in this dashboard preview.
+                    val decoySender = event.decoySender.ifBlank { "VEIL" }
+                    val decoyMessage = event.decoyMessage.ifBlank { "Protected notification" }
+                    "$decoySender: $decoyMessage"
                 } ?: "No notifications yet"
                 binding.layoutEmptyNotifications.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
 
