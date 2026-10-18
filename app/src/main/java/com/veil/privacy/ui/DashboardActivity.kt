@@ -191,10 +191,9 @@ class DashboardActivity : AppCompatActivity() {
         binding.viewTabContacts.visibility = if (tab == TAB_CONTACTS) View.VISIBLE else View.GONE
         binding.viewTabSettings.visibility = if (tab == TAB_SETTINGS) View.VISIBLE else View.GONE
 
-        // Update button visual styles
-        val primaryStyle = R.style.Widget_Veil_Button_Primary
-        val secondaryStyle = R.style.Widget_Veil_Button_Secondary
+        binding.fabAddProtectedChat.visibility = if (tab == TAB_CHATS) View.VISIBLE else View.GONE
 
+        // Update tab visual styles
         applyTabStyle(binding.tabChats, tab == TAB_CHATS)
         applyTabStyle(binding.tabNotifications, tab == TAB_NOTIFICATIONS)
         applyTabStyle(binding.tabContacts, tab == TAB_CONTACTS)
@@ -219,7 +218,7 @@ class DashboardActivity : AppCompatActivity() {
             button.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_button_primary_bg)
             button.setTextColor(ContextCompat.getColor(this, R.color.veil_button_primary_text))
             button.strokeColor = ContextCompat.getColorStateList(this, R.color.veil_button_primary_bg)
-            button.strokeWidth = (1.5f * density).toInt()
+            button.strokeWidth = 0
             button.setIconResource(R.drawable.ic_veil_visor_glyph)
             button.iconSize = (13 * density).toInt()
             button.iconGravity = com.google.android.material.button.MaterialButton.ICON_GRAVITY_TEXT_START
@@ -306,15 +305,7 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun setupActions() {
-        binding.btnQuickAddContact.setOnClickListener {
-            openAddContactChooser()
-        }
-
-        binding.btnAddChatTop.setOnClickListener {
-            openAddContactChooser()
-        }
-
-        binding.btnEmptyAddChat.setOnClickListener {
+        binding.fabAddProtectedChat.setOnClickListener {
             openAddContactChooser()
         }
 

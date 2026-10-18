@@ -1,5 +1,13 @@
 # VEIL Changelog
 
+## 4.2.0
+- Fix dashboard tab clipping by removing fading-edge artifacts, preventing child clipping, and keeping tab shape/stroke styling consistent.
+- Replace duplicate dashboard add-chat buttons with a single bottom-right FAB on the Protected Chats tab; reserve list space so it does not cover chat rows.
+- Add a local sticker-emoji picker with categories and recently used items. Selecting a sticker inserts its emoji into the existing reply field; it is sent only through the existing supported text-reply path, not as a fabricated native sticker attachment.
+- Preserve photo/video sharing through Android Photo Picker and the existing WhatsApp share flow.
+- Version code: 30 (previous: 4.1.0 / 29).
+
+
 ## 4.0.0
 - Remove Panic Mode completely from the dashboard and settings UI, including the panic button, volume-key interception, trigger configuration, preference keys, utility class, and unit tests.
 - Keep the normal app lock, protected chats, notification protection, and all unrelated settings intact.
