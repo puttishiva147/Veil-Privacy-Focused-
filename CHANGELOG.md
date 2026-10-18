@@ -1,5 +1,11 @@
 # VEIL Changelog
 
+## 4.4.0
+- Restore direct access to the existing full Settings screen from a new header gear beside the notification bell.
+- Replace the all-events badge with persisted last-viewed timestamp tracking against the real Room event stream; opening Notifications marks the current inbox as viewed without deleting stored events.
+- Synchronize the About screen version with the build configuration.
+- Version code: 33 (previous: 4.3.0 / 32).
+
 ## 4.3.0
 - Redesign dashboard navigation as a floating three-destination pill.
 - Add a top-right notification button with a live event-count badge.
