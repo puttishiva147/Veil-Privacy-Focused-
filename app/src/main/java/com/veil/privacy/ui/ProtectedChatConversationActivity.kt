@@ -400,7 +400,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             }
             content.addView(grid)
         }
-        categories.keys.toList().let { names ->
+        categories.keys.filter { it != "Recent" }.let { names ->
             names.forEach { category ->
                 val button = com.google.android.material.button.MaterialButton(this).apply {
                     text = category
