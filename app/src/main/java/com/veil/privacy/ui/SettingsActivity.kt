@@ -1,7 +1,9 @@
 package com.veil.privacy.ui
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -141,12 +143,12 @@ class SettingsActivity : AppCompatActivity() {
             applyNotifMode(VeilPrefs.NOTIF_DISPLAY_SHOW_WHEN_PAUSED)
         }
 
-        // Notification Access shortcuts
+        // Explain Android's manual restricted-settings approval before opening access settings.
         binding.btnOpenNotificationSettings.setOnClickListener {
-            NotificationUtils.openNotificationListenerSettings(this)
+            showNotificationAccessHelp()
         }
         binding.btnRowNotificationAccess.setOnClickListener {
-            NotificationUtils.openNotificationListenerSettings(this)
+            showNotificationAccessHelp()
         }
 
         // Decoy Names Editor
@@ -193,6 +195,30 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnAboutVeil.setOnClickListener {
             showAboutDialog()
         }
+    }
+
+    private fun showNotificationAccessHelp() {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Enable notification access")
+            .setMessage(
+                "If Android shows “Controlled by restricted setting”:\n\n" +
+                    "1. Tap Open app info below.\n" +
+                    "2. Tap the three-dot menu (⋮).\n" +
+                    "3. Choose Allow restricted settings and confirm.\n" +
+                    "4. Return to VEIL and open notification settings to enable access.\n\n" +
+                    "Only allow this for an app you trust. Android requires this step to be completed manually."
+            )
+            .setPositiveButton("Open app info") { _, _ ->
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:$packageName")
+                }
+                startActivity(intent)
+            }
+            .setNeutralButton("Open notification settings") { _, _ ->
+                NotificationUtils.openNotificationListenerSettings(this)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun executePipelineDiagnostic() {
