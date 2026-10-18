@@ -1,5 +1,12 @@
 # VEIL Changelog
 
+## 3.12.0
+- Refine Security Setup spacing, copy, and compact VEIL logo presentation.
+- Add native system-respecting haptic feedback to setup actions and reduce global card outlines.
+- Apply approved VEIL branding to remaining authentication and settings surfaces.
+- Version code: 22 (previous release: 3.11.0 / 21).
+
+
 ## 3.11.0
 - Apply the uploaded official VEIL logo to launcher and in-app branding.
 - Version code: 21 (previous release: 3.10.0 / 20).

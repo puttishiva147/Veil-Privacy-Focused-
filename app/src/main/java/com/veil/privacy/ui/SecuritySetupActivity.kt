@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import com.veil.privacy.util.VeilHaptics
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -76,6 +77,7 @@ class SecuritySetupActivity : AppCompatActivity() {
     private fun setupStepListeners() {
         // Step 1: Create PIN
         binding.btnStep1Next.setOnClickListener {
+            VeilHaptics.tap(it)
             val pin = binding.etCreatePassword.text?.toString()?.trim() ?: ""
             when (val result = SecurityManager.validatePinFormat(pin)) {
                 is SecurityManager.PinValidationResult.Empty -> {
@@ -104,6 +106,7 @@ class SecuritySetupActivity : AppCompatActivity() {
 
         // Step 2: Confirm PIN
         binding.btnStep2Confirm.setOnClickListener {
+            VeilHaptics.tap(it)
             val confirmed = binding.etConfirmPassword.text?.toString()?.trim() ?: ""
             if (confirmed != pendingPassword) {
                 binding.tvStep2Error.text = "PINs do not match. Please re-enter."
@@ -115,15 +118,18 @@ class SecuritySetupActivity : AppCompatActivity() {
         }
 
         binding.btnStep2Back.setOnClickListener {
+            VeilHaptics.tap(it)
             showStep(STEP_CREATE)
         }
 
         // Step 3: Biometric Setup
         binding.btnEnableBiometric.setOnClickListener {
+            VeilHaptics.tap(it)
             testAndRegisterBiometric()
         }
 
         binding.btnOpenDeviceSettings.setOnClickListener {
+            VeilHaptics.tap(it)
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     startActivity(Intent(Settings.ACTION_BIOMETRIC_ENROLL))
@@ -136,12 +142,14 @@ class SecuritySetupActivity : AppCompatActivity() {
         }
 
         binding.btnSkipBiometric.setOnClickListener {
+            VeilHaptics.tap(it)
             biometricEnabled = false
             showStep(STEP_COMPLETE)
         }
 
         // Step 4: Finish Setup and Transition to Unlock Screen
         binding.btnFinishSetup.setOnClickListener {
+            VeilHaptics.tap(it)
             finalizeSecurityConfiguration()
         }
     }

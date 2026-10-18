@@ -12,13 +12,15 @@
         android:gravity="center_horizontal"
         android:orientation="vertical"
         android:paddingHorizontal="24dp"
-        android:paddingVertical="28dp">
+        android:paddingVertical="16dp">
 
         <!-- Top Header with VEIL Emblem -->
         <ImageView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:src="@drawable/ic_launcher_foreground" />
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="@string/app_name"
+            android:scaleType="fitCenter"
+            android:src="@drawable/veil_official_logo" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -43,7 +45,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="16dp"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -124,7 +126,7 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp">
+            android:layout_marginTop="20dp">
 
             <!-- STEP 1: CREATE PASSWORD -->
             <LinearLayout
@@ -147,7 +149,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="Choose a secure 4 to 8 digit numeric PIN to encrypt and lock your VEIL Protected Chats and notification layer."
+                    android:text="Choose a 4–8 digit PIN to secure your protected chats."
                     android:textColor="@color/veil_text_medium"
                     android:textSize="13sp" />
 
@@ -156,7 +158,7 @@
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="14dp"
                     android:textColorHint="@color/veil_text_low"
                     app:boxBackgroundColor="@color/veil_surface_card"
                     app:boxStrokeColor="@color/veil_accent_secure"
@@ -224,7 +226,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:layout_marginTop="24dp"
-                    android:text="Continue to Confirmation" />
+                    android:text="Continue" />
             </LinearLayout>
 
             <!-- STEP 2: CONFIRM PASSWORD -->
@@ -440,7 +442,7 @@
                 <ImageView
                     android:layout_width="72dp"
                     android:layout_height="72dp"
-                    android:src="@drawable/ic_launcher_foreground" />
+                    android:src="@drawable/veil_official_logo" />
 
                 <TextView
                     android:layout_width="wrap_content"

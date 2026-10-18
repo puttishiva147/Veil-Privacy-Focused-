@@ -18,10 +18,10 @@
 
         <!-- Official VEIL Emblem Header -->
         <ImageView
-            android:layout_width="52dp"
-            android:layout_height="52dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:contentDescription="VEIL Emblem"
-            android:src="@drawable/ic_launcher_foreground" />
+            android:src="@drawable/veil_official_logo" />
 
         <TextView
             android:layout_width="wrap_content"
