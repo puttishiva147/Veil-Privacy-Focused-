@@ -106,7 +106,8 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
-                        app:trackTint="@color/veil_surface_interactive" />
+                        app:thumbTint="@color/veil_switch_thumb"
+                        app:trackTint="@color/veil_switch_track" />
                 </RelativeLayout>
 
                 <View
@@ -153,7 +154,8 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
-                        app:trackTint="@color/veil_surface_interactive" />
+                        app:thumbTint="@color/veil_switch_thumb"
+                        app:trackTint="@color/veil_switch_track" />
                 </RelativeLayout>
 
                 <View
@@ -200,7 +202,8 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
-                        app:trackTint="@color/veil_surface_interactive" />
+                        app:thumbTint="@color/veil_switch_thumb"
+                        app:trackTint="@color/veil_switch_track" />
                 </RelativeLayout>
 
                 <View
