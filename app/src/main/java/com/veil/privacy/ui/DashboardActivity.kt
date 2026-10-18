@@ -199,7 +199,8 @@ class DashboardActivity : AppCompatActivity() {
         applyTabStyle(binding.tabContacts, tab == TAB_CONTACTS)
         applyTabStyle(binding.tabSettings, tab == TAB_SETTINGS)
 
-        // Smooth scroll to ensure active tab is comfortably in view on narrow viewports
+        // Center the selected tab using its actual scroll-container coordinates.
+        // This accounts for padding and prevents tabs being clipped at narrow widths.
         binding.tabScrollView.post {
             val targetView = when (tab) {
                 TAB_CHATS -> binding.tabChats
@@ -207,30 +208,36 @@ class DashboardActivity : AppCompatActivity() {
                 TAB_CONTACTS -> binding.tabContacts
                 else -> binding.tabSettings
             }
-            val scrollX = targetView.left - (binding.tabScrollView.width - targetView.width) / 2
-            binding.tabScrollView.smoothScrollTo(scrollX.coerceAtLeast(0), 0)
+            val rect = android.graphics.Rect()
+            targetView.getDrawingRect(rect)
+            binding.tabScrollView.offsetDescendantRectToMyCoords(targetView, rect)
+            val maxScroll = (binding.tabScrollView.getChildAt(0).width - binding.tabScrollView.width).coerceAtLeast(0)
+            val scrollX = (rect.centerX() - binding.tabScrollView.width / 2).coerceIn(0, maxScroll)
+            binding.tabScrollView.smoothScrollTo(scrollX, 0)
         }
     }
 
     private fun applyTabStyle(button: com.google.android.material.button.MaterialButton, isSelected: Boolean) {
         val density = resources.displayMetrics.density
-        if (isSelected) {
-            button.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_button_primary_bg)
-            button.setTextColor(ContextCompat.getColor(this, R.color.veil_button_primary_text))
-            button.strokeColor = ContextCompat.getColorStateList(this, R.color.veil_button_primary_bg)
-            button.strokeWidth = 0
-            button.setIconResource(R.drawable.ic_veil_visor_glyph)
-            button.iconSize = (13 * density).toInt()
-            button.iconGravity = com.google.android.material.button.MaterialButton.ICON_GRAVITY_TEXT_START
-            button.iconPadding = (6 * density).toInt()
-            button.iconTint = ContextCompat.getColorStateList(this, R.color.veil_button_primary_text)
-        } else {
-            button.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_surface_card)
-            button.setTextColor(ContextCompat.getColor(this, R.color.veil_text_medium))
-            button.strokeColor = ContextCompat.getColorStateList(this, R.color.veil_hairline)
-            button.strokeWidth = (1 * density).toInt()
-            button.icon = null
-        }
+        // Keep every tab text-only with the same stroke width so selection never changes
+        // the measured width and causes neighbouring chips to jump or leave visual seams.
+        button.icon = null
+        button.iconPadding = 0
+        button.backgroundTintList = ContextCompat.getColorStateList(
+            this,
+            if (isSelected) R.color.veil_button_primary_bg else R.color.veil_surface_card
+        )
+        button.setTextColor(
+            ContextCompat.getColor(
+                this,
+                if (isSelected) R.color.veil_button_primary_text else R.color.veil_text_medium
+            )
+        )
+        button.strokeColor = ContextCompat.getColorStateList(
+            this,
+            if (isSelected) R.color.veil_button_primary_bg else R.color.veil_hairline
+        )
+        button.strokeWidth = (1 * density).toInt()
     }
 
     private fun setupRecyclerViews() {
