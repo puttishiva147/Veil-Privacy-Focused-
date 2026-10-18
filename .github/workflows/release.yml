@@ -1,0 +1,131 @@
+name: VEIL Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: veil-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Test and build signed release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4.7.1
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Configure Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$SDKMANAGER"
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses >/dev/null
+          set -o pipefail
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+          echo "$SDK_ROOT/build-tools/36.0.0" >> "$GITHUB_PATH"
+
+      - name: Verify version and release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION_NAME="$(sed -nE 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' app/build.gradle.kts | head -n1)"
+          VERSION_CODE="$(sed -nE 's/^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*([0-9]+).*/\1/p' app/build.gradle.kts | head -n1)"
+          if [[ -z "$VERSION_NAME" || -z "$VERSION_CODE" ]]; then
+            echo "::error::Could not read versionName/versionCode from app/build.gradle.kts."
+            exit 1
+          fi
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME#v}" != "$VERSION_NAME" ]]; then
+            echo "::error::Tag version does not match app/build.gradle.kts versionName."
+            exit 1
+          fi
+          echo "VEIL version: $VERSION_NAME (code $VERSION_CODE)"
+          echo "VEIL_VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+          echo "VEIL_VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+
+      - name: Prepare release signing keystore
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${RELEASE_KEYSTORE_BASE64:-}" || -z "${STORE_PASSWORD:-}" || -z "${KEY_PASSWORD:-}" || -z "${KEY_ALIAS:-}" ]]; then
+            echo "::error::Release signing secrets are missing. Configure RELEASE_KEYSTORE_BASE64, RELEASE_STORE_PASSWORD, RELEASE_KEY_PASSWORD, and RELEASE_KEY_ALIAS in repository Actions secrets."
+            exit 1
+          fi
+          KEYSTORE_PATH="$RUNNER_TEMP/veil-release.jks"
+          if ! printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"; then
+            echo "::error::RELEASE_KEYSTORE_BASE64 could not be decoded."
+            exit 1
+          fi
+          chmod 600 "$KEYSTORE_PATH"
+          if ! keytool -list -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null 2>&1; then
+            rm -f "$KEYSTORE_PATH"
+            echo "::error::The configured keystore/password/alias could not be validated."
+            exit 1
+          fi
+          echo "KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+
+      - name: Run unit tests
+        run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
+
+      - name: Build release APK
+        env:
+          STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        run: ./gradlew --no-daemon --stacktrace :app:assembleRelease
+
+      - name: Verify release APK metadata and signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          apksigner verify --verbose "$APK" >/dev/null
+          BADGING="$(aapt dump badging "$APK")"
+          EXPECTED="package: name='com.veil.privacy' versionCode='$VEIL_VERSION_CODE' versionName='$VEIL_VERSION_NAME'"
+          if ! grep -Fq "$EXPECTED" <<< "$BADGING"; then
+            echo "::error::APK package/version metadata does not match the Gradle configuration."
+            exit 1
+          fi
+          echo "Verified signed APK for com.veil.privacy version $VEIL_VERSION_NAME ($VEIL_VERSION_CODE)."
+          ls -lh "$APK"
+
+      - name: Upload signed APK artifact
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: VEIL-${{ env.VEIL_VERSION_NAME }}-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
+
+      - name: Publish GitHub Release for version tag
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "app/build/outputs/apk/release/app-release.apk#VEIL-${VEIL_VERSION_NAME}.apk" --title "VEIL ${VEIL_VERSION_NAME}" --generate-notes

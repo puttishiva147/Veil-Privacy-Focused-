@@ -16,3 +16,21 @@
 local.properties
 .env
 debug.keystore
+
+# Local configuration and release signing material
+.env.*
+!.env.example
+secrets.properties
+google-services.json
+**/google-services.json
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+
+# Generated Android packages and build outputs
+*.apk
+*.aab
+**/build/

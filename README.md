@@ -6,7 +6,7 @@
 
 VEIL is an Android privacy utility designed to help users manage how selected app notifications are handled on their device. The project includes protected-contact rules, notification-listener integration, a private inbox/event interface, biometric support, and a protection service.
 
-> **Project status:** Android source project. The repository's current Gradle configuration declares version **3.15.0** (version code **25**). This README does not imply that a release APK has been built, tested, or published.
+> **Current source version:** **4.5.1** (version code **35**), from `app/build.gradle.kts`. No official GitHub Release has been published yet; use the official Releases page linked below when a signed release is available.
 
 ## What is in the app?
 
@@ -24,10 +24,23 @@ Actual behavior depends on Android version, user-granted permissions, source con
 
 ## Requirements
 
-- Android Studio with a compatible Android Gradle Plugin
-- JDK 17 for the current Android Gradle Plugin toolchain
-- Android SDK platform/build tools required by the project (the app module currently declares compile SDK 36 and minimum SDK 26)
-- An Android device or emulator running Android 8.0 (API 26) or newer for installation/testing
+- Android 8.0 (API 26) or newer.
+- The release APK must come from the official VEIL GitHub Releases page.
+- For development: Android Studio, JDK 17, and the Android SDK packages required by the project (compile SDK 36; target SDK 35).
+
+## Download and install VEIL
+
+**[Open official VEIL releases and download the APK](https://github.com/puttishiva147/Veil-Privacy-Focused-/releases)**
+
+The Releases page currently has no published release. When an official release is available:
+
+1. Open the official Releases page above.
+2. Download the `VEIL-<version>.apk` asset attached to the release. Do not install APKs from unofficial mirrors or untrusted links.
+3. Open the downloaded APK on your Android device. If Android prompts you, allow your browser or file manager to **Install unknown apps** for this installation, then return to the APK and continue.
+4. Review Android's installer prompts and install VEIL.
+5. Open VEIL and grant only the permissions required for the features you intend to use.
+
+If Android reports a signature conflict while updating, the installed copy may have been signed with a different key. Do not uninstall it blindly: uninstalling can erase VEIL's local app data. Obtain an update signed with the same release key, or decide whether the local data can safely be lost before uninstalling.
 
 ## Build locally
 
@@ -56,7 +69,7 @@ Actual behavior depends on Android version, user-granted permissions, source con
    app/build/outputs/apk/debug/app-debug.apk
    ```
 
-These are standard project build instructions, not a claim that the current checkout has been successfully built in this environment. If the Gradle wrapper is absent or sync fails, use Android Studio's Gradle tooling and review the reported SDK/plugin requirements.
+The repository includes the Gradle wrapper scripts and wrapper JAR. The wrapper downloads the Gradle distribution declared in `gradle/wrapper/gradle-wrapper.properties`. If a build fails, review the reported SDK/plugin requirements and ensure JDK 17 and the Android SDK are installed.
 
 ### Optional service configuration
 
@@ -95,6 +108,22 @@ This README is not a privacy audit or a guarantee that the app is fully offline.
 ## Branding and project identity
 
 The app's source defines the name **VEIL** and expands it as **Variable Event Identity Layer**. The existing launcher resources are part of the project. No claim is made here that the name or logo has been independently verified as an official external brand; the repository's own source is the evidence for the in-app identity.
+
+
+## Release and version information
+
+- Source version: **4.5.1** (version code **35**).
+- The version is authoritative in `app/build.gradle.kts`; release tags must match the version name, for example `v4.5.1`.
+- Official release assets are published at [GitHub Releases](https://github.com/puttishiva147/Veil-Privacy-Focused-/releases) only after the release workflow succeeds.
+- A source version or successful debug build is not the same as a published, production-signed release.
+
+## Troubleshooting
+
+- **APK won't install:** Confirm the device runs Android 8.0/API 26 or newer, download the APK again from the official Releases page, and check available storage.
+- **Android blocks the install:** Review the device's “Install unknown apps” setting for the app used to open the APK. Enable it only for a source you trust.
+- **“App not installed” or signature conflict:** Android may reject an APK signed by a different key from the installed copy. Prefer an update signed with the same release key; uninstalling may erase local VEIL data.
+- **App behavior differs by device:** Notification access, background services, battery restrictions, and notification rendering vary by Android version and manufacturer. Review VEIL's in-app permissions and Android system settings.
+- **Release workflow fails at signing:** The repository owner must configure the four signing secrets described in the release workflow setup instructions. Never commit the keystore or its password.
 
 ## Contributing
 
