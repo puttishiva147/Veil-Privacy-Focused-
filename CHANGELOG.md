@@ -1,5 +1,9 @@
 # VEIL Changelog
 
+## 4.5.2
+- Fix dashboard top spacing by explicitly enabling edge-to-edge layout so the existing system-bar inset handler is the single source of inset padding.
+- Version code: 36 (previous: 4.5.1 / 35).
+
 ## 4.5.1
 - Set the requested forest-green ON and charcoal OFF switch track/thumb colors for rule and system configuration switches.
 - Preserve the confirmation dialog shape while fixing destructive-button text/background contrast.
