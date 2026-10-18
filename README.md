@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="app/src/main/res/drawable/veil_official_logo.jpg" alt="VEIL Logo" width="180" />
+</p>
+
 # VEIL — Variable Event Identity Layer
 
 VEIL is an Android privacy utility designed to help users manage how selected app notifications are handled on their device. The project includes protected-contact rules, notification-listener integration, a private inbox/event interface, biometric support, and a protection service.
