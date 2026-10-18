@@ -2,7 +2,7 @@
 
 VEIL is an Android privacy utility designed to help users manage how selected app notifications are handled on their device. The project includes protected-contact rules, notification-listener integration, a private inbox/event interface, biometric support, and a protection service.
 
-> **Project status:** Android source project. The repository's current Gradle configuration declares version **3.8.0** (version code **18**). This README does not imply that a release APK has been built, tested, or published.
+> **Project status:** Android source project. The repository's current Gradle configuration declares version **3.15.0** (version code **25**). This README does not imply that a release APK has been built, tested, or published.
 
 ## What is in the app?
 
