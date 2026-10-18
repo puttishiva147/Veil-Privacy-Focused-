@@ -1,5 +1,12 @@
 # VEIL Changelog
 
+## 3.14.0
+- Establish a cohesive 2026 visual system with mineral-dark surfaces, jade primary actions, warm amber status, and semantic danger colors.
+- Refine Material 3 buttons, cards, chips, dialogs, and sheets; remove default primary-button outlines and soften decorative borders.
+- Apply the design tokens to the dashboard and settings surfaces while preserving navigation, functionality, and stored data.
+- Version code: 24 (previous release: 3.13.0 / 23).
+
+
 ## 3.13.0
 - Auto-confirm unlock when the full configured 4–8 digit master PIN has been entered.
 - Persist PIN length metadata without storing plaintext PIN; clear it when credentials are reset.

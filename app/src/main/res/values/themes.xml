@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Veil" parent="Theme.Material3.Dark.NoActionBar">
-        <!-- Brand Colors: Cyber-Visor Monochromatic (Zero Green, Zero Blue, Zero Purple) -->
+        <!-- Brand Colors: 2026 mineral surfaces and restrained jade brand accent -->
         <item name="colorPrimary">@color/md_theme_dark_primary</item>
         <item name="colorOnPrimary">@color/md_theme_dark_onPrimary</item>
         <item name="colorPrimaryContainer">@color/md_theme_dark_primaryContainer</item>
@@ -26,6 +26,7 @@
         <item name="colorOnSurfaceVariant">@color/veil_text_medium</item>
         <item name="colorOutline">@color/veil_hairline</item>
         <item name="colorOutlineVariant">@color/veil_hairline_bright</item>
+        <item name="colorControlHighlight">#33A7F3D0</item>
 
         <!-- Status & Navigation Bars -->
         <item name="android:statusBarColor">@color/veil_canvas</item>
@@ -47,7 +48,7 @@
     <!-- VEIL Card: Stealth Cyber Chassis -->
     <style name="Widget.Veil.Card" parent="Widget.Material3.CardView.Filled">
         <item name="cardBackgroundColor">@color/veil_surface_card</item>
-        <item name="cardCornerRadius">8dp</item>
+        <item name="cardCornerRadius">16dp</item>
         <item name="cardElevation">0dp</item>
         <item name="strokeColor">@color/veil_hairline</item>
         <item name="strokeWidth">0dp</item>
@@ -59,9 +60,9 @@
         <item name="backgroundTint">@color/veil_button_primary_bg</item>
         <item name="android:textColor">@color/veil_button_primary_text</item>
         <item name="iconTint">@color/veil_button_primary_text</item>
-        <item name="cornerRadius">6dp</item>
-        <item name="strokeColor">#E5E7EB</item>
-        <item name="strokeWidth">1dp</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="android:minHeight">52dp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">0.05</item>
         <item name="elevation">0dp</item>
@@ -76,7 +77,7 @@
         <item name="backgroundTint">@color/veil_surface_card</item>
         <item name="android:textColor">@color/veil_text_high</item>
         <item name="iconTint">@color/veil_text_high</item>
-        <item name="cornerRadius">6dp</item>
+        <item name="cornerRadius">14dp</item>
         <item name="strokeColor">@color/veil_button_secondary_border</item>
         <item name="strokeWidth">1dp</item>
         <item name="android:textStyle">bold</item>
@@ -116,8 +117,8 @@
     <style name="Widget.Veil.Chip" parent="Widget.Material3.Chip.Assist">
         <item name="chipBackgroundColor">@color/veil_surface_card</item>
         <item name="chipStrokeColor">@color/veil_hairline_bright</item>
-        <item name="chipStrokeWidth">1dp</item>
-        <item name="chipCornerRadius">6dp</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="chipCornerRadius">10dp</item>
         <item name="android:textColor">@color/veil_text_high</item>
     </style>
 
