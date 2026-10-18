@@ -1,5 +1,11 @@
 # VEIL Changelog
 
+## 3.15.1
+- Fix APK update compatibility by reusing a persistent debug signing key across GitHub Actions builds instead of generating a new certificate each run.
+- Note: the first APK signed with the persistent key cannot update an install signed by a previously discarded ephemeral key; uninstalling that old build may be required once.
+- Version code: 26 (previous release: 3.15.0 / 25).
+
+
 ## 3.15.0
 - Clip the official in-app JPEG logo to its matching rounded silhouette to hide white corner pixels without altering the source artwork; keep adaptive launcher masking and align its background with VEIL charcoal.
 - Add native Android 12+ splash-screen theming and a restrained in-app launch state with asynchronous database initialization, correct authentication routing, and a retry path on initialization failure.
