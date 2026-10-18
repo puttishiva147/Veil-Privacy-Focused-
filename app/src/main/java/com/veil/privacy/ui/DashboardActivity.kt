@@ -175,7 +175,13 @@ class DashboardActivity : AppCompatActivity() {
         }
         binding.tabNotifications.setOnClickListener { switchTab(TAB_NOTIFICATIONS) }
         binding.tabContacts.setOnClickListener { switchTab(TAB_CONTACTS) }
-        binding.tabSettings.setOnClickListener { switchTab(TAB_SETTINGS) }
+        // Keep the existing Settings destination reachable without adding a fourth
+        // item to the requested three-destination floating navigation.
+        binding.tabContacts.setOnLongClickListener {
+            switchTab(TAB_SETTINGS)
+            true
+        }
+        binding.btnNotificationBell.setOnClickListener { switchTab(TAB_NOTIFICATIONS) }
         if (VeilPrefs.isSessionUnlocked) {
             switchTab(TAB_CHATS)
         } else {
@@ -193,45 +199,26 @@ class DashboardActivity : AppCompatActivity() {
 
         binding.fabAddProtectedChat.visibility = if (tab == TAB_CHATS) View.VISIBLE else View.GONE
 
-        // Update tab visual styles
         applyTabStyle(binding.tabChats, tab == TAB_CHATS)
         applyTabStyle(binding.tabNotifications, tab == TAB_NOTIFICATIONS)
         applyTabStyle(binding.tabContacts, tab == TAB_CONTACTS)
-        applyTabStyle(binding.tabSettings, tab == TAB_SETTINGS)
-
-        // Center the selected tab using its actual scroll-container coordinates.
-        // This accounts for padding and prevents tabs being clipped at narrow widths.
-        binding.tabScrollView.post {
-            val targetView = when (tab) {
-                TAB_CHATS -> binding.tabChats
-                TAB_NOTIFICATIONS -> binding.tabNotifications
-                TAB_CONTACTS -> binding.tabContacts
-                else -> binding.tabSettings
-            }
-            val rect = android.graphics.Rect()
-            targetView.getDrawingRect(rect)
-            binding.tabScrollView.offsetDescendantRectToMyCoords(targetView, rect)
-            val maxScroll = (binding.tabScrollView.getChildAt(0).width - binding.tabScrollView.width).coerceAtLeast(0)
-            val scrollX = (rect.centerX() - binding.tabScrollView.width / 2).coerceIn(0, maxScroll)
-            binding.tabScrollView.smoothScrollTo(scrollX, 0)
-        }
     }
 
     private fun applyTabStyle(button: com.google.android.material.button.MaterialButton, isSelected: Boolean) {
         val density = resources.displayMetrics.density
-        // Keep every tab text-only with the same stroke width so selection never changes
-        // the measured width and causes neighbouring chips to jump or leave visual seams.
-        button.icon = null
-        button.iconPadding = 0
         button.backgroundTintList = ContextCompat.getColorStateList(
             this,
-            if (isSelected) R.color.veil_button_primary_bg else R.color.veil_surface_card
+            if (isSelected) R.color.veil_button_primary_bg else R.color.veil_surface_interactive
         )
         button.setTextColor(
             ContextCompat.getColor(
                 this,
                 if (isSelected) R.color.veil_button_primary_text else R.color.veil_text_medium
             )
+        )
+        button.iconTint = ContextCompat.getColorStateList(
+            this,
+            if (isSelected) R.color.veil_button_primary_text else R.color.veil_text_medium
         )
         button.strokeColor = ContextCompat.getColorStateList(
             this,
@@ -637,12 +624,10 @@ class DashboardActivity : AppCompatActivity() {
                 // Tab 2 Notifications Log
                 notificationsAdapter.submitList(events)
                 val latestNotification = events.maxByOrNull { it.timestamp }
-                binding.tvLatestNotification.text = latestNotification?.let { event ->
-                    // Never expose the original sender or payload in this dashboard preview.
-                    val decoySender = event.decoySender.ifBlank { "VEIL" }
-                    val decoyMessage = event.decoyMessage.ifBlank { "Protected notification" }
-                    "$decoySender: $decoyMessage"
-                } ?: "No notifications yet"
+                // Keep the header badge tied to the current event stream, not sample data.
+                val notificationCount = events.size
+                binding.tvUnreadNotificationCount.visibility = if (notificationCount > 0) View.VISIBLE else View.GONE
+                binding.tvUnreadNotificationCount.text = if (notificationCount > 99) "99+" else notificationCount.toString()
                 binding.layoutEmptyNotifications.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
 
                 // Tab 1 Protected Chats Threads
