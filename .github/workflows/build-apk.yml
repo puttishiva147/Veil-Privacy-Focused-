@@ -35,10 +35,8 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Gradle 9.3.1
+      - name: Configure Gradle cache
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "9.3.1"
 
       - name: Configure Android SDK
         run: |
@@ -76,10 +74,10 @@ jobs:
           fi
 
       - name: Run unit tests
-        run: gradle --no-daemon --stacktrace :app:testDebugUnitTest
+        run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
 
       - name: Build debug APK
-        run: gradle --no-daemon --stacktrace :app:assembleDebug
+        run: ./gradlew --no-daemon --stacktrace :app:assembleDebug
 
       - name: Verify APK output
         run: |
