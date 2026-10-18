@@ -1,7 +1,7 @@
 # VEIL Changelog
 
 ## 4.2.0
-- Fix dashboard tab clipping by removing fading-edge artifacts, preventing child clipping, and keeping tab shape/stroke styling consistent.
+- Fix dashboard tab clipping and misalignment by centering tabs in scroll-container coordinates, clipping content to its bounds, and keeping tab widths/strokes stable when selection changes.
 - Replace duplicate dashboard add-chat buttons with a single bottom-right FAB on the Protected Chats tab; reserve list space so it does not cover chat rows.
 - Add a local sticker-emoji picker with categories and recently used items. Selecting a sticker inserts its emoji into the existing reply field; it is sent only through the existing supported text-reply path, not as a fabricated native sticker attachment.
 - Preserve photo/video sharing through Android Photo Picker and the existing WhatsApp share flow.
