@@ -117,6 +117,26 @@ The app's source defines the name **VEIL** and expands it as **Variable Event Id
 - Official release assets are published at [GitHub Releases](https://github.com/puttishiva147/Veil-Privacy-Focused-/releases) only after the release workflow succeeds.
 - A source version or successful debug build is not the same as a published, production-signed release.
 
+## Maintainer: configure production signing
+
+Before the first official release, create a dedicated release keystore on a trusted machine. Do not reuse or publish the debug keystore. Keep a secure offline backup of the keystore and both passwords; losing the release key can prevent future updates from installing over the published app.
+
+Example on Linux/macOS (the command prompts for identifying details and passwords):
+
+```bash
+keytool -genkeypair -v -keystore "$HOME/veil-release.jks" -alias veil-release -keyalg RSA -keysize 4096 -validity 10000
+base64 < "$HOME/veil-release.jks" | tr -d '\n' > "$HOME/veil-release-keystore.base64"
+```
+
+Do not put either file inside the repository. In the repository, open **Settings → Secrets and variables → Actions → New repository secret** and add:
+
+- `RELEASE_KEYSTORE_BASE64`: the contents of the base64 file.
+- `RELEASE_STORE_PASSWORD`: the keystore password.
+- `RELEASE_KEY_PASSWORD`: the private key password.
+- `RELEASE_KEY_ALIAS`: `veil-release` (or the alias you created).
+
+After adding the secrets, securely remove the temporary base64 file and retain the original keystore backup offline. Never paste secret values into issues, commits, or workflow logs.
+
 ## Troubleshooting
 
 - **APK won't install:** Confirm the device runs Android 8.0/API 26 or newer, download the APK again from the official Releases page, and check available storage.

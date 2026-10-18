@@ -63,6 +63,9 @@ jobs:
           echo "VEIL_VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
           echo "VEIL_VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
 
+      - name: Run unit tests
+        run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
+
       - name: Prepare release signing keystore
         shell: bash
         env:
@@ -88,9 +91,6 @@ jobs:
             exit 1
           fi
           echo "KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
-
-      - name: Run unit tests
-        run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
 
       - name: Build release APK
         env:
