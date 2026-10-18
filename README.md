@@ -32,7 +32,7 @@ Actual behavior depends on Android version, user-granted permissions, source con
 
 **[Open official VEIL releases and download the APK](https://github.com/puttishiva147/Veil-Privacy-Focused-/releases)**
 
-The Releases page currently has no published release. When an official release is available:
+If the Releases page does not yet show a release, the maintainer must complete the signing setup below and push the matching version tag. Once the workflow succeeds, the official APK will appear there:
 
 1. Open the official Releases page above.
 2. Download the `VEIL-<version>.apk` asset attached to the release. Do not install APKs from unofficial mirrors or untrusted links.
@@ -136,6 +136,15 @@ Do not put either file inside the repository. In the repository, open **Settings
 - `RELEASE_KEY_ALIAS`: `veil-release` (or the alias you created).
 
 After adding the secrets, securely remove the temporary base64 file and retain the original keystore backup offline. Never paste secret values into issues, commits, or workflow logs.
+
+From the repository root, after the four Actions secrets are configured and after confirming that the tag does not already exist:
+
+```bash
+git tag -a v4.5.1 -m "VEIL 4.5.1"
+git push origin v4.5.1
+```
+
+The tag must match the current `versionName` in `app/build.gradle.kts`. The workflow checks that match before building and publishing.
 
 ## Troubleshooting
 
