@@ -334,8 +334,10 @@ object VeilDialogs {
         if (isDanger) {
             ivIcon.setImageResource(R.drawable.ic_delete_trash)
             ivIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.veil_accent_danger))
-            btnConfirm.setBackgroundColor(ContextCompat.getColor(context, R.color.veil_accent_danger))
-            btnConfirm.setTextColor(Color.WHITE)
+            btnConfirm.backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(context, R.color.veil_accent_danger)
+            )
+            btnConfirm.setTextColor(ContextCompat.getColor(context, R.color.veil_button_primary_text))
         } else {
             ivIcon.setImageResource(R.drawable.ic_shield_status)
             ivIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.veil_accent_secure))
