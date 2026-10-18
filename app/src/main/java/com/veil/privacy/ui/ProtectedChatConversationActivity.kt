@@ -314,23 +314,149 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun showStickerAndMediaPicker() {
-        val options = arrayOf(
-            "Choose photo or video from device",
-            "Open WhatsApp to send a sticker"
+        val categories = linkedMapOf(
+            "Recent" to emptyList(),
+            "Reactions" to listOf("😀", "😎", "🥹", "🤔", "🙌", "👍", "👎", "🙏", "❤️", "😂", "😭", "😡"),
+            "Hello" to listOf("👋", "😊", "🤗", "💬", "☀️", "🌙", "✨", "🫶"),
+            "Love" to listOf("❤️", "💖", "💕", "💘", "🥰", "😘", "💌", "🫶"),
+            "Laugh" to listOf("😂", "🤣", "😆", "😹", "🤭", "😜", "🙃", "💀"),
+            "Sad" to listOf("😔", "🥺", "😭", "💔", "😞", "🫂", "🌧️", "🩶"),
+            "Celebrate" to listOf("🎉", "🥳", "🎂", "🏆", "👏", "🎊", "⭐", "✨"),
+            "Security" to listOf("🔒", "🛡️", "🔐", "🕶️", "🗝️", "🔎", "✅", "🤫")
         )
+        val recentPrefs = getSharedPreferences("veil_stickers", MODE_PRIVATE)
+        val recent = recentPrefs.getString("recent", "").orEmpty().split("|").filter { it.isNotBlank() }.distinct().take(12)
+        val density = resources.displayMetrics.density
+        fun dp(value: Int) = (value * density).toInt()
 
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Send Sticker or Media")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> pickVisualMediaLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-                    )
-                    1 -> openWhatsAppChatDirectly()
-                }
+        val root = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(dp(16), dp(8), dp(16), dp(12))
+        }
+        val categoryScroll = android.widget.HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            clipToPadding = false
+        }
+        val categoryRow = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.HORIZONTAL
+        }
+        val content = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+        }
+        val scroll = android.widget.ScrollView(this).apply {
+            isFillViewport = true
+            addView(content)
+        }
+        fun addLabel(text: String) {
+            content.addView(android.widget.TextView(this).apply {
+                this.text = text
+                textSize = 12f
+                setTextColor(ContextCompat.getColor(this@ProtectedChatConversationActivity, R.color.veil_text_medium))
+                setPadding(dp(2), dp(10), dp(2), dp(8))
+            })
+        }
+        fun insertSticker(sticker: String, dialog: androidx.appcompat.app.AlertDialog) {
+            val current = binding.etReplyInput.text?.toString().orEmpty()
+            val separator = if (current.isNotBlank() && !current.endsWith(" ")) " " else ""
+            binding.etReplyInput.setText(current + separator + sticker + " ")
+            binding.etReplyInput.setSelection(binding.etReplyInput.text?.length ?: 0)
+            val updated = (listOf(sticker) + recentPrefs.getString("recent", "").orEmpty().split("|").filter { it.isNotBlank() })
+                .distinct().take(12)
+            recentPrefs.edit().putString("recent", updated.joinToString("|")).apply()
+            dialog.dismiss()
+            Toast.makeText(this, "Sticker emoji added to reply. Use Send to send it as text.", Toast.LENGTH_LONG).show()
+        }
+        lateinit var dialog: androidx.appcompat.app.AlertDialog
+        fun renderCategory(category: String) {
+            content.removeAllViews()
+            val items = if (category == "Recent") recent else categories[category].orEmpty()
+            if (items.isEmpty()) {
+                addLabel(if (category == "Recent") "Your recently used stickers will appear here." else "No stickers in this category.")
+                return
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+            if (category == "Recent") addLabel("RECENTLY USED") else addLabel(category.uppercase())
+            val grid = android.widget.GridLayout(this).apply {
+                columnCount = 4
+                useDefaultMargins = false
+            }
+            items.forEachIndexed { index, sticker ->
+                val tile = android.widget.TextView(this).apply {
+                    text = sticker
+                    textSize = 27f
+                    gravity = android.view.Gravity.CENTER
+                    contentDescription = "Insert $sticker sticker emoji"
+                    background = ContextCompat.getDrawable(this@ProtectedChatConversationActivity, R.drawable.bg_circle_icon)
+                    isClickable = true
+                    isFocusable = true
+                    setOnClickListener { insertSticker(sticker, dialog) }
+                }
+                val params = android.widget.GridLayout.LayoutParams().apply {
+                    width = 0
+                    height = dp(58)
+                    columnSpec = android.widget.GridLayout.spec(index % 4, 1f)
+                    setMargins(dp(3), dp(3), dp(3), dp(3))
+                }
+                grid.addView(tile, params)
+            }
+            content.addView(grid)
+        }
+        categories.keys.toList().let { names ->
+            names.forEach { category ->
+                val button = com.google.android.material.button.MaterialButton(this).apply {
+                    text = category
+                    textSize = 10f
+                    minWidth = 0
+                    minHeight = dp(34)
+                    insetTop = 0
+                    insetBottom = 0
+                    setPadding(dp(9), 0, dp(9), 0)
+                    setOnClickListener { renderCategory(category) }
+                }
+                categoryRow.addView(button, android.widget.LinearLayout.LayoutParams(-2, dp(38)).apply {
+                    marginEnd = dp(6)
+                })
+            }
+        }
+        val recentButton = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Recent"
+            textSize = 10f
+            minWidth = 0
+            minHeight = dp(34)
+            insetTop = 0
+            insetBottom = 0
+            setPadding(dp(9), 0, dp(9), 0)
+            setOnClickListener { renderCategory("Recent") }
+        }
+        categoryRow.addView(recentButton, 0, android.widget.LinearLayout.LayoutParams(-2, dp(38)).apply {
+            marginEnd = dp(6)
+        })
+        categoryScroll.addView(categoryRow)
+        root.addView(categoryScroll, android.widget.LinearLayout.LayoutParams(-1, dp(44)))
+        root.addView(scroll, android.widget.LinearLayout.LayoutParams(-1, dp(270)))
+        root.addView(com.google.android.material.button.MaterialButton(this).apply {
+            text = "Choose photo or video"
+            setOnClickListener {
+                dialog.dismiss()
+                pickVisualMediaLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                )
+            }
+        }, android.widget.LinearLayout.LayoutParams(-1, dp(44)).apply { topMargin = dp(8) })
+        root.addView(com.google.android.material.button.MaterialButton(this).apply {
+            text = "Open WhatsApp"
+            setOnClickListener {
+                dialog.dismiss()
+                openWhatsAppChatDirectly()
+            }
+        }, android.widget.LinearLayout.LayoutParams(-1, dp(44)).apply { topMargin = dp(4) })
+
+        dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Stickers")
+            .setView(root)
+            .setNegativeButton("Close", null)
+            .create()
+        renderCategory("Recent")
+        dialog.show()
     }
 
     private fun shareMediaOrStickerToWhatsApp(imageUri: Uri) {
