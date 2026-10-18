@@ -57,7 +57,36 @@
                 android:textSize="10.5sp" />
         </LinearLayout>
 
-
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNotificationBell"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="Open notifications"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:padding="0dp"
+                app:icon="@drawable/ic_veil_notification"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="22dp"
+                app:iconTint="@color/veil_text_high" />
+            <TextView
+                android:id="@+id/tvUnreadNotificationCount"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="top|end"
+                android:background="@drawable/bg_notification_badge"
+                android:gravity="center"
+                android:textColor="@android:color/white"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </FrameLayout>
 
     </LinearLayout>
 
@@ -141,85 +170,6 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- 4 Clean Monochromatic Navigation Tabs with Responsive Horizontal Scroll Support -->
-    <HorizontalScrollView
-        android:id="@+id/tabScrollView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/veil_surface"
-        android:clipChildren="true"
-        android:clipToPadding="true"
-        android:fillViewport="false"
-        android:overScrollMode="never"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clipChildren="true"
-            android:clipToPadding="true"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/tabChats"
-                style="@style/Widget.Veil.Button.Primary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minHeight="38dp"
-                android:minWidth="0dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:paddingHorizontal="14dp"
-                android:text="Protected Chats"
-                android:textSize="12sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/tabNotifications"
-                style="@style/Widget.Veil.Button.Secondary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:minHeight="38dp"
-                android:minWidth="0dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:paddingHorizontal="14dp"
-                android:text="Notifications"
-                android:textSize="12sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/tabContacts"
-                style="@style/Widget.Veil.Button.Secondary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:minHeight="38dp"
-                android:minWidth="0dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:paddingHorizontal="14dp"
-                android:text="Rules &amp; Contacts"
-                android:textSize="12sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/tabSettings"
-                style="@style/Widget.Veil.Button.Secondary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:minHeight="38dp"
-                android:minWidth="0dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:paddingHorizontal="14dp"
-                android:text="Settings"
-                android:textSize="12sp" />
-        </LinearLayout>
-    </HorizontalScrollView>
-
     <!-- Container for Tab Content -->
     <FrameLayout
         android:layout_width="match_parent"
@@ -234,58 +184,6 @@
             android:orientation="vertical"
             android:visibility="visible">
 
-            <!-- Latest protected notification preview -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardLatestNotification"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="14dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="4dp"
-                app:cardBackgroundColor="@color/veil_surface_card"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/veil_hairline"
-                app:strokeWidth="0dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="10dp">
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="Latest notification"
-                        android:src="@drawable/ic_veil_notification"
-                        app:tint="@color/veil_text_medium" />
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="LATEST NOTIFICATION"
-                            android:textColor="@color/veil_text_medium"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                        <TextView
-                            android:id="@+id/tvLatestNotification"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="3dp"
-                            android:ellipsize="end"
-                            android:maxLines="2"
-                            android:text="No notifications yet"
-                            android:textColor="@color/veil_text_high"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
             <!-- Subheader Bar -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -1142,12 +1040,73 @@
             android:layout_height="56dp"
             android:layout_gravity="bottom|end"
             android:layout_marginEnd="20dp"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="104dp"
             android:contentDescription="Add protected chat"
             android:src="@drawable/ic_add_plus"
             android:visibility="gone"
             app:backgroundTint="@color/veil_brand_silver"
             app:elevation="2dp"
             app:tint="@color/veil_canvas" />
+        <LinearLayout
+            android:id="@+id/floatingBottomNavigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_floating_navigation"
+            android:elevation="8dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="6dp">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tabChats"
+                style="@style/Widget.Veil.Button.Primary"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="2dp"
+                android:text="Protected Chats"
+                android:textSize="10sp"
+                app:icon="@drawable/ic_nav_chat"
+                app:iconGravity="top"
+                app:iconPadding="2dp"
+                app:iconSize="18dp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tabNotifications"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="2dp"
+                android:text="Notifications"
+                android:textSize="10sp"
+                app:icon="@drawable/ic_veil_notification"
+                app:iconGravity="top"
+                app:iconPadding="2dp"
+                app:iconSize="18dp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tabContacts"
+                style="@style/Widget.Veil.Button.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="2dp"
+                android:text="Rules &amp; Contact"
+                android:textSize="10sp"
+                app:icon="@drawable/ic_nav_person"
+                app:iconGravity="top"
+                app:iconPadding="2dp"
+                app:iconSize="18dp" />
+        </LinearLayout>
     </FrameLayout>
 </LinearLayout>
