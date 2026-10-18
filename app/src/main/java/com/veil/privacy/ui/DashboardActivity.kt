@@ -30,6 +30,7 @@ import com.veil.privacy.notification.VeilNotificationManager
 import com.veil.privacy.security.SecurityManager
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
+import com.veil.privacy.util.PanicTriggerSequence
 import com.veil.privacy.ui.adapter.PrivateInboxAdapter
 import com.veil.privacy.ui.adapter.ProtectedChatThreadsAdapter
 import com.veil.privacy.ui.adapter.ProtectionRuleAdapter
@@ -63,29 +64,40 @@ class DashboardActivity : AppCompatActivity() {
 
     private var currentTab: Int = TAB_CHATS
 
-    // Panic shortcut: three deliberate volume-down presses while VEIL is foreground.
-    private var panicPressCount = 0
-    private var lastPanicPressAt = 0L
+    // Android only delivers these key events while VEIL is foreground.
+    private val panicTriggerSequence = PanicTriggerSequence()
     private var panicTriggered = false
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN &&
-            event.action == KeyEvent.ACTION_DOWN &&
-            event.repeatCount == 0 &&
-            !panicTriggered
-        ) {
-            val now = SystemClock.elapsedRealtime()
-            if (now - lastPanicPressAt > 1_500L) panicPressCount = 0
-            lastPanicPressAt = now
-            panicPressCount++
-            if (panicPressCount >= 3) {
-                triggerPanicMode()
-                return true
-            }
-            // Consume the first two presses so they don't change media volume.
-            return true
+        val prefs = VeilPrefs.getInstance(this)
+        if (!prefs.isPanicVolumeTriggerEnabled || panicTriggered) {
+            panicTriggerSequence.reset()
+            return super.dispatchKeyEvent(event)
         }
-        return super.dispatchKeyEvent(event)
+
+        val isVolumeKey = event.keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
+            event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+        if (!isVolumeKey) return super.dispatchKeyEvent(event)
+
+        val configuredKey = if (prefs.panicVolumeKey == VeilPrefs.PANIC_VOLUME_UP) {
+            KeyEvent.KEYCODE_VOLUME_UP
+        } else {
+            KeyEvent.KEYCODE_VOLUME_DOWN
+        }
+        if (event.keyCode != configuredKey) {
+            panicTriggerSequence.reset()
+            return super.dispatchKeyEvent(event)
+        }
+
+        // Consume only the configured volume key while the opt-in sequence is active.
+        if (event.action == KeyEvent.ACTION_UP) return true
+        if (event.action != KeyEvent.ACTION_DOWN) return true
+        if (event.repeatCount > 0) return true
+
+        if (panicTriggerSequence.onPress(SystemClock.elapsedRealtime(), prefs.panicPressCount)) {
+            triggerPanicMode()
+        }
+        return true
     }
 
     companion object {
@@ -172,7 +184,7 @@ class DashboardActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         panicTriggered = false
-        panicPressCount = 0
+        panicTriggerSequence.reset()
         NotificationUtils.ensureListenerBound(this)
         updateNotificationListenerStatus()
         refreshChatThreads()

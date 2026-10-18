@@ -22,7 +22,10 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:contentDescription="VEIL Logo"
-            android:src="@drawable/veil_official_logo" />
+            android:src="@drawable/veil_official_logo"
+        android:background="@drawable/bg_logo_clip_small"
+        android:clipToOutline="true"
+        android:scaleType="fitCenter" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -1125,7 +1128,7 @@
                     android:layout_marginTop="20dp"
                     android:layout_marginBottom="16dp"
                     android:fontFamily="monospace"
-                    android:text="VEIL Core • Production Release 3.8.0 (NEXRO Series)"
+                    android:text="@string/app_version_name"
                     android:textColor="@color/veil_text_low"
                     android:textSize="11sp" />
             </LinearLayout>

@@ -2,7 +2,7 @@
 <resources>
     <!-- VEIL 2026 tokens: mineral-dark surfaces, jade primary, warm amber status, semantic danger -->
 
-    <!-- Base Canvas & Structural Surfaces: Pure Neutral Charcoal & Graphite -->
+    <!-- Base Canvas & Structural Surfaces: mineral charcoal -->
     <color name="veil_canvas">#0B1113</color>
     <color name="veil_surface">#10191C</color>
     <color name="veil_surface_card">#152125</color>

@@ -1,5 +1,13 @@
 # VEIL Changelog
 
+## 3.15.0
+- Clip the official in-app JPEG logo to its matching rounded silhouette to hide white corner pixels without altering the source artwork; keep adaptive launcher masking and align its background with VEIL charcoal.
+- Add native Android 12+ splash-screen theming and a restrained in-app launch state with asynchronous database initialization, correct authentication routing, and a retry path on initialization failure.
+- Add opt-in, configurable volume-button Panic Mode activation (Volume Up/Down, two/three presses) with an explicit foreground-only Android limitation and persisted preferences.
+- Improve ON/OFF contrast for the four Protection Rule switches using shared mint/neutral tint selectors; preserve saved rule values.
+- Version code: 25 (previous release: 3.14.0 / 24).
+
+
 ## 3.14.0
 - Establish a cohesive 2026 visual system with mineral-dark surfaces, jade primary actions, warm amber status, and semantic danger colors.
 - Refine Material 3 buttons, cards, chips, dialogs, and sheets; remove default primary-button outlines and soften decorative borders.

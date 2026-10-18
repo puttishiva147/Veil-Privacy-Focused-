@@ -5,6 +5,11 @@ import com.veil.privacy.notification.VeilNotificationManager
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
 import com.veil.privacy.util.NotificationUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class VeilApplication : Application() {
 
@@ -13,18 +18,30 @@ class VeilApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // Initialize preferences, database, and notification channel
+        // Initialize preferences and the lightweight notification channel
         VeilPrefs.getInstance(this)
-        VeilDatabase.getInstance(this)
         VeilNotificationManager.getInstance(this).createNotificationChannel()
 
         // Ensure notification listener service is bound if permission is granted
         NotificationUtils.ensureListenerBound(this)
 
-        // Start Persistent Protection Shield Service if enabled
+        // Warm up Room off the main thread. Start the persistent shield only after
+        // storage is ready so a cold launch does not block the first frame.
         val prefs = VeilPrefs.getInstance(this)
-        if (prefs.isVeilEnabled && prefs.isPersistentShieldEnabled && NotificationUtils.isNotificationAccessGranted(this)) {
-            com.veil.privacy.service.VeilProtectionService.startService(this)
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            try {
+                VeilDatabase.getInstance(applicationContext)
+            } catch (_: Exception) {
+                // MainActivity owns the visible retry state if startup storage fails.
+                return@launch
+            }
+            withContext(Dispatchers.Main) {
+                if (prefs.isVeilEnabled && prefs.isPersistentShieldEnabled &&
+                    NotificationUtils.isNotificationAccessGranted(this@VeilApplication)
+                ) {
+                    com.veil.privacy.service.VeilProtectionService.startService(this@VeilApplication)
+                }
+            }
         }
 
         // Register lifecycle callbacks for mandatory, zero-timeout app lock

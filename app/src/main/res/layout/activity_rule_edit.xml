@@ -405,11 +405,12 @@
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/switchRuleSound"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_height="48dp"
                             android:layout_alignParentEnd="true"
                             android:layout_centerVertical="true"
-                            android:checked="true"
-                            app:trackTint="@color/veil_surface_interactive" />
+                            android:checked="true" 
+                            app:thumbTint="@color/veil_switch_thumb"
+                            app:trackTint="@color/veil_switch_track" />
                     </RelativeLayout>
 
                     <View
@@ -447,11 +448,12 @@
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/switchRuleVibration"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_height="48dp"
                             android:layout_alignParentEnd="true"
                             android:layout_centerVertical="true"
-                            android:checked="true"
-                            app:trackTint="@color/veil_surface_interactive" />
+                            android:checked="true" 
+                            app:thumbTint="@color/veil_switch_thumb"
+                            app:trackTint="@color/veil_switch_track" />
                     </RelativeLayout>
 
                     <View
@@ -489,11 +491,12 @@
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/switchRuleCallDisguise"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_height="48dp"
                             android:layout_alignParentEnd="true"
                             android:layout_centerVertical="true"
-                            android:checked="true"
-                            app:trackTint="@color/veil_surface_interactive" />
+                            android:checked="true" 
+                            app:thumbTint="@color/veil_switch_thumb"
+                            app:trackTint="@color/veil_switch_track" />
                     </RelativeLayout>
 
                     <View
@@ -531,11 +534,12 @@
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/switchRuleActive"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_height="48dp"
                             android:layout_alignParentEnd="true"
                             android:layout_centerVertical="true"
-                            android:checked="true"
-                            app:trackTint="@color/veil_surface_interactive" />
+                            android:checked="true" 
+                            app:thumbTint="@color/veil_switch_thumb"
+                            app:trackTint="@color/veil_switch_track" />
                     </RelativeLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

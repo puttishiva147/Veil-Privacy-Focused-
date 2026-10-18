@@ -20,7 +20,9 @@
             android:layout_height="48dp"
             android:contentDescription="@string/app_name"
             android:scaleType="fitCenter"
-            android:src="@drawable/veil_official_logo" />
+            android:src="@drawable/veil_official_logo"
+        android:background="@drawable/bg_logo_clip_small"
+        android:clipToOutline="true" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -442,7 +444,10 @@
                 <ImageView
                     android:layout_width="72dp"
                     android:layout_height="72dp"
-                    android:src="@drawable/veil_official_logo" />
+        android:scaleType="fitCenter"
+        android:src="@drawable/veil_official_logo"
+        android:background="@drawable/bg_logo_clip"
+        android:clipToOutline="true" />
 
                 <TextView
                     android:layout_width="wrap_content"

@@ -3,10 +3,13 @@
     <string name="app_name">VEIL</string>
     <string name="app_full_name">Variable Event Identity Layer</string>
     <string name="app_tagline">Autonomous Notification Disguise Architecture</string>
-    <string name="app_version_name">VEIL Core • Production Release 3.13.0 (NEXRO Series)</string>
+    <string name="app_version_name">VEIL Core • Production Release 3.15.0 (NEXRO Series)</string>
 
     <!-- General Navigation & Actions -->
     <string name="action_back">Back</string>
+    <string name="action_retry">Retry initialization</string>
+    <string name="launch_initialization_error">VEIL could not finish starting: %1$s</string>
+    <string name="launch_unknown_error">unknown initialization error</string>
     <string name="action_save">Save Rule</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_delete">Delete</string>

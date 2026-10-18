@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Veil.Launcher" parent="Theme.Veil">
+        <item name="android:windowSplashScreenBackground">@color/veil_canvas</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/veil_canvas</item>
+        <item name="android:windowSplashScreenAnimationDuration">180</item>
+    </style>
+</resources>

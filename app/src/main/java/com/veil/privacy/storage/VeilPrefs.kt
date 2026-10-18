@@ -33,6 +33,12 @@ class VeilPrefs(context: Context) {
         private const val KEY_PASSWORD_HASH = "key_password_hash"
         private const val KEY_PASSWORD_SALT = "key_password_salt"
         private const val KEY_MASTER_PIN_LENGTH = "key_master_pin_length"
+        private const val KEY_PANIC_VOLUME_TRIGGER_ENABLED = "key_panic_volume_trigger_enabled"
+        private const val KEY_PANIC_VOLUME_KEY = "key_panic_volume_key"
+        private const val KEY_PANIC_PRESS_COUNT = "key_panic_press_count"
+        const val PANIC_VOLUME_UP = "VOLUME_UP"
+        const val PANIC_VOLUME_DOWN = "VOLUME_DOWN"
+
         private const val KEY_PRIVACY_NOTIF_TITLE = "key_privacy_notif_title"
         private const val KEY_PRIVACY_NOTIF_BODY = "key_privacy_notif_body"
 
@@ -455,6 +461,24 @@ class VeilPrefs(context: Context) {
     fun hasPasswordConfigured(): Boolean {
         return !passwordHash.isNullOrBlank() && !passwordSalt.isNullOrBlank()
     }
+
+    /** Hardware shortcut is opt-in and only receives keys while VEIL is foreground. */
+    var isPanicVolumeTriggerEnabled: Boolean
+        get() = prefs.getBoolean(KEY_PANIC_VOLUME_TRIGGER_ENABLED, false)
+        set(value) { prefs.edit().putBoolean(KEY_PANIC_VOLUME_TRIGGER_ENABLED, value).apply() }
+
+    var panicVolumeKey: String
+        get() = prefs.getString(KEY_PANIC_VOLUME_KEY, PANIC_VOLUME_DOWN) ?: PANIC_VOLUME_DOWN
+        set(value) {
+            prefs.edit().putString(
+                KEY_PANIC_VOLUME_KEY,
+                if (value == PANIC_VOLUME_UP) PANIC_VOLUME_UP else PANIC_VOLUME_DOWN
+            ).apply()
+        }
+
+    var panicPressCount: Int
+        get() = prefs.getInt(KEY_PANIC_PRESS_COUNT, 3).coerceIn(2, 3)
+        set(value) { prefs.edit().putInt(KEY_PANIC_PRESS_COUNT, value.coerceIn(2, 3)).apply() }
 
     fun savePasswordCredentials(hash: String, salt: String) {
         prefs.edit()
