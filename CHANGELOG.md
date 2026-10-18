@@ -1,5 +1,10 @@
 # VEIL Changelog
 
+## 4.5.0
+- Replace the dashboard header's V-shaped icon with a dedicated notification bell drawable while retaining the separate V brand/status asset.
+- Refine the three dashboard navigation tabs into a continuous floating capsule with equal-width tabs, rounded selected state, no internal borders, and zero button insets.
+- Version code: 34 (previous: 4.4.0 / 33).
+
 ## 4.4.0
 - Restore direct access to the existing full Settings screen from a new header gear beside the notification bell.
 - Replace the all-events badge with persisted last-viewed timestamp tracking against the real Room event stream; opening Notifications marks the current inbox as viewed without deleting stored events.
