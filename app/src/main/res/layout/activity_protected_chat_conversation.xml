@@ -395,7 +395,7 @@
                 android:layout_height="38dp"
                 android:layout_marginEnd="6dp"
                 android:background="@drawable/bg_circle_icon"
-                android:contentDescription="Send Sticker or Media"
+                android:contentDescription="Open sticker picker"
                 android:padding="8dp"
                 android:src="@drawable/ic_sticker_media"
                 app:tint="@color/veil_text_medium" />
