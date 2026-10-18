@@ -9,6 +9,8 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.view.View
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -179,6 +181,18 @@ class AuthLockActivity : AppCompatActivity() {
         binding.btnUnlockSubmit.setOnClickListener {
             verifyPasswordAndUnlock()
         }
+
+        // Auto-confirm only at the exact configured PIN length, never on a partial prefix.
+        binding.etPassword.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                val expectedLength = prefs.masterPinLength
+                if (expectedLength in 4..8 && s?.length == expectedLength) {
+                    binding.etPassword.post { if (!isFinishing && !isDestroyed && binding.etPassword.text?.length == expectedLength) verifyPasswordAndUnlock() }
+                }
+            }
+        })
 
         binding.etPassword.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO) {

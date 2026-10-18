@@ -32,6 +32,7 @@ class VeilPrefs(context: Context) {
         private const val KEY_SECURITY_SETUP_COMPLETED = "key_security_setup_completed"
         private const val KEY_PASSWORD_HASH = "key_password_hash"
         private const val KEY_PASSWORD_SALT = "key_password_salt"
+        private const val KEY_MASTER_PIN_LENGTH = "key_master_pin_length"
         private const val KEY_PRIVACY_NOTIF_TITLE = "key_privacy_notif_title"
         private const val KEY_PRIVACY_NOTIF_BODY = "key_privacy_notif_body"
 
@@ -447,6 +448,10 @@ class VeilPrefs(context: Context) {
     val passwordSalt: String?
         get() = prefs.getString(KEY_PASSWORD_SALT, null)
 
+    var masterPinLength: Int
+        get() = prefs.getInt(KEY_MASTER_PIN_LENGTH, 0)
+        set(value) { if (value in 4..8) prefs.edit().putInt(KEY_MASTER_PIN_LENGTH, value).apply() }
+
     fun hasPasswordConfigured(): Boolean {
         return !passwordHash.isNullOrBlank() && !passwordSalt.isNullOrBlank()
     }
@@ -465,6 +470,7 @@ class VeilPrefs(context: Context) {
         prefs.edit()
             .remove(KEY_PASSWORD_HASH)
             .remove(KEY_PASSWORD_SALT)
+            .remove(KEY_MASTER_PIN_LENGTH)
             .remove(KEY_APP_LOCK_PIN)
             .putBoolean(KEY_SECURITY_SETUP_COMPLETED, false)
             .apply()

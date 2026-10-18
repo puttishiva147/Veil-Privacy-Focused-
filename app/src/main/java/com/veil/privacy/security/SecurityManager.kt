@@ -143,7 +143,9 @@ object SecurityManager {
      */
     fun savePin(context: Context, pin: String): Boolean {
         if (pin.length < MIN_PIN_LENGTH || !pin.all { it.isDigit() }) return false
-        return savePassword(context, pin)
+        val saved = savePassword(context, pin)
+        if (saved) VeilPrefs.getInstance(context).masterPinLength = pin.length
+        return saved
     }
 
     /**

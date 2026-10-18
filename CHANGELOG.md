@@ -1,5 +1,11 @@
 # VEIL Changelog
 
+## 3.13.0
+- Auto-confirm unlock when the full configured 4–8 digit master PIN has been entered.
+- Persist PIN length metadata without storing plaintext PIN; clear it when credentials are reset.
+- Version code: 23 (previous release: 3.12.0 / 22).
+
+
 ## 3.12.0
 - Refine Security Setup spacing, copy, and compact VEIL logo presentation.
 - Add native system-respecting haptic feedback to setup actions and reduce global card outlines.

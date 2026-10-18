@@ -38,7 +38,6 @@ import com.veil.privacy.util.InsetsUtils
 import com.veil.privacy.util.NotificationUtils
 import com.veil.privacy.util.PermissionUtils
 import com.veil.privacy.util.VeilDialogs
-import com.veil.privacy.util.VeilHaptics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -334,7 +333,6 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun triggerPanicMode() {
-        if (::binding.isInitialized) VeilHaptics.confirm(binding.btnPanicMode)
         panicTriggered = true
         VeilPrefs.isSessionUnlocked = false
         VeilPrefs.lockAllContacts()
@@ -346,37 +344,30 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun setupActions() {
         binding.btnPanicMode.setOnClickListener {
-            VeilHaptics.tap(it)
             triggerPanicMode()
         }
 
         binding.btnQuickAddContact.setOnClickListener {
-            VeilHaptics.tap(it)
             openAddContactChooser()
         }
 
         binding.btnAddChatTop.setOnClickListener {
-            VeilHaptics.tap(it)
             openAddContactChooser()
         }
 
         binding.btnEmptyAddChat.setOnClickListener {
-            VeilHaptics.tap(it)
             openAddContactChooser()
         }
 
         binding.btnAddContactRuleTop.setOnClickListener {
-            VeilHaptics.tap(it)
             startActivity(Intent(this, RuleEditActivity::class.java))
         }
 
         binding.btnEmptyAddContactRule.setOnClickListener {
-            VeilHaptics.tap(it)
             startActivity(Intent(this, RuleEditActivity::class.java))
         }
 
         binding.btnClearNotificationsLog.setOnClickListener {
-            VeilHaptics.tap(it)
             VeilDialogs.showConfirmationDialog(
                 context = this,
                 title = "Clear Notification Log",

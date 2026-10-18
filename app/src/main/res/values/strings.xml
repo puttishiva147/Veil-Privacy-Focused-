@@ -3,7 +3,7 @@
     <string name="app_name">VEIL</string>
     <string name="app_full_name">Variable Event Identity Layer</string>
     <string name="app_tagline">Autonomous Notification Disguise Architecture</string>
-    <string name="app_version_name">VEIL Core • Production Release 3.12.0 (NEXRO Series)</string>
+    <string name="app_version_name">VEIL Core • Production Release 3.13.0 (NEXRO Series)</string>
 
     <!-- General Navigation & Actions -->
     <string name="action_back">Back</string>
