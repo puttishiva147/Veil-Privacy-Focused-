@@ -155,5 +155,15 @@
     <!-- Privacy Architecture Dialog -->
     <string name="privacy_title">VEIL Architectural Model</string>
     <string name="privacy_point_1_title">1. Android NotificationListener API Only</string>
-    <string name="privacy_point_1_desc">VEIL only accesses notifications through Android's official notification listener permission.</string>
+    <string name="privacy_point_1_desc">VEIL inspects notifications strictly via the official Android NotificationListenerService framework. It does not tamper with app binaries, query WhatsApp internal databases, or require root permissions.</string>
+    <string name="privacy_point_2_title">2. Absolute Zero-Network Boundary</string>
+    <string name="privacy_point_2_desc">All rules, decoys, and event logs remain strictly on this device inside sandboxed storage. The application contains zero network request libraries, zero analytics SDKs, and zero telemetry.</string>
+    <string name="privacy_point_3_title">3. Nonce Decoy Generation</string>
+    <string name="privacy_point_3_desc">Decoy senders and messages are independently chosen per event from the user\'s local dictionary. There is never a persistent 1:1 mapping between real identities and decoys.</string>
+    <string name="privacy_point_4_title">4. Local Dual-State Interaction</string>
+    <string name="privacy_point_4_desc">Android system notifications cannot support custom third-party gesture detection. In-situ reveal operations are executed exclusively within VEIL\'s authenticated interface.</string>
+
+    <!-- Notification Channel -->
+    <string name="channel_veil_name">VEIL Disguised Alerts</string>
+    <string name="channel_veil_desc">Encrypted alert channel for disguised notification delivery</string>
 </resources>
