@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- VEIL monochrome design system -->
+    <!-- VEIL monochrome design system; trigger fresh APK build -->
     <color name="veil_canvas">#000000</color>
     <color name="veil_surface">#121212</color>
     <color name="veil_surface_card">#121212</color>
