@@ -1,82 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- VEIL 2026 tokens: mineral-dark surfaces, jade primary, warm amber status, semantic danger -->
-
-    <!-- Base Canvas & Structural Surfaces: mineral charcoal -->
-    <color name="veil_canvas">#0B1113</color>
-    <color name="veil_surface">#10191C</color>
-    <color name="veil_surface_card">#152125</color>
-    <color name="veil_surface_elevated">#1B2A2E</color>
-    <color name="veil_surface_interactive">#23363A</color>
-    <color name="veil_hairline">#26383C</color>
-    <color name="veil_hairline_bright">#354B50</color>
-
-    <!-- Typography: High-legibility, Neutral Crisp Whites & Grays -->
-    <color name="veil_text_high">#F2F7F6</color>
-    <color name="veil_text_medium">#A9B9B9</color>
-    <color name="veil_text_low">#7D9292</color>
-    <color name="veil_text_monospace">#D5E2E0</color>
-
-    <!-- Clean Functional Accents: Pure Monochrome Titanium & Silver -->
-    <color name="veil_accent_secure">#A7F3D0</color>
-    <color name="veil_accent_secure_dim">#18382F</color>
-    <color name="veil_accent_secure_border">#2C5B4D</color>
-    <color name="veil_accent_cyan">#8FE3CF</color>
-    <color name="veil_brand_silver">#D9F3EC</color>
-
-    <!-- Official VEIL Cyber-Visor Button System -->
-    <color name="veil_button_primary_bg">#A7F3D0</color>
-    <color name="veil_button_primary_text">#10221D</color>
-    <color name="veil_button_secondary_bg">#152125</color>
-    <color name="veil_button_secondary_text">#F2F7F6</color>
-    <color name="veil_button_secondary_border">#354B50</color>
-
-    <!-- Warning / Setup Required: Architectural Warm Amber -->
-    <color name="veil_accent_amber">#F5C46B</color>
-    <color name="veil_accent_amber_dim">#332817</color>
-    <color name="veil_accent_amber_border">#5D4725</color>
-
-    <!-- Destructive / Alert: Restrained Clean Crimson -->
-    <color name="veil_accent_danger">#FF8585</color>
-    <color name="veil_accent_danger_dim">#351B1D</color>
-    <color name="veil_accent_danger_border">#654044</color>
-
-    <!-- Neutral / Titanium Accent -->
-    <color name="veil_accent_titanium">#A7F3D0</color>
-    <color name="veil_accent_titanium_dim">#18382F</color>
-
-    <!-- Comprehensive Material 3 Token Overrides (Locks Out System Purple) -->
-    <color name="md_theme_dark_primary">#A7F3D0</color>
-    <color name="md_theme_dark_onPrimary">#10221D</color>
-    <color name="md_theme_dark_primaryContainer">#18382F</color>
-    <color name="md_theme_dark_onPrimaryContainer">#D9F3EC</color>
-    <color name="md_theme_dark_secondary">#B9D6D0</color>
-    <color name="md_theme_dark_onSecondary">#142522</color>
-    <color name="md_theme_dark_secondaryContainer">#203632</color>
-    <color name="md_theme_dark_onSecondaryContainer">#E2F5F0</color>
-    <color name="md_theme_dark_tertiary">#F5C46B</color>
-    <color name="md_theme_dark_onTertiary">#2C2110</color>
-    <color name="md_theme_dark_tertiaryContainer">#332817</color>
-    <color name="md_theme_dark_onTertiaryContainer">#FFE6B8</color>
-    <color name="md_theme_dark_error">#FF8585</color>
-    <color name="md_theme_dark_errorContainer">#351B1D</color>
-    <color name="md_theme_dark_onError">#321719</color>
-    <color name="md_theme_dark_onErrorContainer">#FFDAD9</color>
-    <color name="md_theme_dark_background">#0B1113</color>
-    <color name="md_theme_dark_onBackground">#F2F7F6</color>
-    <color name="md_theme_dark_surface">#10191C</color>
-    <color name="md_theme_dark_onSurface">#F2F7F6</color>
-    <color name="md_theme_dark_surfaceVariant">#152125</color>
-    <color name="md_theme_dark_onSurfaceVariant">#A9B9B9</color>
-    <color name="md_theme_dark_outline">#354B50</color>
-    <color name="md_theme_dark_inverseOnSurface">#0B1113</color>
-    <color name="md_theme_dark_inverseSurface">#D9F3EC</color>
-    <color name="md_theme_dark_inversePrimary">#245B4C</color>
-    <color name="md_theme_dark_surfaceTint">#A7F3D0</color>
-    <color name="md_theme_dark_outlineVariant">#26383C</color>
+    <!-- VEIL monochrome design system -->
+    <color name="veil_canvas">#000000</color>
+    <color name="veil_surface">#121212</color>
+    <color name="veil_surface_card">#121212</color>
+    <color name="veil_surface_elevated">#121212</color>
+    <color name="veil_surface_interactive">#292929</color>
+    <color name="veil_hairline">#292929</color>
+    <color name="veil_hairline_bright">#292929</color>
+    <color name="veil_text_high">#FFFFFF</color>
+    <color name="veil_text_medium">#A1A1AA</color>
+    <color name="veil_text_low">#A1A1AA</color>
+    <color name="veil_text_monospace">#FFFFFF</color>
+    <color name="veil_accent_secure">#FFFFFF</color>
+    <color name="veil_accent_secure_dim">#121212</color>
+    <color name="veil_accent_secure_border">#292929</color>
+    <color name="veil_accent_cyan">#FFFFFF</color>
+    <color name="veil_brand_silver">#FFFFFF</color>
+    <color name="veil_button_primary_bg">#FFFFFF</color>
+    <color name="veil_button_primary_text">#000000</color>
+    <color name="veil_button_secondary_bg">#121212</color>
+    <color name="veil_button_secondary_text">#FFFFFF</color>
+    <color name="veil_button_secondary_border">#292929</color>
+    <color name="veil_accent_amber">#A1A1AA</color>
+    <color name="veil_accent_amber_dim">#121212</color>
+    <color name="veil_accent_amber_border">#292929</color>
+    <color name="veil_accent_danger">#FFFFFF</color>
+    <color name="veil_accent_danger_dim">#121212</color>
+    <color name="veil_accent_danger_border">#292929</color>
+    <color name="veil_accent_titanium">#FFFFFF</color>
+    <color name="veil_accent_titanium_dim">#121212</color>
+    <color name="md_theme_dark_primary">#FFFFFF</color>
+    <color name="md_theme_dark_onPrimary">#000000</color>
+    <color name="md_theme_dark_primaryContainer">#292929</color>
+    <color name="md_theme_dark_onPrimaryContainer">#FFFFFF</color>
+    <color name="md_theme_dark_secondary">#A1A1AA</color>
+    <color name="md_theme_dark_onSecondary">#000000</color>
+    <color name="md_theme_dark_secondaryContainer">#121212</color>
+    <color name="md_theme_dark_onSecondaryContainer">#FFFFFF</color>
+    <color name="md_theme_dark_tertiary">#A1A1AA</color>
+    <color name="md_theme_dark_onTertiary">#000000</color>
+    <color name="md_theme_dark_tertiaryContainer">#121212</color>
+    <color name="md_theme_dark_onTertiaryContainer">#FFFFFF</color>
+    <color name="md_theme_dark_error">#FFFFFF</color>
+    <color name="md_theme_dark_errorContainer">#292929</color>
+    <color name="md_theme_dark_onError">#000000</color>
+    <color name="md_theme_dark_onErrorContainer">#FFFFFF</color>
+    <color name="md_theme_dark_background">#000000</color>
+    <color name="md_theme_dark_onBackground">#FFFFFF</color>
+    <color name="md_theme_dark_surface">#121212</color>
+    <color name="md_theme_dark_onSurface">#FFFFFF</color>
+    <color name="md_theme_dark_surfaceVariant">#121212</color>
+    <color name="md_theme_dark_onSurfaceVariant">#A1A1AA</color>
+    <color name="md_theme_dark_outline">#292929</color>
+    <color name="md_theme_dark_inverseOnSurface">#000000</color>
+    <color name="md_theme_dark_inverseSurface">#FFFFFF</color>
+    <color name="md_theme_dark_inversePrimary">#A1A1AA</color>
+    <color name="md_theme_dark_surfaceTint">#FFFFFF</color>
+    <color name="md_theme_dark_outlineVariant">#292929</color>
     <color name="md_theme_dark_scrim">#000000</color>
-
-    <!-- Utility Colors -->
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="transparent">#00000000</color>
