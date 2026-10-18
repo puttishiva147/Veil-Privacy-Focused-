@@ -261,7 +261,7 @@ class SettingsActivity : AppCompatActivity() {
             context = this,
             title = "System Architecture • NEXRO Series",
             message = "VEIL (Variable Event Identity Layer)\n\n" +
-                "Version: 4.1.0\n" +
+                "Version: " + com.veil.privacy.BuildConfig.VERSION_NAME + "\n" +
                 "Package: com.veil.privacy\n\n" +
                 "Target Subsystem: Multi-App Messaging Layer (WhatsApp, Telegram, Signal, SMS, Instagram)\n" +
                 "Interception Engine: Android NotificationListenerService & Foreground Shield\n" +
