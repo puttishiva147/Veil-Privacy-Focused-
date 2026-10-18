@@ -217,10 +217,13 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun applyTabStyle(button: com.google.android.material.button.MaterialButton, isSelected: Boolean) {
         val density = resources.displayMetrics.density
+        // Keep inactive buttons visually merged into the single capsule; only the
+        // selected destination gets a contrasting white pill.
         button.backgroundTintList = ContextCompat.getColorStateList(
             this,
-            if (isSelected) R.color.veil_button_primary_bg else R.color.veil_surface_interactive
+            if (isSelected) R.color.veil_button_primary_bg else R.color.veil_surface
         )
+        button.cornerRadius = (24 * density).toInt()
         button.setTextColor(
             ContextCompat.getColor(
                 this,
@@ -231,11 +234,7 @@ class DashboardActivity : AppCompatActivity() {
             this,
             if (isSelected) R.color.veil_button_primary_text else R.color.veil_text_medium
         )
-        button.strokeColor = ContextCompat.getColorStateList(
-            this,
-            if (isSelected) R.color.veil_button_primary_bg else R.color.veil_hairline
-        )
-        button.strokeWidth = (1 * density).toInt()
+        button.strokeWidth = 0
     }
 
     private fun setupRecyclerViews() {
