@@ -1,5 +1,12 @@
 # VEIL Changelog
 
+## 4.0.0
+- Remove Panic Mode completely from the dashboard and settings UI, including the panic button, volume-key interception, trigger configuration, preference keys, utility class, and unit tests.
+- Keep the normal app lock, protected chats, notification protection, and all unrelated settings intact.
+- Retain the previous security cleanup: remove the unused battery-exemption permission and mark the boot/package-replacement receiver non-exported.
+- Version code: 28 (previous: 3.15.2 / 27).
+
+
 ## 3.15.2
 - Remove the unused REQUEST_IGNORE_BATTERY_OPTIMIZATIONS permission; repository search found no corresponding request flow or API use.
 - Mark the boot/package-replacement receiver non-exported; it only handles protected system broadcasts and does not need external app entry points.

@@ -6,8 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.SystemClock
-import android.view.KeyEvent
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
@@ -30,7 +28,6 @@ import com.veil.privacy.notification.VeilNotificationManager
 import com.veil.privacy.security.SecurityManager
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
-import com.veil.privacy.util.PanicTriggerSequence
 import com.veil.privacy.ui.adapter.PrivateInboxAdapter
 import com.veil.privacy.ui.adapter.ProtectedChatThreadsAdapter
 import com.veil.privacy.ui.adapter.ProtectionRuleAdapter
@@ -65,40 +62,6 @@ class DashboardActivity : AppCompatActivity() {
     private var currentTab: Int = TAB_CHATS
 
     // Android only delivers these key events while VEIL is foreground.
-    private val panicTriggerSequence = PanicTriggerSequence()
-    private var panicTriggered = false
-
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        val prefs = VeilPrefs.getInstance(this)
-        if (!prefs.isPanicVolumeTriggerEnabled || panicTriggered) {
-            panicTriggerSequence.reset()
-            return super.dispatchKeyEvent(event)
-        }
-
-        val isVolumeKey = event.keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
-            event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
-        if (!isVolumeKey) return super.dispatchKeyEvent(event)
-
-        val configuredKey = if (prefs.panicVolumeKey == VeilPrefs.PANIC_VOLUME_UP) {
-            KeyEvent.KEYCODE_VOLUME_UP
-        } else {
-            KeyEvent.KEYCODE_VOLUME_DOWN
-        }
-        if (event.keyCode != configuredKey) {
-            panicTriggerSequence.reset()
-            return super.dispatchKeyEvent(event)
-        }
-
-        // Consume only the configured volume key while the opt-in sequence is active.
-        if (event.action == KeyEvent.ACTION_UP) return true
-        if (event.action != KeyEvent.ACTION_DOWN) return true
-        if (event.repeatCount > 0) return true
-
-        if (panicTriggerSequence.onPress(SystemClock.elapsedRealtime(), prefs.panicPressCount)) {
-            triggerPanicMode()
-        }
-        return true
-    }
 
     companion object {
         const val TAB_CHATS = 0
@@ -183,8 +146,6 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        panicTriggered = false
-        panicTriggerSequence.reset()
         NotificationUtils.ensureListenerBound(this)
         updateNotificationListenerStatus()
         refreshChatThreads()
@@ -344,21 +305,7 @@ class DashboardActivity : AppCompatActivity() {
         binding.rvContactRules.adapter = rulesAdapter
     }
 
-    private fun triggerPanicMode() {
-        panicTriggered = true
-        VeilPrefs.isSessionUnlocked = false
-        VeilPrefs.lockAllContacts()
-        Toast.makeText(this, "VEIL Panic Mode: protected chats locked", Toast.LENGTH_SHORT).show()
-        startActivity(Intent(this, AuthLockActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        })
-    }
-
     private fun setupActions() {
-        binding.btnPanicMode.setOnClickListener {
-            triggerPanicMode()
-        }
-
         binding.btnQuickAddContact.setOnClickListener {
             openAddContactChooser()
         }
@@ -472,50 +419,6 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         updateAppLockStatusUI()
-        setupPanicTriggerControls()
-    }
-
-    private fun setupPanicTriggerControls() {
-        binding.switchPanicVolumeEnabled.isChecked = prefs.isPanicVolumeTriggerEnabled
-        binding.radioPanicVolumeUp.isChecked = prefs.panicVolumeKey == VeilPrefs.PANIC_VOLUME_UP
-        binding.radioPanicVolumeDown.isChecked = prefs.panicVolumeKey != VeilPrefs.PANIC_VOLUME_UP
-        binding.radioPanicPressTwo.isChecked = prefs.panicPressCount == 2
-        binding.radioPanicPressThree.isChecked = prefs.panicPressCount == 3
-        updatePanicTriggerStatus()
-
-        binding.switchPanicVolumeEnabled.setOnCheckedChangeListener { _, enabled ->
-            prefs.isPanicVolumeTriggerEnabled = enabled
-            panicTriggerSequence.reset()
-            updatePanicTriggerStatus()
-        }
-        binding.radioGroupPanicVolumeKey.setOnCheckedChangeListener { _, checkedId ->
-            if (checkedId == R.id.radioPanicVolumeUp) {
-                prefs.panicVolumeKey = VeilPrefs.PANIC_VOLUME_UP
-            } else if (checkedId == R.id.radioPanicVolumeDown) {
-                prefs.panicVolumeKey = VeilPrefs.PANIC_VOLUME_DOWN
-            }
-            panicTriggerSequence.reset()
-            updatePanicTriggerStatus()
-        }
-        binding.radioGroupPanicPressCount.setOnCheckedChangeListener { _, checkedId ->
-            if (checkedId == R.id.radioPanicPressTwo) prefs.panicPressCount = 2
-            else if (checkedId == R.id.radioPanicPressThree) prefs.panicPressCount = 3
-            panicTriggerSequence.reset()
-            updatePanicTriggerStatus()
-        }
-    }
-
-    private fun updatePanicTriggerStatus() {
-        val enabled = prefs.isPanicVolumeTriggerEnabled
-        val keyLabel = if (prefs.panicVolumeKey == VeilPrefs.PANIC_VOLUME_UP) "Volume Up" else "Volume Down"
-        binding.tvPanicTriggerStatus.text = if (enabled) {
-            "Enabled · $keyLabel × ${prefs.panicPressCount} while the VEIL dashboard is open"
-        } else {
-            "Disabled · physical-button activation is off"
-        }
-        binding.tvPanicTriggerStatus.setTextColor(
-            ContextCompat.getColor(this, if (enabled) R.color.veil_accent_secure else R.color.veil_text_medium)
-        )
     }
 
     private fun updateDecoyThemeUI() {
