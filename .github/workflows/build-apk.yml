@@ -54,18 +54,26 @@ jobs:
           yes | "$SDKMANAGER" --licenses
           "$SDKMANAGER" --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
-      # The app's existing build.gradle.kts points debug signing at
-      # the repository-root debug.keystore. It is absent from the repository,
-      # so generate a disposable debug key on the runner and never upload it.
-      - name: Generate temporary debug signing key
+      # Reuse one debug signing key across builds so Android accepts APK
+      # updates over the same installed VEIL build instead of rejecting them
+      # due to a different, freshly generated certificate on every run.
+      - name: Restore persistent debug signing key
+        uses: actions/cache@v4
+        with:
+          path: debug.keystore
+          key: veil-debug-signing-key-v1
+
+      - name: Generate debug signing key if missing
         run: |
-          keytool -genkeypair -v \
-            -keystore debug.keystore \
-            -storepass android \
-            -alias androiddebugkey \
-            -keypass android \
-            -dname "CN=Android Debug,O=Android,C=US" \
-            -keyalg RSA -keysize 2048 -validity 10000
+          if [ ! -f debug.keystore ]; then
+            keytool -genkeypair -v \
+              -keystore debug.keystore \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -dname "CN=Android Debug,O=Android,C=US" \
+              -keyalg RSA -keysize 2048 -validity 10000
+          fi
 
       - name: Run unit tests
         run: gradle --no-daemon --stacktrace :app:testDebugUnitTest
