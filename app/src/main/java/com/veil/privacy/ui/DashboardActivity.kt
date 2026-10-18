@@ -60,10 +60,15 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var rulesAdapter: ProtectionRuleAdapter
 
     private var currentTab: Int = TAB_CHATS
+    private val dashboardStatePrefs by lazy {
+        getSharedPreferences("veil_privacy_prefs", MODE_PRIVATE)
+    }
+    private var notificationsLastViewedAt: Long = 0L
 
     // Android only delivers these key events while VEIL is foreground.
 
     companion object {
+        private const val KEY_NOTIFICATIONS_LAST_VIEWED_AT = "dashboard_notifications_last_viewed_at"
         const val TAB_CHATS = 0
         const val TAB_NOTIFICATIONS = 1
         const val TAB_CONTACTS = 2
@@ -116,6 +121,7 @@ class DashboardActivity : AppCompatActivity() {
         prefs = VeilPrefs.getInstance(this)
         database = VeilDatabase.getInstance(this)
 
+        notificationsLastViewedAt = dashboardStatePrefs.getLong(KEY_NOTIFICATIONS_LAST_VIEWED_AT, 0L)
         setupTabs()
         setupRecyclerViews()
         setupActions()
@@ -175,13 +181,10 @@ class DashboardActivity : AppCompatActivity() {
         }
         binding.tabNotifications.setOnClickListener { switchTab(TAB_NOTIFICATIONS) }
         binding.tabContacts.setOnClickListener { switchTab(TAB_CONTACTS) }
-        // Keep the existing Settings destination reachable without adding a fourth
-        // item to the requested three-destination floating navigation.
-        binding.tabContacts.setOnLongClickListener {
-            switchTab(TAB_SETTINGS)
-            true
-        }
         binding.btnNotificationBell.setOnClickListener { switchTab(TAB_NOTIFICATIONS) }
+        binding.btnSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
         if (VeilPrefs.isSessionUnlocked) {
             switchTab(TAB_CHATS)
         } else {
@@ -191,6 +194,14 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun switchTab(tab: Int) {
         currentTab = tab
+        if (tab == TAB_NOTIFICATIONS) {
+            // Mark the existing inbox as viewed; this does not delete stored events.
+            notificationsLastViewedAt = System.currentTimeMillis()
+            dashboardStatePrefs.edit()
+                .putLong(KEY_NOTIFICATIONS_LAST_VIEWED_AT, notificationsLastViewedAt)
+                .apply()
+            binding.tvUnreadNotificationCount.visibility = View.GONE
+        }
 
         binding.viewTabChats.visibility = if (tab == TAB_CHATS) View.VISIBLE else View.GONE
         binding.viewTabNotifications.visibility = if (tab == TAB_NOTIFICATIONS) View.VISIBLE else View.GONE
@@ -623,11 +634,17 @@ class DashboardActivity : AppCompatActivity() {
 
                 // Tab 2 Notifications Log
                 notificationsAdapter.submitList(events)
-                val latestNotification = events.maxByOrNull { it.timestamp }
-                // Keep the header badge tied to the current event stream, not sample data.
-                val notificationCount = events.size
+                // Derive unread state from actual stored events and persisted last-viewed time.
+                // The current ProtectedEvent model has no per-event read flag; opening the
+                // Notifications destination marks the inbox viewed without altering the vault.
+                val notificationCount = events.count { it.timestamp > notificationsLastViewedAt }
                 binding.tvUnreadNotificationCount.visibility = if (notificationCount > 0) View.VISIBLE else View.GONE
                 binding.tvUnreadNotificationCount.text = if (notificationCount > 99) "99+" else notificationCount.toString()
+                binding.btnNotificationBell.contentDescription = if (notificationCount > 0) {
+                    "Notifications, $notificationCount unread"
+                } else {
+                    "Notifications"
+                }
                 binding.layoutEmptyNotifications.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
 
                 // Tab 1 Protected Chats Threads
