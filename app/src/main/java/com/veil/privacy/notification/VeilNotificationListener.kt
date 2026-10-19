@@ -392,7 +392,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
         // 5. Immediately post the replacement VEIL notification containing configured privacy disguise
         notificationManager.postRuleDecoyNotification(eventWithId, matchedRule)
-        emitDiagnostic("POST", "Replacement alert posted: '$finalDecoySender: $finalDecoyMessage'")
+        emitDiagnostic("POST", "Privacy-safe replacement alert posted")
     }
 
     override suspend fun applyPrivacyTransformation(
