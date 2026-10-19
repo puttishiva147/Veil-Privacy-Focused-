@@ -115,7 +115,9 @@ object NotificationReplyRegistry {
 
     fun getLiveCallAction(contactName: String, sourcePackage: String? = null): LiveCallAction? {
         val normalized = if (sourcePackage == null) normalize(contactName) else normalize(contactName, sourcePackage)
-        val call = liveCallsByContact[normalized] ?: return null
+        val call = liveCallsByContact[normalized]
+            ?: (if (sourcePackage == null) liveCallsByContact.values.filter { it.contactName.equals(contactName, ignoreCase = true) }.maxByOrNull { it.capturedAt } else null)
+            ?: return null
         // Call actions expire after 5 minutes
         if (System.currentTimeMillis() - call.capturedAt > 5 * 60 * 1000L) {
             liveCallsByContact.remove(normalized)
@@ -158,7 +160,7 @@ object NotificationReplyRegistry {
             ?: return false
         // Actions older than 2 hours are discarded to avoid stale PendingIntents
         if (System.currentTimeMillis() - action.capturedAt > 2 * 3600 * 1000L) {
-            liveActionsByContact.remove(normalized)
+            liveActionsByContact.remove(normalize(action.contactName, action.sourcePackage))
             keyToContactMap.remove(action.notificationKey)
             return false
         }
