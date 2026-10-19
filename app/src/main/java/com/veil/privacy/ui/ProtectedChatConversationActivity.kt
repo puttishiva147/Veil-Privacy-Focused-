@@ -177,7 +177,10 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
+        val appLabel = com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)
         binding.tvChatContactName.text = contactName
+        binding.btnOpenWhatsApp.text = "Open $appLabel"
+        binding.btnWhatsAppCall.text = "Open $appLabel"
 
         binding.btnBack.setOnClickListener {
             finish()
@@ -256,7 +259,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall != null && (liveCall.answerIntent != null || liveCall.declineIntent != null)) {
             binding.cardLiveCallBanner.visibility = View.VISIBLE
-            binding.tvLiveCallTitle.text = "Incoming WhatsApp Call from $contactName"
+            binding.tvLiveCallTitle.text = "Incoming ${com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)} call from $contactName"
         } else {
             binding.cardLiveCallBanner.visibility = View.GONE
         }
@@ -268,7 +271,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             try {
                 liveCall.answerIntent.send()
                 NotificationReplyRegistry.removeCallByKey(liveCall.notificationKey)
-                Toast.makeText(this, "Answer action sent to WhatsApp; call state is not confirmed by VEIL", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Answer action sent to ${com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)}; call state is not confirmed by VEIL", Toast.LENGTH_LONG).show()
                 binding.cardLiveCallBanner.visibility = View.GONE
             } catch (_: Exception) {
                 Toast.makeText(this, "Could not answer from this notification. Open WhatsApp to check the call.", Toast.LENGTH_LONG).show()
@@ -473,14 +476,17 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
                 type = mimeType
                 putExtra(Intent.EXTRA_STREAM, imageUri)
                 clipData = android.content.ClipData.newUri(contentResolver, "VEIL media", imageUri)
-                setPackage("com.whatsapp")
+                setPackage(sourcePackage)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            startActivity(Intent.createChooser(shareIntent, "Share media to WhatsApp"))
+            startActivity(Intent.createChooser(
+                shareIntent,
+                "Share media to ${com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)}"
+            ))
         } catch (_: android.content.ActivityNotFoundException) {
-            Toast.makeText(this, "WhatsApp is not installed or cannot accept this media", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "${com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)} is not installed or cannot accept this media", Toast.LENGTH_LONG).show()
         } catch (_: Exception) {
-            Toast.makeText(this, "Could not share this media with WhatsApp", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Could not share this media with ${com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)}", Toast.LENGTH_LONG).show()
         }
     }
 
