@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b10">
+  <meta name="description" content="VEIL — Variable Event Identity Layer. Learn about VEIL and download the official Android app.">
+  <title>VEIL — Your identity. Your control.</title>
+  <style>
+    :root{color-scheme:dark;--bg:#090b10;--panel:#10141c;--text:#f4f6fb;--muted:#9ca6b8;--line:#242b38;--accent:#b8c7ff;--accent-ink:#10172a}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:radial-gradient(ellipse at 50% -20%,#202944 0,transparent 45%),var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    a{color:inherit}
+    .wrap{width:min(100% - 40px,920px);margin-inline:auto}
+    header{display:flex;align-items:center;justify-content:space-between;padding:22px 0;border-bottom:1px solid var(--line)}
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:750;letter-spacing:.14em}
+    .brand img{width:32px;height:32px;object-fit:contain;border-radius:9px}
+    nav a{color:var(--muted);text-decoration:none;font-size:.92rem;margin-left:22px}
+    nav a:hover,.text-link:hover{color:var(--text)}
+    main{text-align:center}
+    .hero{padding:86px 0 68px}
+    .logo{width:94px;height:94px;object-fit:contain;border-radius:24px;margin-bottom:20px;box-shadow:0 12px 48px #0006}
+    .eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.19em;font-size:.76rem;font-weight:750}
+    h1{font-size:clamp(2.8rem,9vw,5.4rem);line-height:1.04;letter-spacing:-.065em;margin:12px 0}
+    .tagline{font-size:clamp(1.1rem,3vw,1.45rem);color:#d9deea;margin:0 0 14px}
+    .intro{max-width:590px;margin:0 auto;color:var(--muted)}
+    .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:30px}
+    .button{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 22px;border-radius:12px;text-decoration:none;font-weight:750;transition:transform .18s ease,background .18s ease}
+    .button:hover{transform:translateY(-2px)}
+    .primary{background:var(--accent);color:var(--accent-ink)}
+    .secondary{border:1px solid #343c4b;background:#11151d}
+    .hint{font-size:.83rem;color:var(--muted);margin-top:14px}
+    section{padding:34px 0 62px;scroll-margin-top:24px}
+    .section-card{max-width:690px;margin:0 auto;padding:28px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#121722,#0d1017);text-align:left}
+    h2{font-size:1.55rem;letter-spacing:-.025em;margin:0 0 10px}
+    .section-card p{color:var(--muted);margin:0}
+    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+    .feature{padding:16px;border:1px solid var(--line);border-radius:14px;background:#0b0e14}
+    .feature strong{display:block;font-size:.95rem;margin-bottom:4px}
+    .feature span{display:block;color:var(--muted);font-size:.85rem;line-height:1.5}
+    footer{border-top:1px solid var(--line);padding:24px 0 32px;color:var(--muted);font-size:.86rem}
+    .foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .text-link{color:#d7deed;text-decoration:none}
+    @media(max-width:600px){.wrap{width:min(100% - 28px,920px)}header{padding:16px 0}.brand{letter-spacing:.1em}nav a{margin-left:12px;font-size:.84rem}.hero{padding:64px 0 48px}.features{grid-template-columns:1fr}.section-card{padding:22px}.foot{flex-direction:column}.logo{width:82px;height:82px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button{transition:none}.button:hover{transform:none}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="brand" href="#" aria-label="VEIL home">
+        <img src="https://raw.githubusercontent.com/puttishiva147/Veil-Privacy-Focused-/main/app/src/main/res/drawable/veil_official_logo.jpg" alt="">
+        <span>VEIL</span>
+      </a>
+      <nav aria-label="Main navigation"><a href="#about">About</a><a href="#download">Download</a></nav>
+    </header>
+    <main>
+      <div class="hero">
+        <img class="logo" src="https://raw.githubusercontent.com/puttishiva147/Veil-Privacy-Focused-/main/app/src/main/res/drawable/veil_official_logo.jpg" alt="VEIL app logo">
+        <div class="eyebrow">Variable Event Identity Layer</div>
+        <h1>VEIL</h1>
+        <p class="tagline">Your identity. Your control.</p>
+        <p class="intro">A privacy-focused Android utility that helps you manage selected-contact protection rules and app notification events from one place.</p>
+        <div class="actions">
+          <a class="button primary" href="https://github.com/puttishiva147/Veil-Privacy-Focused-/releases" target="_blank" rel="noopener noreferrer">Download for Android ↗</a>
+          <a class="button secondary" href="#about">Discover VEIL</a>
+        </div>
+        <p class="hint">Official downloads are hosted on GitHub Releases.</p>
+      </div>
+      <section id="about">
+        <div class="section-card">
+          <h2>About VEIL</h2>
+          <p>VEIL is designed to give you a focused place to manage selected-contact protection and notification-related events on your Android device. Its features depend on Android permissions and device settings that you choose to enable.</p>
+          <div class="features">
+            <div class="feature"><strong>Selected contacts</strong><span>Configure protection rules for contacts you choose.</span></div>
+            <div class="feature"><strong>Private event view</strong><span>Review app-managed notification events in a dedicated interface.</span></div>
+            <div class="feature"><strong>Device controls</strong><span>Access security settings and supported biometric authentication.</span></div>
+          </div>
+        </div>
+      </section>
+      <section id="download">
+        <div class="section-card">
+          <h2>Get VEIL for Android</h2>
+          <p>Download VEIL only from the official repository's Releases page. Choose the APK attached to the latest published release, then follow Android's installation prompts.</p>
+          <div class="actions" style="justify-content:flex-start">
+            <a class="button primary" href="https://github.com/puttishiva147/Veil-Privacy-Focused-/releases" target="_blank" rel="noopener noreferrer">Open official releases ↗</a>
+            <a class="button secondary" href="https://github.com/puttishiva147/Veil-Privacy-Focused-" target="_blank" rel="noopener noreferrer">Source code ↗</a>
+          </div>
+          <p class="hint">Android 8.0 or newer. Only install APKs from a release you trust.</p>
+        </div>
+      </section>
+    </main>
+    <footer><div class="foot"><span>© <span id="year">2026</span> VEIL</span><span><a class="text-link" href="https://github.com/puttishiva147/Veil-Privacy-Focused-">GitHub repository</a> · <a class="text-link" href="https://github.com/puttishiva147/Veil-Privacy-Focused-/releases">Releases</a></span></div></footer>
+  </div>
+</body>
+</html>
