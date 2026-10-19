@@ -300,14 +300,11 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
         // Stable event identification and deduplication: prevent duplicate notification events
         val isDuplicate = withContext(Dispatchers.IO) {
-            val hasKey = !parsed.notificationKey.isNullOrBlank() &&
+            // Notification keys identify an Android notification update/repost. Do not
+            // deduplicate on message text: two legitimate consecutive messages can have
+            // identical content (e.g. "OK") and must both appear in VEIL.
+            !parsed.notificationKey.isNullOrBlank() &&
                 database.protectedEventDao().hasEventWithNotificationKey(parsed.notificationKey) > 0
-            val hasRecentContent = database.protectedEventDao().isRecentDuplicate(
-                conversationId = targetConversation,
-                realMessage = parsed.message,
-                minTimestamp = parsed.timestamp - 10000L
-            ) > 0
-            hasKey || hasRecentContent
         }
         if (isDuplicate) {
             // Never include notification keys, contact names, or message-derived values
