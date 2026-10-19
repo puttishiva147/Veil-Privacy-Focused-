@@ -272,7 +272,6 @@ class DashboardActivity : AppCompatActivity() {
                                     putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, thread.contactName)
                                     putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
                             putExtra(ProtectedChatConversationActivity.EXTRA_CONVERSATION_ID, thread.conversationId)
-                                    putExtra(ProtectedChatConversationActivity.EXTRA_CONVERSATION_ID, thread.conversationId)
                                 }
                                 startActivity(intent)
                             }
