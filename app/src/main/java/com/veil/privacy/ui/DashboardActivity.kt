@@ -692,9 +692,14 @@ class DashboardActivity : AppCompatActivity() {
                 }
                 binding.layoutEmptyNotifications.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
 
-                // Tab 1 Protected Chats Threads: keep the active app section isolated.
+                // Tab 1 Protected Chats Threads: only show rules assigned to this app.
+                val appRules = rules.filter {
+                    com.veil.privacy.model.ProtectionAppScope.matches(
+                        this@DashboardActivity, it.contactName, selectedProtectedApp
+                    )
+                }
                 val threads = (if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
-                    rules.map { rule ->
+                    appRules.map { rule ->
                         val sourceEvents = events.filter {
                             it.sourcePackage == selectedProtectedApp &&
                                 it.conversationId == rule.contactName.lowercase().trim()
@@ -717,7 +722,7 @@ class DashboardActivity : AppCompatActivity() {
                         .groupBy { it.conversationId }
                         .mapNotNull { (conversationId, conversationEvents) ->
                             val latest = conversationEvents.maxByOrNull { it.timestamp } ?: return@mapNotNull null
-                            val displayName = rules.firstOrNull { it.contactName.lowercase().trim() == conversationId }?.contactName
+                            val displayName = appRules.firstOrNull { it.contactName.lowercase().trim() == conversationId }?.contactName
                                 ?: latest.realSender.ifBlank { conversationId }
                             ProtectedChatThread(
                                 contactName = displayName,
@@ -742,8 +747,13 @@ class DashboardActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val rules = database.protectionRuleDao().getAllRulesSync()
             val events = database.protectedEventDao().getAllSync()
+            val appRules = rules.filter {
+                com.veil.privacy.model.ProtectionAppScope.matches(
+                    this@DashboardActivity, it.contactName, selectedProtectedApp
+                )
+            }
             val threads = (if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
-                rules.map { rule ->
+                appRules.map { rule ->
                     val sourceEvents = events.filter {
                         it.sourcePackage == selectedProtectedApp &&
                             it.conversationId == rule.contactName.lowercase().trim()
