@@ -278,13 +278,23 @@ class RuleEditActivity : AppCompatActivity() {
     }
 
     private fun showManualEntryDialog(initialName: String = "") {
+        val isWhatsApp = selectedProtectionPackage == ProtectionAppScope.WHATSAPP
+        val targetHint = when (selectedProtectionPackage) {
+            ProtectionAppScope.INSTAGRAM -> "Exact Instagram username *"
+            ProtectionAppScope.TELEGRAM -> "Telegram username or chat name *"
+            else -> "WhatsApp Contact or Chat Name *"
+        }
+        val phoneHint = if (isWhatsApp) "Phone Number (Optional - High Confidence)" else "Not used for this app"
         VeilDialogs.showQuickProtectBottomSheet(
             activity = this,
             initialName = initialName,
+            targetNameHint = targetHint,
+            targetPhoneHint = phoneHint,
+            showPhoneField = isWhatsApp,
             onConfirmed = { name, phone, decoyIdentity, decoyMessage, pin ->
                 setContactTarget(
                     name = name,
-                    phone = phone,
+                    phone = if (isWhatsApp) phone else "",
                     contactId = "",
                     source = ProtectionRule.SOURCE_MANUAL
                 )
@@ -323,6 +333,7 @@ class RuleEditActivity : AppCompatActivity() {
                     source = rule.source
                 )
                 selectedProtectionPackage = ProtectionAppScope.get(this@RuleEditActivity, rule.contactName)
+                setupUI()
                 updateProtectionPackageButtons()
                 binding.etDecoyIdentity.setText(rule.decoyIdentity)
                 binding.etDecoyMessage.setText(rule.decoyMessage)
