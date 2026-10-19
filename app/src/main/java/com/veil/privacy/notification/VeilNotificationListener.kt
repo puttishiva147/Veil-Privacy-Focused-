@@ -249,13 +249,20 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             rules
         }
 
-        if (allRules.isEmpty() && !preferences.isProtectAllSenders) {
+        // Never let an Instagram/Telegram rule accidentally match a WhatsApp (or other app) alert.
+        val appScopedRules = allRules.filter {
+            com.veil.privacy.model.ProtectionAppScope.matches(
+                applicationContext, it.contactName, parsed.packageName
+            )
+        }
+
+        if (appScopedRules.isEmpty() && !preferences.isProtectAllSenders) {
             emitDiagnostic("RULE", "No protection rules configured. Original alert left untouched.")
             return
         }
 
         // High-confidence matching evaluation
-        var matchedRule = ruleMatchingEngine.evaluateMatch(sbn, parsed, allRules)
+        var matchedRule = ruleMatchingEngine.evaluateMatch(sbn, parsed, appScopedRules)
 
         if (matchedRule == null && preferences.isProtectAllSenders) {
             matchedRule = ProtectionRule(
