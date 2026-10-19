@@ -120,7 +120,7 @@ object NotificationReplyRegistry {
             ?: return null
         // Call actions expire after 5 minutes
         if (System.currentTimeMillis() - call.capturedAt > 5 * 60 * 1000L) {
-            liveCallsByContact.remove(normalized)
+            liveCallsByContact.remove(normalize(call.contactName, call.sourcePackage))
             return null
         }
         return call
