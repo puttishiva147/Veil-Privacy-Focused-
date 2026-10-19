@@ -156,8 +156,8 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         serviceScope.launch {
             try {
                 processIncomingProtectedNotification(sbn, parsed, replyActionPair)
-            } catch (_: Exception) {
-                // Defensive guard guarantees the listener service never crashes
+            } catch (e: Exception) {
+                emitDiagnostic("PROCESS", "Notification processing failed (${e.javaClass.simpleName})", false)
             }
         }
     }
