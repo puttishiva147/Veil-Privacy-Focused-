@@ -665,7 +665,7 @@ class DashboardActivity : AppCompatActivity() {
                 binding.layoutEmptyNotifications.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
 
                 // Tab 1 Protected Chats Threads: keep the active app section isolated.
-                val threads = if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
+                val threads = (if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
                     rules.map { rule ->
                         val sourceEvents = events.filter {
                             it.sourcePackage == selectedProtectedApp &&
@@ -702,7 +702,7 @@ class DashboardActivity : AppCompatActivity() {
                                 conversationId = conversationId
                             )
                         }
-                }.sortedByDescending { it.lastTimestamp }
+                }).sortedByDescending { it.lastTimestamp }
                 chatThreadsAdapter.submitList(threads)
                 binding.tvChatsHeaderCount.text = "${threads.size} ${com.veil.privacy.model.SupportedApp.getAppDisplayName(selectedProtectedApp).uppercase()} PROTECTED CONVERSATIONS"
                 binding.layoutEmptyChats.visibility = if (threads.isEmpty()) View.VISIBLE else View.GONE
