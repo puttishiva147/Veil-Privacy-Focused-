@@ -94,6 +94,28 @@ class RuleEditActivity : AppCompatActivity() {
     private fun setupUI() {
         binding.toolbarRuleEdit.setNavigationOnClickListener { finish() }
 
+        val isWhatsApp = selectedProtectionPackage == ProtectionAppScope.WHATSAPP
+        binding.btnScopeWhatsApp.visibility = View.GONE
+        binding.btnScopeInstagram.visibility = View.GONE
+        binding.btnScopeTelegram.visibility = View.GONE
+        // Source app is chosen by the dashboard app switcher; do not show a second selector.
+        binding.btnPickContact.visibility = if (isWhatsApp) View.VISIBLE else View.GONE
+        binding.btnManualContact.text = when (selectedProtectionPackage) {
+            ProtectionAppScope.INSTAGRAM -> "Enter Instagram username"
+            ProtectionAppScope.TELEGRAM -> "Enter Telegram username / chat"
+            else -> "Enter phone number manually"
+        }
+        binding.tvSelectedContactName.text = when (selectedProtectionPackage) {
+            ProtectionAppScope.INSTAGRAM -> "No Instagram username selected"
+            ProtectionAppScope.TELEGRAM -> "No Telegram contact selected"
+            else -> "No contact selected"
+        }
+        binding.tvSelectedContactPhone.text = when (selectedProtectionPackage) {
+            ProtectionAppScope.INSTAGRAM -> "Use the exact Instagram username"
+            ProtectionAppScope.TELEGRAM -> "Use the Telegram username or chat name"
+            else -> "Select a contact or enter a phone number"
+        }
+
         if (editingRuleId > 0) {
             binding.toolbarRuleEdit.title = "Edit Protection Rule"
             binding.btnDeleteRule.visibility = View.VISIBLE
