@@ -714,7 +714,7 @@ class DashboardActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val rules = database.protectionRuleDao().getAllRulesSync()
             val events = database.protectedEventDao().getAllSync()
-            val threads = if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
+            val threads = (if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
                 rules.map { rule ->
                     val sourceEvents = events.filter {
                         it.sourcePackage == selectedProtectedApp &&
@@ -751,7 +751,7 @@ class DashboardActivity : AppCompatActivity() {
                             conversationId = conversationId
                         )
                     }
-            }.sortedByDescending { it.lastTimestamp }
+            }).sortedByDescending { it.lastTimestamp }
 
             withContext(Dispatchers.Main) {
                 chatThreadsAdapter.submitList(threads)
