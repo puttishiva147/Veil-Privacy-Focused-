@@ -30,6 +30,7 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
         const val EXTRA_CONTACT_NAME = "extra_contact_name"
         const val EXTRA_CONVERSATION_ID = "extra_conversation_id"
         const val EXTRA_NOTIFICATION_ID = "extra_notification_id"
+        const val EXTRA_SOURCE_PACKAGE = "extra_source_package"
         const val KEY_TEXT_REPLY = "key_text_reply"
         private const val TAG = "VeilReplyReceiver"
     }
@@ -45,9 +46,11 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
         val conversationId = intent.getStringExtra(EXTRA_CONVERSATION_ID)
             ?.takeIf { it.isNotBlank() } ?: contactName.lowercase().trim()
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
+        val sourcePackage = intent.getStringExtra(EXTRA_SOURCE_PACKAGE)
+            ?.takeIf { it.isNotBlank() } ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
 
         // This confirms only that Android accepted the PendingIntent dispatch, not delivery.
-        val dispatched = NotificationReplyRegistry.sendReply(context, contactName, replyText)
+        val dispatched = NotificationReplyRegistry.sendReply(context, contactName, replyText, sourcePackage)
         val pendingResult = goAsync()
         val appContext = context.applicationContext
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -61,6 +64,7 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
                     isOutgoing = true,
                     replyStatus = if (dispatched) "DISPATCHED_NOT_CONFIRMED" else "FAILED_DISPATCH",
                     conversationId = conversationId,
+                    sourcePackage = sourcePackage,
                     timestamp = System.currentTimeMillis()
                 )
                 VeilDatabase.getInstance(appContext).protectedEventDao().insert(outgoingEvent)
