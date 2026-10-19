@@ -2,6 +2,10 @@ package com.veil.privacy.ui
 
 import android.Manifest
 import android.app.Activity
+import android.app.Dialog
+import android.view.Gravity
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -746,17 +750,60 @@ class DashboardActivity : AppCompatActivity() {
             com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM,
             com.veil.privacy.model.SupportedApp.PKG_TELEGRAM
         )
-        val labels = packages.map { com.veil.privacy.model.SupportedApp.getAppDisplayName(it) }.toTypedArray()
-        val selected = packages.indexOf(selectedProtectedApp).coerceAtLeast(0)
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Protected app")
-            .setSingleChoiceItems(labels, selected) { dialog, which ->
-                selectedProtectedApp = packages[which]
-                refreshChatThreads()
-                dialog.dismiss()
+        val panel = Dialog(this)
+        val density = resources.displayMetrics.density
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((20 * density).toInt(), (32 * density).toInt(), (16 * density).toInt(), (20 * density).toInt())
+            setBackgroundColor(ContextCompat.getColor(this@DashboardActivity, R.color.veil_surface))
+        }
+        val title = TextView(this).apply {
+            text = "PROTECTED APPS"
+            textSize = 13f
+            letterSpacing = 0.12f
+            setTextColor(ContextCompat.getColor(this@DashboardActivity, R.color.veil_text_medium))
+            setPadding(0, 0, 0, (18 * density).toInt())
+        }
+        container.addView(title)
+        packages.forEach { sourcePackage ->
+            val selected = sourcePackage == selectedProtectedApp
+            val item = TextView(this).apply {
+                text = (if (selected) "●  " else "○  ") +
+                    com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)
+                textSize = 16f
+                setTextColor(ContextCompat.getColor(this@DashboardActivity,
+                    if (selected) R.color.veil_text_high else R.color.veil_text_medium))
+                setPadding((12 * density).toInt(), (16 * density).toInt(), (8 * density).toInt(), (16 * density).toInt())
+                isClickable = true
+                isFocusable = true
+                setOnClickListener {
+                    selectedProtectedApp = sourcePackage
+                    refreshChatThreads()
+                    panel.dismiss()
+                }
             }
-            .setNegativeButton("Close", null)
-            .show()
+            container.addView(item, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+            ))
+        }
+        val hint = TextView(this).apply {
+            text = "Swipe from the left edge to switch sections"
+            textSize = 12f
+            setTextColor(ContextCompat.getColor(this@DashboardActivity, R.color.veil_text_low))
+            setPadding((12 * density).toInt(), (24 * density).toInt(), (8 * density).toInt(), 0)
+        }
+        container.addView(hint)
+        panel.setContentView(container)
+        panel.window?.let { window ->
+            window.setBackgroundDrawableResource(android.R.color.transparent)
+            window.setLayout((300 * density).toInt(), android.view.ViewGroup.LayoutParams.MATCH_PARENT)
+            window.setGravity(Gravity.START)
+            window.setDimAmount(0.45f)
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        }
+        panel.show()
+        panel.window?.setLayout((300 * density).toInt(), android.view.ViewGroup.LayoutParams.MATCH_PARENT)
+        panel.window?.setGravity(Gravity.START)
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
