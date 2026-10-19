@@ -180,7 +180,9 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         val appLabel = com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)
         binding.tvChatContactName.text = contactName
         binding.btnOpenWhatsApp.text = "Open $appLabel"
-        binding.btnWhatsAppCall.text = "Open $appLabel"
+        val supportsWhatsAppCallShortcut = sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
+            sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS
+        binding.btnWhatsAppCall.visibility = if (supportsWhatsAppCallShortcut) View.VISIBLE else View.GONE
 
         binding.btnBack.setOnClickListener {
             finish()
