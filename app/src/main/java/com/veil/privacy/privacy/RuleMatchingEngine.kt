@@ -26,7 +26,7 @@ class RuleMatchingEngine {
     }
 
     /**
-     * Evaluates an incoming WhatsApp notification against active VEIL protection rules.
+     * Evaluates a supported-app notification against active VEIL protection rules.
      * Returns the matched [ProtectionRule] only if matching confidence is high, or null otherwise.
      */
     fun evaluateMatch(
@@ -60,7 +60,9 @@ class RuleMatchingEngine {
         val isGroup = isGroupConversation(extras)
 
         // Safety Guard 1: Ignore WhatsApp system/service notifications
-        if (isWhatsAppServiceNotification(parsed.sender, parsed.message)) {
+        if ((parsed.packageName == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
+                parsed.packageName == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS) &&
+            isWhatsAppServiceNotification(parsed.sender, parsed.message)) {
             return MatchResult.LowConfidenceRejected("WhatsApp system service alert")
         }
 
