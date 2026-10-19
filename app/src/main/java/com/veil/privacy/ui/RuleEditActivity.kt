@@ -32,6 +32,7 @@ class RuleEditActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_RULE_ID = "extra_rule_id"
+        const val EXTRA_PROTECTION_PACKAGE = "extra_protection_package"
     }
 
     private lateinit var binding: ActivityRuleEditBinding
@@ -73,6 +74,9 @@ class RuleEditActivity : AppCompatActivity() {
 
         db = VeilDatabase.getInstance(this)
         editingRuleId = intent.getLongExtra(EXTRA_RULE_ID, 0)
+        selectedProtectionPackage = intent.getStringExtra(EXTRA_PROTECTION_PACKAGE)
+            ?.takeIf { it == ProtectionAppScope.WHATSAPP || it == ProtectionAppScope.INSTAGRAM || it == ProtectionAppScope.TELEGRAM }
+            ?: ProtectionAppScope.WHATSAPP
 
         setupUI()
         setupListeners()
