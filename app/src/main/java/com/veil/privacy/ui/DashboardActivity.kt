@@ -222,12 +222,9 @@ class DashboardActivity : AppCompatActivity() {
         selectedProtectedApp = packageName
         dashboardStatePrefs.edit().putString("selected_protected_app", packageName).apply()
         updateProtectedAppSelector()
-        binding.fabAddProtectedChat.visibility =
-            if (currentTab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) View.VISIBLE else View.GONE
-        binding.fabAddInstagramProtection.visibility =
-            if (currentTab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM) View.VISIBLE else View.GONE
-        binding.fabAddTelegramProtection.visibility =
-            if (currentTab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_TELEGRAM) View.VISIBLE else View.GONE
+        binding.fabAddProtectedChat.visibility = if (currentTab == TAB_CHATS) View.VISIBLE else View.GONE
+        binding.fabAddInstagramProtection.visibility = View.GONE
+        binding.fabAddTelegramProtection.visibility = View.GONE
         refreshChatThreads()
     }
 
@@ -366,15 +363,9 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun setupActions() {
-        binding.fabAddProtectedChat.setOnClickListener {
-            openAddContactChooser(com.veil.privacy.model.SupportedApp.PKG_WHATSAPP)
-        }
-        binding.fabAddInstagramProtection.setOnClickListener {
-            openAddContactChooser(com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM)
-        }
-        binding.fabAddTelegramProtection.setOnClickListener {
-            openAddContactChooser(com.veil.privacy.model.SupportedApp.PKG_TELEGRAM)
-        }
+        binding.fabAddProtectedChat.setOnClickListener { openAddContactChooser(selectedProtectedApp) }
+        binding.fabAddInstagramProtection.setOnClickListener { openAddContactChooser(selectedProtectedApp) }
+        binding.fabAddTelegramProtection.setOnClickListener { openAddContactChooser(selectedProtectedApp) }
 
         binding.btnAddContactRuleTop.setOnClickListener { openRuleEditorForSelectedApp() }
         binding.btnEmptyAddContactRule.setOnClickListener { openRuleEditorForSelectedApp() }
@@ -751,6 +742,11 @@ class DashboardActivity : AppCompatActivity() {
                 chatThreadsAdapter.submitList(threads)
                 binding.tvChatsHeaderCount.text = "${threads.size} ${com.veil.privacy.model.SupportedApp.getAppDisplayName(selectedProtectedApp).uppercase()} PROTECTED CONVERSATIONS"
                 binding.layoutEmptyChats.visibility = if (threads.isEmpty()) View.VISIBLE else View.GONE
+                binding.tvEmptyChatsDescription.text = when (selectedProtectedApp) {
+                    com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM -> "Add an Instagram username to protect its Direct notifications."
+                    com.veil.privacy.model.SupportedApp.PKG_TELEGRAM -> "Add a Telegram username or chat to protect its notifications."
+                    else -> "Select a WhatsApp contact or enter their phone number to protect their notifications."
+                }
             }
         }
     }
