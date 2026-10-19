@@ -172,6 +172,7 @@ class VeilNotificationManager(private val context: Context) {
         val intent = Intent(context, ProtectedChatConversationActivity::class.java).apply {
             putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, event.realSender)
             putExtra(ProtectedChatConversationActivity.EXTRA_EVENT_ID, event.id)
+            putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, event.sourcePackage)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
 
@@ -223,11 +224,12 @@ class VeilNotificationManager(private val context: Context) {
             .setColor(context.getColor(R.color.veil_accent_secure))
 
         // Attach Android RemoteInput inline reply action if live WhatsApp reply token is active
-        if (!event.isCall && NotificationReplyRegistry.isReplyActionLive(event.realSender)) {
+        if (!event.isCall && NotificationReplyRegistry.isReplyActionLive(event.realSender, event.sourcePackage)) {
             val replyBroadcastIntent = Intent(context, VeilNotificationReplyReceiver::class.java).apply {
                 action = VeilNotificationReplyReceiver.ACTION_REPLY
                 putExtra(VeilNotificationReplyReceiver.EXTRA_CONTACT_NAME, event.realSender)
                 putExtra(VeilNotificationReplyReceiver.EXTRA_CONVERSATION_ID, event.conversationId)
+                putExtra(VeilNotificationReplyReceiver.EXTRA_SOURCE_PACKAGE, event.sourcePackage)
                 putExtra(VeilNotificationReplyReceiver.EXTRA_NOTIFICATION_ID, notificationId)
             }
             val replyPendingIntent = PendingIntent.getBroadcast(
