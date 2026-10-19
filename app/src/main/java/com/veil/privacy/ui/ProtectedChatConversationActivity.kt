@@ -46,6 +46,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private var contactName: String = ""
     private var conversationId: String = ""
+    private var sourcePackage: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
     private var contactPhoneNumber: String = ""
     private var isUnlockedForCurrentSession: Boolean = false
 
@@ -60,6 +61,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_CONTACT_NAME = "extra_contact_name"
         const val EXTRA_EVENT_ID = "extra_event_id"
+        const val EXTRA_SOURCE_PACKAGE = "extra_source_package"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,6 +73,8 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
         contactName = intent.getStringExtra(EXTRA_CONTACT_NAME)?.trim() ?: "Protected Contact"
         conversationId = contactName.lowercase().trim()
+        sourcePackage = intent.getStringExtra(EXTRA_SOURCE_PACKAGE)
+            ?.takeIf { it.isNotBlank() } ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
         database = VeilDatabase.getInstance(this)
 
         setupUI()
@@ -480,7 +484,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private fun observeConversation() {
         lifecycleScope.launch {
-            database.protectedEventDao().getMessagesForConversationFlow(conversationId)
+            database.protectedEventDao().getMessagesForSourceConversationFlow(conversationId, sourcePackage)
                 .collectLatest { events ->
                     chatAdapter.submitList(events) {
                         if (events.isNotEmpty()) {
