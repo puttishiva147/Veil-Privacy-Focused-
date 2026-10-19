@@ -41,6 +41,9 @@ interface ProtectedEventDao {
     @Query("DELETE FROM protected_events WHERE conversationId = :conversationId")
     fun deleteConversation(conversationId: String)
 
+    @Query("DELETE FROM protected_events WHERE conversationId = :conversationId AND sourcePackage = :sourcePackage")
+    fun deleteSourceConversation(conversationId: String, sourcePackage: String)
+
     @Query("DELETE FROM protected_events")
     fun deleteAll()
 
