@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import com.veil.privacy.R
 import com.veil.privacy.databinding.ActivityRuleEditBinding
 import com.veil.privacy.model.ProtectionRule
+import com.veil.privacy.model.ProtectionAppScope
 import com.veil.privacy.model.SelectedContact
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.util.ContactSelectionHelper
@@ -41,6 +42,7 @@ class RuleEditActivity : AppCompatActivity() {
     private var selectedContactName: String = ""
     private var selectedContactPhone: String = ""
     private var selectedSource: String = ProtectionRule.SOURCE_ANDROID_CONTACTS
+    private var selectedProtectionPackage: String = ProtectionAppScope.WHATSAPP
 
     // Contact Picker Launcher
     private val pickContactLauncher = registerForActivityResult(
@@ -110,6 +112,11 @@ class RuleEditActivity : AppCompatActivity() {
             showManualEntryDialog()
         }
 
+        binding.btnScopeWhatsApp.setOnClickListener { selectProtectionPackage(ProtectionAppScope.WHATSAPP) }
+        binding.btnScopeInstagram.setOnClickListener { selectProtectionPackage(ProtectionAppScope.INSTAGRAM) }
+        binding.btnScopeTelegram.setOnClickListener { selectProtectionPackage(ProtectionAppScope.TELEGRAM) }
+        updateProtectionPackageButtons()
+
         binding.switchCustomPinEnabled.setOnCheckedChangeListener { _, isChecked ->
             binding.tilContactLockPin.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
@@ -169,6 +176,28 @@ class RuleEditActivity : AppCompatActivity() {
 
         binding.btnDeleteRule.setOnClickListener {
             confirmDeleteRule()
+        }
+    }
+
+    private fun selectProtectionPackage(packageName: String) {
+        selectedProtectionPackage = packageName
+        updateProtectionPackageButtons()
+    }
+
+    private fun updateProtectionPackageButtons() {
+        val selectedColor = ContextCompat.getColor(this, R.color.veil_button_primary_bg)
+        val idleColor = ContextCompat.getColor(this, R.color.veil_surface)
+        val selectedText = ContextCompat.getColor(this, R.color.veil_button_primary_text)
+        val idleText = ContextCompat.getColor(this, R.color.veil_text_medium)
+        listOf(
+            binding.btnScopeWhatsApp to ProtectionAppScope.WHATSAPP,
+            binding.btnScopeInstagram to ProtectionAppScope.INSTAGRAM,
+            binding.btnScopeTelegram to ProtectionAppScope.TELEGRAM
+        ).forEach { (button, packageName) ->
+            val selected = selectedProtectionPackage == packageName
+            button.backgroundTintList = android.content.res.ColorStateList.valueOf(if (selected) selectedColor else idleColor)
+            button.setTextColor(if (selected) selectedText else idleText)
+            button.isSelected = selected
         }
     }
 
@@ -267,6 +296,8 @@ class RuleEditActivity : AppCompatActivity() {
                     contactId = rule.contactId,
                     source = rule.source
                 )
+                selectedProtectionPackage = ProtectionAppScope.get(this@RuleEditActivity, rule.contactName)
+                updateProtectionPackageButtons()
                 binding.etDecoyIdentity.setText(rule.decoyIdentity)
                 binding.etDecoyMessage.setText(rule.decoyMessage)
                 binding.switchRuleSound.isChecked = rule.soundEnabled
@@ -397,6 +428,7 @@ class RuleEditActivity : AppCompatActivity() {
                     db.protectedContactDao().insert(protectedModel)
                 }
 
+                ProtectionAppScope.set(this@RuleEditActivity, selectedContactName, selectedProtectionPackage)
                 Toast.makeText(
                     this@RuleEditActivity,
                     "Protection rule saved for ${rule.contactName}",
