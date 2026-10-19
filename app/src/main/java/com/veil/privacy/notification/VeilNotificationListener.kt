@@ -109,7 +109,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             return
         }
 
-        emitDiagnostic("DETECT", "Captured alert from ${com.veil.privacy.model.SupportedApp.getAppDisplayName(pkg)} ($pkg)")
+        emitDiagnostic("DETECT", "Captured supported-app notification")
 
         // 4. Parse incoming notification exposed by Android
         val parsed = notificationParser.parse(sbn, ownPackage, preferences.isProtectAnyApp)
@@ -118,7 +118,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             return
         }
 
-        emitDiagnostic("PARSE", "Parsed sender='${parsed.sender}', body='${parsed.message.take(30)}...'")
+        emitDiagnostic("PARSE", "Notification content parsed successfully")
 
         // 5. Capture live RemoteInput reply action if exposed by messaging app
         val replyActionPair = NotificationReplyRegistry.findReplyAction(sbn.notification)
@@ -142,22 +142,22 @@ class VeilNotificationListener : BaseNotificationListenerService() {
                 declineIntent = callActionsPair.second,
                 sourcePackage = pkg
             )
-            emitDiagnostic("CALL_ACTION", "Live call action captured for ${parsed.sender}")
+            emitDiagnostic("CALL_ACTION", "Live call action captured")
         }
 
         // 6. Capture for Sensor Learning if active
         if (preferences.isLearnModeActive) {
             preferences.lastLearnedSender = parsed.sender
             _learnedSenderFlow.tryEmit(parsed.sender)
-            emitDiagnostic("SENSOR", "Sender '${parsed.sender}' passed to Sensor Learning")
+            emitDiagnostic("SENSOR", "Sender passed to Sensor Learning")
         }
 
         // 7. Evaluate and process against configured VEIL rules
         serviceScope.launch {
             try {
                 processIncomingProtectedNotification(sbn, parsed, replyActionPair)
-            } catch (_: Exception) {
-                // Defensive guard guarantees the listener service never crashes
+            } catch (e: Exception) {
+                emitDiagnostic("PROCESS", "Notification processing failed (${e.javaClass.simpleName})", false)
             }
         }
     }
@@ -244,15 +244,15 @@ class VeilNotificationListener : BaseNotificationListenerService() {
                 decoyMessage = "Protected message",
                 isEnabled = true
             )
-            emitDiagnostic("RULE", "Protect All Senders active: Created auto-rule for '${parsed.sender}'")
+            emitDiagnostic("RULE", "Protect All Senders active: created automatic rule")
         }
 
         if (matchedRule == null) {
-            emitDiagnostic("RULE", "Sender '${parsed.sender}' did not match any protected contact. Undisguised.")
+            emitDiagnostic("RULE", "Notification did not match a protected contact. Undisguised.")
             return
         }
 
-        emitDiagnostic("RULE", "Matched rule for '${matchedRule.contactName}' -> Mode: ${matchedRule.disguiseMode}")
+        emitDiagnostic("RULE", "Matched a protection rule")
 
         // Call disguise toggle check
         if (parsed.isCall && !matchedRule.isCallDisguiseEnabled) {
@@ -274,26 +274,6 @@ class VeilNotificationListener : BaseNotificationListenerService() {
                 remoteInput = replyActionPair.second,
                 sourcePackage = sbn.packageName
             )
-        }
-
-        // 1. Dismiss original notification where Android permits
-        if (preferences.isHideOriginalEnabled) {
-            try {
-                sbn.key?.let { cancelNotification(it) }
-                // Also cancel associated group summary or member notifications
-                val groupKey = sbn.groupKey
-                if (!groupKey.isNullOrBlank()) {
-                    try {
-                        activeNotifications?.filter { it.groupKey == groupKey && it.packageName == sbn.packageName }?.forEach { gSbn ->
-                            cancelNotification(gSbn.key)
-                        }
-                    } catch (_: Exception) {}
-                }
-                emitDiagnostic("SUPPRESS", "Original notification cancelled from Android notification shade")
-            } catch (_: SecurityException) {
-                emitDiagnostic("SUPPRESS", "OEM restricted cancelNotification call", false)
-            } catch (_: Exception) {
-            }
         }
 
         // Stable event identification and deduplication: prevent duplicate notification events
@@ -373,6 +353,18 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             database.protectedEventDao().insert(protectedEvent)
         }
         val eventWithId = protectedEvent.copy(id = insertedId)
+
+        // Persist first; suppress only this matched notification, never unchecked grouped siblings.
+        if (preferences.isHideOriginalEnabled) {
+            try {
+                sbn.key?.let { cancelNotification(it) }
+                emitDiagnostic("SUPPRESS", "Requested suppression of the matched notification")
+            } catch (_: SecurityException) {
+                emitDiagnostic("SUPPRESS", "Android restricted notification suppression", false)
+            } catch (e: Exception) {
+                emitDiagnostic("SUPPRESS", "Notification suppression failed (${e.javaClass.simpleName})", false)
+            }
+        }
 
         // 4. Update interception counter
         preferences.incrementInterceptionsCount()
