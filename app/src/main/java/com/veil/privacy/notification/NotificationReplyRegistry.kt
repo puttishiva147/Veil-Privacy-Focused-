@@ -154,7 +154,7 @@ object NotificationReplyRegistry {
     fun isReplyActionLive(contactName: String, sourcePackage: String? = null): Boolean {
         val normalized = if (sourcePackage == null) normalize(contactName) else normalize(contactName, sourcePackage)
         val action = liveActionsByContact[normalized]
-            ?: if (sourcePackage == null) liveActionsByContact.values.filter { it.contactName.equals(contactName, ignoreCase = true) }.maxByOrNull { it.capturedAt } else null
+            ?: (if (sourcePackage == null) liveActionsByContact.values.filter { it.contactName.equals(contactName, ignoreCase = true) }.maxByOrNull { it.capturedAt } else null)
             ?: return false
         // Actions older than 2 hours are discarded to avoid stale PendingIntents
         if (System.currentTimeMillis() - action.capturedAt > 2 * 3600 * 1000L) {
