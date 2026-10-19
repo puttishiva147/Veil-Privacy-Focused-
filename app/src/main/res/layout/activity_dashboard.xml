@@ -235,6 +235,7 @@
                 android:id="@+id/protectedAppSelector"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 android:orientation="horizontal"
                 android:paddingHorizontal="12dp"
                 android:paddingTop="4dp"
@@ -309,7 +310,7 @@
                 android:layout_weight="1"
                 android:fillViewport="true"
                 android:clipToPadding="false"
-                android:paddingBottom="88dp"
+                android:paddingBottom="12dp"
                 android:visibility="gone">
 
                 <LinearLayout
@@ -346,7 +347,8 @@
                         android:layout_marginTop="8dp"
                         android:gravity="center"
                         android:lineSpacingExtra="3dp"
-                        android:text="Select WhatsApp contacts you want to protect. When they message you, VEIL disguises their notification and securely streams their conversation here with inline reply capability."
+                        android:id="@+id/tvEmptyChatsDescription"
+                        android:text="Select a WhatsApp contact or enter their phone number to protect their notifications."
                         android:textColor="@color/veil_text_medium"
                         android:textSize="12.5sp" />
 
