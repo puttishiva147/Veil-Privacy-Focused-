@@ -4,6 +4,12 @@
 
 # VEIL — Variable Event Identity Layer
 
+<p align="center">
+
+  **[🌐 Visit the official VEIL website](https://puttishiva147.github.io/Veil-Privacy-Focused-/)** · **[Download the Android APK](https://github.com/puttishiva147/Veil-Privacy-Focused-/releases)**
+
+</p>
+
 VEIL is an Android privacy utility designed to help users manage how selected app notifications are handled on their device. The project includes protected-contact rules, notification-listener integration, a private inbox/event interface, biometric support, and a protection service.
 
 > **Current source version:** **4.5.2** (version code **36**), from `app/build.gradle.kts`. Official signed APK releases are published through the GitHub Releases page linked below after the release workflow succeeds.
