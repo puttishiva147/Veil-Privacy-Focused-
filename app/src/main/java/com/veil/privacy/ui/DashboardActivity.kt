@@ -6,6 +6,7 @@ import android.app.Dialog
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.ImageView
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -783,13 +784,10 @@ class DashboardActivity : AppCompatActivity() {
         container.addView(title)
         packages.forEach { sourcePackage ->
             val selected = sourcePackage == selectedProtectedApp
-            val item = TextView(this).apply {
-                text = (if (selected) "●  " else "○  ") +
-                    com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)
-                textSize = 16f
-                setTextColor(ContextCompat.getColor(this@DashboardActivity,
-                    if (selected) R.color.veil_text_high else R.color.veil_text_medium))
-                setPadding((12 * density).toInt(), (16 * density).toInt(), (8 * density).toInt(), (16 * density).toInt())
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding((12 * density).toInt(), (12 * density).toInt(), (8 * density).toInt(), (12 * density).toInt())
                 isClickable = true
                 isFocusable = true
                 setOnClickListener {
@@ -798,7 +796,29 @@ class DashboardActivity : AppCompatActivity() {
                     panel.dismiss()
                 }
             }
-            container.addView(item, LinearLayout.LayoutParams(
+            val appIcon = ImageView(this).apply {
+                layoutParams = LinearLayout.LayoutParams((32 * density).toInt(), (32 * density).toInt())
+                scaleType = ImageView.ScaleType.FIT_CENTER
+                setImageDrawable(
+                    try {
+                        packageManager.getApplicationIcon(sourcePackage)
+                    } catch (_: android.content.pm.PackageManager.NameNotFoundException) {
+                        ContextCompat.getDrawable(this@DashboardActivity, R.drawable.veil_official_logo)
+                    }
+                )
+                contentDescription = com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)
+            }
+            val label = TextView(this).apply {
+                text = (if (selected) "●  " else "○  ") +
+                    com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)
+                textSize = 16f
+                setTextColor(ContextCompat.getColor(this@DashboardActivity,
+                    if (selected) R.color.veil_text_high else R.color.veil_text_medium))
+                setPadding((12 * density).toInt(), 0, 0, 0)
+            }
+            row.addView(appIcon)
+            row.addView(label, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            container.addView(row, LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
             ))
         }
