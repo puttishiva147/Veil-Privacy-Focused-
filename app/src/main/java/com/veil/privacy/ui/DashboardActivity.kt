@@ -199,11 +199,39 @@ class DashboardActivity : AppCompatActivity() {
         binding.btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+
+        // Visible in-app selectors. These switch VEIL's protected inbox only; they never
+        // launch WhatsApp, Instagram, or Telegram.
+        selectedProtectedApp = dashboardStatePrefs.getString(
+            "selected_protected_app",
+            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+        ) ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+        binding.btnProtectedWhatsApp.setOnClickListener { selectProtectedApp(com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) }
+        binding.btnProtectedInstagram.setOnClickListener { selectProtectedApp(com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM) }
+        binding.btnProtectedTelegram.setOnClickListener { selectProtectedApp(com.veil.privacy.model.SupportedApp.PKG_TELEGRAM) }
+        updateProtectedAppSelector()
+
         if (VeilPrefs.isSessionUnlocked) {
             switchTab(TAB_CHATS)
         } else {
             switchTab(TAB_NOTIFICATIONS)
         }
+    }
+
+    private fun selectProtectedApp(packageName: String) {
+        selectedProtectedApp = packageName
+        dashboardStatePrefs.edit().putString("selected_protected_app", packageName).apply()
+        updateProtectedAppSelector()
+        refreshChatThreads()
+    }
+
+    private fun updateProtectedAppSelector() {
+        applyTabStyle(binding.btnProtectedWhatsApp, selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP)
+        applyTabStyle(binding.btnProtectedInstagram, selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM)
+        applyTabStyle(binding.btnProtectedTelegram, selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_TELEGRAM)
+        binding.btnProtectedWhatsApp.contentDescription = "Show WhatsApp protected conversations"
+        binding.btnProtectedInstagram.contentDescription = "Show Instagram protected conversations"
+        binding.btnProtectedTelegram.contentDescription = "Show Telegram protected conversations"
     }
 
     private fun switchTab(tab: Int) {
