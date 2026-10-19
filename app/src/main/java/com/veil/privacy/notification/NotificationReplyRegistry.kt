@@ -197,7 +197,9 @@ object NotificationReplyRegistry {
 
             true
         } catch (e: Exception) {
-
+            // A cancelled PendingIntent is no longer a live reply route. Remove it now so
+            // VEIL does not keep advertising an action that repeatedly fails.
+            removeByKey(action.notificationKey)
             false
         }
     }
