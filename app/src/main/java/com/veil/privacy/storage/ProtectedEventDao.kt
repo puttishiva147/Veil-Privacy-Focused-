@@ -23,6 +23,9 @@ interface ProtectedEventDao {
     @Query("SELECT * FROM protected_events WHERE conversationId = :conversationId ORDER BY timestamp ASC")
     fun getMessagesForConversationSync(conversationId: String): List<ProtectedEvent>
 
+    @Query("SELECT * FROM protected_events WHERE conversationId = :conversationId AND sourcePackage = :sourcePackage ORDER BY timestamp ASC")
+    fun getMessagesForSourceConversationFlow(conversationId: String, sourcePackage: String): Flow<List<ProtectedEvent>>
+
     @Query("SELECT * FROM protected_events WHERE id = :id LIMIT 1")
     fun getByIdSync(id: Long): ProtectedEvent?
 
