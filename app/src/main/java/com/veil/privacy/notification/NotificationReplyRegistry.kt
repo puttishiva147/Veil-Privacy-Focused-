@@ -100,7 +100,7 @@ object NotificationReplyRegistry {
         declineIntent: PendingIntent?,
         sourcePackage: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
     ) {
-        val normalizedName = normalize(contactName)
+        val normalizedName = normalize(contactName, sourcePackage)
         val liveCall = LiveCallAction(
             notificationKey = notificationKey,
             contactName = contactName,
@@ -113,8 +113,8 @@ object NotificationReplyRegistry {
 
     }
 
-    fun getLiveCallAction(contactName: String): LiveCallAction? {
-        val normalized = normalize(contactName)
+    fun getLiveCallAction(contactName: String, sourcePackage: String? = null): LiveCallAction? {
+        val normalized = if (sourcePackage == null) normalize(contactName) else normalize(contactName, sourcePackage)
         val call = liveCallsByContact[normalized] ?: return null
         // Call actions expire after 5 minutes
         if (System.currentTimeMillis() - call.capturedAt > 5 * 60 * 1000L) {
@@ -134,7 +134,7 @@ object NotificationReplyRegistry {
         remoteInput: RemoteInput,
         sourcePackage: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
     ) {
-        val normalizedName = normalize(contactName)
+        val normalizedName = normalize(contactName, sourcePackage)
         val liveAction = LiveReplyAction(
             notificationKey = notificationKey,
             contactName = contactName,
@@ -151,9 +151,11 @@ object NotificationReplyRegistry {
     /**
      * Checks if a live notification reply action is currently available for this contact.
      */
-    fun isReplyActionLive(contactName: String): Boolean {
-        val normalized = normalize(contactName)
-        val action = liveActionsByContact[normalized] ?: return false
+    fun isReplyActionLive(contactName: String, sourcePackage: String? = null): Boolean {
+        val normalized = if (sourcePackage == null) normalize(contactName) else normalize(contactName, sourcePackage)
+        val action = liveActionsByContact[normalized]
+            ?: if (sourcePackage == null) liveActionsByContact.values.filter { it.contactName.equals(contactName, ignoreCase = true) }.maxByOrNull { it.capturedAt } else null
+            ?: return false
         // Actions older than 2 hours are discarded to avoid stale PendingIntents
         if (System.currentTimeMillis() - action.capturedAt > 2 * 3600 * 1000L) {
             liveActionsByContact.remove(normalized)
@@ -166,9 +168,11 @@ object NotificationReplyRegistry {
     /**
      * Gets the live action details if available.
      */
-    fun getLiveReplyAction(contactName: String): LiveReplyAction? {
-        val normalized = normalize(contactName)
-        return if (isReplyActionLive(normalized)) liveActionsByContact[normalized] else null
+    fun getLiveReplyAction(contactName: String, sourcePackage: String? = null): LiveReplyAction? {
+        val normalized = if (sourcePackage == null) normalize(contactName) else normalize(contactName, sourcePackage)
+        return if (isReplyActionLive(contactName, sourcePackage)) liveActionsByContact[normalized]
+            ?: liveActionsByContact.values.filter { it.contactName.equals(contactName, ignoreCase = true) }.maxByOrNull { it.capturedAt }
+        else null
     }
 
     /**
@@ -176,8 +180,8 @@ object NotificationReplyRegistry {
      *
      * @return true if the reply was successfully handed over to the Android OS for delivery, false if token is expired/missing.
      */
-    fun sendReply(context: Context, contactName: String, replyText: String): Boolean {
-        val action = getLiveReplyAction(contactName) ?: run {
+    fun sendReply(context: Context, contactName: String, replyText: String, sourcePackage: String? = null): Boolean {
+        val action = getLiveReplyAction(contactName, sourcePackage) ?: run {
 
             return false
         }
@@ -227,4 +231,6 @@ object NotificationReplyRegistry {
     }
 
     private fun normalize(name: String): String = name.lowercase().trim()
+
+    private fun normalize(name: String, sourcePackage: String): String = "${sourcePackage.trim().lowercase()}::${normalize(name)}"
 }
