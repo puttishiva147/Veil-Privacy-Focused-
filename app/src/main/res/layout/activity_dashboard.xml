@@ -200,6 +200,7 @@
             android:id="@+id/viewTabChats"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_marginBottom="80dp"
             android:orientation="vertical"
             android:visibility="visible">
 
@@ -299,7 +300,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:paddingBottom="96dp"
                 android:clipToPadding="false">
 
                 <!-- Protected Chat Threads List -->
