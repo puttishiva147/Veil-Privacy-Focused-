@@ -662,35 +662,50 @@ class DashboardActivity : AppCompatActivity() {
                 }
                 binding.layoutEmptyNotifications.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
 
-                // Tab 1 Protected Chats Threads
-                val threads = mutableListOf<ProtectedChatThread>()
-                for (rule in rules) {
-                    val conversationEvents = events.filter {
-                        it.conversationId == rule.contactName.lowercase().trim()
-                    }
-                    val latestEvent = conversationEvents.maxByOrNull { it.timestamp }
-                    val lastMessage = latestEvent?.realMessage ?: "No messages captured yet"
-                    val lastTime = latestEvent?.timestamp ?: rule.createdAt
-                    val isLive = NotificationReplyRegistry.isReplyActionLive(rule.contactName, selectedProtectedApp)
-
-                    threads.add(
+                // Tab 1 Protected Chats Threads: keep the active app section isolated.
+                val threads = if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
+                    selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS) {
+                    rules.map { rule ->
+                        val sourceEvents = events.filter {
+                            (it.sourcePackage == selectedProtectedApp ||
+                                (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP &&
+                                    it.sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS)) &&
+                                it.conversationId == rule.contactName.lowercase().trim()
+                        }
+                        val latest = sourceEvents.maxByOrNull { it.timestamp }
                         ProtectedChatThread(
                             contactName = rule.contactName,
                             contactPhoneNumber = rule.contactPhoneNumber,
-                            lastMessage = lastMessage,
-                            lastTimestamp = lastTime,
-                            isLiveReplyAvailable = isLive,
+                            lastMessage = latest?.realMessage ?: "No messages captured yet",
+                            lastTimestamp = latest?.timestamp ?: rule.createdAt,
+                            isLiveReplyAvailable = NotificationReplyRegistry.isReplyActionLive(rule.contactName, selectedProtectedApp),
                             disguiseMode = rule.disguiseMode,
-                            decoyIdentity = rule.decoyIdentity
+                            decoyIdentity = rule.decoyIdentity,
+                            sourcePackage = selectedProtectedApp,
+                            conversationId = rule.contactName.lowercase().trim()
                         )
-                    )
-                }
-
-                // Sort threads by latest activity
-                val sortedThreads = threads.sortedByDescending { it.lastTimestamp }
-                chatThreadsAdapter.submitList(sortedThreads)
-                binding.tvChatsHeaderCount.text = "${sortedThreads.size} PROTECTED CONVERSATIONS"
-                binding.layoutEmptyChats.visibility = if (sortedThreads.isEmpty()) View.VISIBLE else View.GONE
+                    }
+                } else {
+                    events.filter { it.sourcePackage == selectedProtectedApp }
+                        .groupBy { it.conversationId }
+                        .mapNotNull { (conversationId, conversationEvents) ->
+                            val latest = conversationEvents.maxByOrNull { it.timestamp } ?: return@mapNotNull null
+                            val displayName = latest.realSender.ifBlank { conversationId }
+                            ProtectedChatThread(
+                                contactName = displayName,
+                                lastMessage = latest.realMessage,
+                                lastTimestamp = latest.timestamp,
+                                isLiveReplyAvailable = NotificationReplyRegistry.isReplyActionLive(displayName, selectedProtectedApp),
+                                disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
+                                decoyIdentity = latest.decoySender,
+                                sourcePackage = selectedProtectedApp,
+                                conversationId = conversationId
+                            )
+                        }
+                }.sortedByDescending { it.lastTimestamp }
+                chatThreadsAdapter.submitList(threads)
+                binding.tvChatsHeaderCount.text = "${threads.size} ${com.veil.privacy.model.SupportedApp.getAppDisplayName(selectedProtectedApp).uppercase()} PROTECTED CONVERSATIONS"
+                binding.layoutEmptyChats.visibility = if (threads.isEmpty()) View.VISIBLE else View.GONE
             }
         }
     }
