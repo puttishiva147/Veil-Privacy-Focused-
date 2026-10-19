@@ -44,7 +44,7 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
 
         // 1. Dispatch through official Android RemoteInput to WhatsApp
         val dispatched = NotificationReplyRegistry.sendReply(context, contactName, replyText)
-        Log.d(TAG, "Dispatched notification inline reply for '$contactName': success=$dispatched")
+        Log.d(TAG, "Inline reply dispatch attempted; acceptedByPendingIntent=$dispatched (delivery is not confirmed)")
 
         // 2. Persist outgoing message in local encrypted Room database
         val db = VeilDatabase.getInstance(context)
@@ -53,7 +53,7 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
                 realSender = "You",
                 realMessage = replyText,
                 isOutgoing = true,
-                replyStatus = if (dispatched) "SENT_VIA_REMOTE_INPUT" else "FAILED_DISPATCH",
+                replyStatus = if (dispatched) "DISPATCHED_NOT_CONFIRMED" else "FAILED_DISPATCH",
                 conversationId = conversationId,
                 timestamp = System.currentTimeMillis()
             )
@@ -63,7 +63,7 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
         // 3. Update the notification in-place to give immediate feedback to user
         if (notificationId != 0) {
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-            val statusText = if (dispatched) "✓ Reply dispatched: $replyText" else "⚠️ Reply action expired"
+            val statusText = if (dispatched) "Reply handed to Android; delivery not confirmed" else "Reply could not be dispatched; reopen VEIL to retry"
 
             val updatedNotification = NotificationCompat.Builder(context, VeilNotificationManager.CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_veil_notification)
