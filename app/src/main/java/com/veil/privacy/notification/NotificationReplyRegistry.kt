@@ -6,7 +6,6 @@ import android.app.RemoteInput
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -22,8 +21,6 @@ import java.util.concurrent.ConcurrentHashMap
  *   action as unavailable so VEIL does not pretend the message can be sent.
  */
 object NotificationReplyRegistry {
-
-    private const val TAG = "NotificationReplyReg"
 
     data class LiveReplyAction(
         val notificationKey: String,
@@ -113,7 +110,7 @@ object NotificationReplyRegistry {
         )
         liveCallsByContact[normalizedName] = liveCall
         keyToContactMap[notificationKey] = normalizedName
-        Log.d(TAG, "Registered active call action for contact='$contactName'")
+
     }
 
     fun getLiveCallAction(contactName: String): LiveCallAction? {
@@ -148,7 +145,7 @@ object NotificationReplyRegistry {
         )
         liveActionsByContact[normalizedName] = liveAction
         keyToContactMap[notificationKey] = normalizedName
-        Log.d(TAG, "Registered active reply action for contact='$contactName', pkg='$sourcePackage', key='$notificationKey'")
+
     }
 
     /**
@@ -181,7 +178,7 @@ object NotificationReplyRegistry {
      */
     fun sendReply(context: Context, contactName: String, replyText: String): Boolean {
         val action = getLiveReplyAction(contactName) ?: run {
-            Log.w(TAG, "Cannot send reply: no active reply action found for '$contactName'")
+
             return false
         }
 
@@ -193,10 +190,10 @@ object NotificationReplyRegistry {
 
             // Send intent via PendingIntent
             action.actionIntent.send(context, 0, intent)
-            Log.i(TAG, "Successfully dispatched RemoteInput reply for '$contactName' to WhatsApp")
+
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to dispatch RemoteInput reply: ${e.message}", e)
+
             false
         }
     }
@@ -210,7 +207,7 @@ object NotificationReplyRegistry {
         // rule name. Remove every matching entry, but preserve newer tokens for the same contact.
         liveActionsByContact.entries.removeIf { it.value.notificationKey == notificationKey }
         liveCallsByContact.entries.removeIf { it.value.notificationKey == notificationKey }
-        Log.d(TAG, "Removed matching actions for notification key='$notificationKey'")
+
     }
 
     /**
@@ -220,7 +217,7 @@ object NotificationReplyRegistry {
     fun removeCallByKey(notificationKey: String) {
         liveCallsByContact.entries.removeIf { it.value.notificationKey == notificationKey }
         keyToContactMap.remove(notificationKey)
-        Log.d(TAG, "Removed call controls for notification key='$notificationKey'")
+
     }
 
     fun clearAll() {
