@@ -70,7 +70,7 @@
                 android:insetBottom="0dp"
                 android:minWidth="0dp"
                 android:padding="0dp"
-                app:icon="@drawable/ic_notification_bell"
+                app:icon="@drawable/ic_menu_hamburger"
                 app:iconGravity="textStart"
                 app:iconPadding="0dp"
                 app:iconSize="22dp"
