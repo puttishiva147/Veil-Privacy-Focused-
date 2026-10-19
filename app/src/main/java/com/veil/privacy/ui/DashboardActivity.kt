@@ -872,7 +872,7 @@ class DashboardActivity : AppCompatActivity() {
             ))
         }
         val hint = TextView(this).apply {
-            text = "Swipe from the left edge to switch sections"
+            text = "WhatsApp, Instagram and Telegram have dedicated protection sections. Other recognized apps may appear in the notification log, but app-specific rule setup is currently available for these three."
             textSize = 12f
             setTextColor(ContextCompat.getColor(this@DashboardActivity, R.color.veil_text_low))
             setPadding((12 * density).toInt(), (24 * density).toInt(), (8 * density).toInt(), 0)
