@@ -842,6 +842,7 @@ class DashboardActivity : AppCompatActivity() {
                 isFocusable = true
                 setOnClickListener {
                     selectProtectedApp(sourcePackage)
+                    switchTab(TAB_CHATS)
                     panel.dismiss()
                 }
             }
