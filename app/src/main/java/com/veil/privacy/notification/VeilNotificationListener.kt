@@ -288,6 +288,19 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             hasKey || hasRecentContent
         }
         if (isDuplicate) {
+            // Android may repost/update the same message notification after the first
+            // event was stored. Deduplicate the inbox event, but still enforce the
+            // user's hide-original preference for this active notification key.
+            if (preferences.isHideOriginalEnabled) {
+                try {
+                    sbn.key?.let { cancelNotification(it) }
+                    emitDiagnostic("SUPPRESS", "Suppressed duplicate/update of an already-captured protected notification")
+                } catch (_: SecurityException) {
+                    emitDiagnostic("SUPPRESS", "Android restricted suppression of duplicate/update notification", false)
+                } catch (e: Exception) {
+                    emitDiagnostic("SUPPRESS", "Duplicate/update suppression failed (${e.javaClass.simpleName})", false)
+                }
+            }
             emitDiagnostic("DEDUP", "Ignored duplicate notification event (${parsed.notificationKey ?: targetConversation})")
             return
         }
