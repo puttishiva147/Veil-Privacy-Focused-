@@ -916,15 +916,21 @@ class DashboardActivity : AppCompatActivity() {
         dashboardStatePrefs.edit().putString("selected_protected_app", sourcePackage).apply()
         updateProtectedAppSelector()
         switchTab(TAB_CHATS)
+
+        // Instagram and Telegram protection is based on usernames/chat titles, not phone contacts.
+        // Open their app-scoped rule editor directly so the rule is saved against the correct app.
+        if (sourcePackage != com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
+            startActivity(Intent(this, RuleEditActivity::class.java).putExtra(
+                RuleEditActivity.EXTRA_PROTECTION_PACKAGE, sourcePackage
+            ))
+            return
+        }
+
         VeilDialogs.showProtectTargetChooser(
             activity = this,
-            onQuickManual = { showQuickManualAddDialog(sourcePackage) },
-            onPickContacts = { launchContactPickerFlow(sourcePackage) },
-            onAdvancedRule = {
-                startActivity(Intent(this, RuleEditActivity::class.java).putExtra(
-                    RuleEditActivity.EXTRA_PROTECTION_PACKAGE, sourcePackage
-                ))
-            }
+            onQuickManual = { showQuickManualAddDialog() },
+            onPickContacts = { launchContactPickerFlow() },
+            onAdvancedRule = { openRuleEditorForSelectedApp() }
         )
     }
 
