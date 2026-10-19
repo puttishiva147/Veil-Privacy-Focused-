@@ -62,6 +62,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         const val EXTRA_CONTACT_NAME = "extra_contact_name"
         const val EXTRA_EVENT_ID = "extra_event_id"
         const val EXTRA_SOURCE_PACKAGE = "extra_source_package"
+        const val EXTRA_CONVERSATION_ID = "extra_conversation_id"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,7 +73,8 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         InsetsUtils.applySystemBarInsets(binding.root)
 
         contactName = intent.getStringExtra(EXTRA_CONTACT_NAME)?.trim() ?: "Protected Contact"
-        conversationId = contactName.lowercase().trim()
+        conversationId = intent.getStringExtra(EXTRA_CONVERSATION_ID)
+            ?.takeIf { it.isNotBlank() } ?: contactName.lowercase().trim()
         sourcePackage = intent.getStringExtra(EXTRA_SOURCE_PACKAGE)
             ?.takeIf { it.isNotBlank() } ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
         database = VeilDatabase.getInstance(this)
