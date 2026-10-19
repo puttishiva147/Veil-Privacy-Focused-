@@ -12,13 +12,16 @@ import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.storage.VeilDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
- * Handles inline replies dispatched directly from VEIL replacement notifications.
+ * Handles inline replies dispatched from VEIL replacement notifications.
  *
- * Forwards the reply via Android's RemoteInput PendingIntent directly to WhatsApp,
- * updates the local encrypted vault, and refreshes the notification in place.
+ * A BroadcastReceiver's process may be reclaimed after onReceive returns. goAsync()
+ * keeps the receiver alive while the outgoing event is persisted, and status wording
+ * deliberately distinguishes dispatch acceptance from confirmed message delivery.
  */
 class VeilNotificationReplyReceiver : BroadcastReceiver() {
 
@@ -38,44 +41,63 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
         val replyText = results.getCharSequence(KEY_TEXT_REPLY)?.toString()?.trim().orEmpty()
         if (replyText.isBlank()) return
 
-        val contactName = intent.getStringExtra(EXTRA_CONTACT_NAME) ?: return
-        val conversationId = intent.getStringExtra(EXTRA_CONVERSATION_ID) ?: contactName.lowercase().trim()
+        val contactName = intent.getStringExtra(EXTRA_CONTACT_NAME)?.takeIf { it.isNotBlank() } ?: return
+        val conversationId = intent.getStringExtra(EXTRA_CONVERSATION_ID)
+            ?.takeIf { it.isNotBlank() } ?: contactName.lowercase().trim()
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
 
-        // 1. Dispatch through official Android RemoteInput to WhatsApp
+        // This confirms only that Android accepted the PendingIntent dispatch, not delivery.
         val dispatched = NotificationReplyRegistry.sendReply(context, contactName, replyText)
-        Log.d(TAG, "Inline reply dispatch attempted; acceptedByPendingIntent=$dispatched (delivery is not confirmed)")
+        val pendingResult = goAsync()
+        val appContext = context.applicationContext
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-        // 2. Persist outgoing message in local encrypted Room database
-        val db = VeilDatabase.getInstance(context)
-        CoroutineScope(Dispatchers.IO).launch {
-            val outgoingEvent = ProtectedEvent(
-                realSender = "You",
-                realMessage = replyText,
-                isOutgoing = true,
-                replyStatus = if (dispatched) "DISPATCHED_NOT_CONFIRMED" else "FAILED_DISPATCH",
-                conversationId = conversationId,
-                timestamp = System.currentTimeMillis()
-            )
-            db.protectedEventDao().insert(outgoingEvent)
-        }
-
-        // 3. Update the notification in-place to give immediate feedback to user
-        if (notificationId != 0) {
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-            val statusText = if (dispatched) "Reply handed to Android; delivery not confirmed" else "Reply could not be dispatched; reopen VEIL to retry"
-
-            val updatedNotification = NotificationCompat.Builder(context, VeilNotificationManager.CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_veil_notification)
-                .setContentTitle("🔒 VEIL")
-                .setContentText(statusText)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(statusText))
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setTimeoutAfter(8000)
-                .setAutoCancel(true)
-                .build()
-
-            notificationManager?.notify(notificationId, updatedNotification)
+        scope.launch {
+            var persisted = false
+            try {
+                val outgoingEvent = ProtectedEvent(
+                    realSender = "You",
+                    realMessage = replyText,
+                    isOutgoing = true,
+                    replyStatus = if (dispatched) "DISPATCHED_NOT_CONFIRMED" else "FAILED_DISPATCH",
+                    conversationId = conversationId,
+                    timestamp = System.currentTimeMillis()
+                )
+                VeilDatabase.getInstance(appContext).protectedEventDao().insert(outgoingEvent)
+                persisted = true
+            } catch (e: Exception) {
+                // Never log reply text, contact identity, or conversation identifiers.
+                Log.e(TAG, "Unable to persist outgoing reply status (${e.javaClass.simpleName})")
+            } finally {
+                try {
+                    if (notificationId != 0) {
+                        val statusText = when {
+                            !dispatched -> "Reply could not be handed to Android. Reopen VEIL to retry."
+                            persisted -> "Reply handed to Android; delivery is not confirmed."
+                            else -> "Reply was handed to Android, but VEIL could not save its status."
+                        }
+                        val updatedNotification = NotificationCompat.Builder(
+                            appContext,
+                            VeilNotificationManager.CHANNEL_ID
+                        )
+                            .setSmallIcon(R.drawable.ic_veil_notification)
+                            .setContentTitle("VEIL")
+                            .setContentText(statusText)
+                            .setStyle(NotificationCompat.BigTextStyle().bigText(statusText))
+                            .setPriority(NotificationCompat.PRIORITY_LOW)
+                            .setTimeoutAfter(8000)
+                            .setAutoCancel(true)
+                            .build()
+                        (appContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager)
+                            ?.notify(notificationId, updatedNotification)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to update reply status notification (${e.javaClass.simpleName})")
+                } finally {
+                    pendingResult.finish()
+                    scope.cancel()
+                }
+            }
         }
     }
 }
