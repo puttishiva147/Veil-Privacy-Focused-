@@ -222,6 +222,12 @@ class DashboardActivity : AppCompatActivity() {
         selectedProtectedApp = packageName
         dashboardStatePrefs.edit().putString("selected_protected_app", packageName).apply()
         updateProtectedAppSelector()
+        binding.fabAddProtectedChat.visibility =
+            if (currentTab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) View.VISIBLE else View.GONE
+        binding.fabAddInstagramProtection.visibility =
+            if (currentTab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM) View.VISIBLE else View.GONE
+        binding.fabAddTelegramProtection.visibility =
+            if (currentTab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_TELEGRAM) View.VISIBLE else View.GONE
         refreshChatThreads()
     }
 
