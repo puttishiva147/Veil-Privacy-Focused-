@@ -688,7 +688,8 @@ class DashboardActivity : AppCompatActivity() {
                         .groupBy { it.conversationId }
                         .mapNotNull { (conversationId, conversationEvents) ->
                             val latest = conversationEvents.maxByOrNull { it.timestamp } ?: return@mapNotNull null
-                            val displayName = latest.realSender.ifBlank { conversationId }
+                            val displayName = rules.firstOrNull { it.contactName.lowercase().trim() == conversationId }?.contactName
+                                ?: latest.realSender.ifBlank { conversationId }
                             ProtectedChatThread(
                                 contactName = displayName,
                                 lastMessage = latest.realMessage,
@@ -736,7 +737,8 @@ class DashboardActivity : AppCompatActivity() {
                     .groupBy { it.conversationId }
                     .mapNotNull { (conversationId, conversationEvents) ->
                         val latestEvent = conversationEvents.maxByOrNull { it.timestamp } ?: return@mapNotNull null
-                        val displayName = latestEvent.realSender.ifBlank { conversationId }
+                        val displayName = rules.firstOrNull { it.contactName.lowercase().trim() == conversationId }?.contactName
+                            ?: latestEvent.realSender.ifBlank { conversationId }
                         ProtectedChatThread(
                             contactName = displayName,
                             lastMessage = latestEvent.realMessage,
