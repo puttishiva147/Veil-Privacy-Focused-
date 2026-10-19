@@ -663,13 +663,10 @@ class DashboardActivity : AppCompatActivity() {
                 binding.layoutEmptyNotifications.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
 
                 // Tab 1 Protected Chats Threads: keep the active app section isolated.
-                val threads = if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
-                    selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS) {
+                val threads = if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
                     rules.map { rule ->
                         val sourceEvents = events.filter {
-                            (it.sourcePackage == selectedProtectedApp ||
-                                (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP &&
-                                    it.sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS)) &&
+                            it.sourcePackage == selectedProtectedApp &&
                                 it.conversationId == rule.contactName.lowercase().trim()
                         }
                         val latest = sourceEvents.maxByOrNull { it.timestamp }
@@ -714,13 +711,10 @@ class DashboardActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val rules = database.protectionRuleDao().getAllRulesSync()
             val events = database.protectedEventDao().getAllSync()
-            val threads = if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
-                selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS) {
+            val threads = if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
                 rules.map { rule ->
                     val sourceEvents = events.filter {
-                        (it.sourcePackage == selectedProtectedApp ||
-                            (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP &&
-                                it.sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS)) &&
+                        it.sourcePackage == selectedProtectedApp &&
                             it.conversationId == rule.contactName.lowercase().trim()
                     }
                     val latestEvent = sourceEvents.maxByOrNull { it.timestamp }
@@ -729,7 +723,7 @@ class DashboardActivity : AppCompatActivity() {
                         contactPhoneNumber = rule.contactPhoneNumber,
                         lastMessage = latestEvent?.realMessage ?: "No messages captured yet",
                         lastTimestamp = latestEvent?.timestamp ?: rule.createdAt,
-                        isLiveReplyAvailable = NotificationReplyRegistry.isReplyActionLive(rule.contactName),
+                        isLiveReplyAvailable = NotificationReplyRegistry.isReplyActionLive(rule.contactName, selectedProtectedApp),
                         disguiseMode = rule.disguiseMode,
                         decoyIdentity = rule.decoyIdentity,
                         sourcePackage = selectedProtectedApp,
