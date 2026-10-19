@@ -195,7 +195,7 @@ class DashboardActivity : AppCompatActivity() {
         }
         binding.tabNotifications.setOnClickListener { switchTab(TAB_NOTIFICATIONS) }
         binding.tabContacts.setOnClickListener { switchTab(TAB_CONTACTS) }
-        binding.btnNotificationBell.setOnClickListener { switchTab(TAB_NOTIFICATIONS) }
+        binding.btnNotificationBell.setOnClickListener { showProtectedAppSwitcher() }
         binding.btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
@@ -250,7 +250,12 @@ class DashboardActivity : AppCompatActivity() {
         binding.viewTabContacts.visibility = if (tab == TAB_CONTACTS) View.VISIBLE else View.GONE
         binding.viewTabSettings.visibility = if (tab == TAB_SETTINGS) View.VISIBLE else View.GONE
 
-        binding.fabAddProtectedChat.visibility = if (tab == TAB_CHATS) View.VISIBLE else View.GONE
+        binding.fabAddProtectedChat.visibility =
+            if (tab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) View.VISIBLE else View.GONE
+        binding.fabAddInstagramProtection.visibility =
+            if (tab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM) View.VISIBLE else View.GONE
+        binding.fabAddTelegramProtection.visibility =
+            if (tab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_TELEGRAM) View.VISIBLE else View.GONE
 
         applyTabStyle(binding.tabChats, tab == TAB_CHATS)
         applyTabStyle(binding.tabNotifications, tab == TAB_NOTIFICATIONS)
@@ -356,16 +361,17 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun setupActions() {
         binding.fabAddProtectedChat.setOnClickListener {
-            openAddContactChooser()
+            openAddContactChooser(com.veil.privacy.model.SupportedApp.PKG_WHATSAPP)
+        }
+        binding.fabAddInstagramProtection.setOnClickListener {
+            openAddContactChooser(com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM)
+        }
+        binding.fabAddTelegramProtection.setOnClickListener {
+            openAddContactChooser(com.veil.privacy.model.SupportedApp.PKG_TELEGRAM)
         }
 
-        binding.btnAddContactRuleTop.setOnClickListener {
-            startActivity(Intent(this, RuleEditActivity::class.java))
-        }
-
-        binding.btnEmptyAddContactRule.setOnClickListener {
-            startActivity(Intent(this, RuleEditActivity::class.java))
-        }
+        binding.btnAddContactRuleTop.setOnClickListener { openRuleEditorForSelectedApp() }
+        binding.btnEmptyAddContactRule.setOnClickListener { openRuleEditorForSelectedApp() }
 
         binding.btnClearNotificationsLog.setOnClickListener {
             VeilDialogs.showConfirmationDialog(
@@ -829,8 +835,7 @@ class DashboardActivity : AppCompatActivity() {
                 isClickable = true
                 isFocusable = true
                 setOnClickListener {
-                    selectedProtectedApp = sourcePackage
-                    refreshChatThreads()
+                    selectProtectedApp(sourcePackage)
                     panel.dismiss()
                 }
             }
@@ -900,12 +905,26 @@ class DashboardActivity : AppCompatActivity() {
         return super.dispatchTouchEvent(event)
     }
 
-    private fun openAddContactChooser() {
+    private fun openRuleEditorForSelectedApp() {
+        startActivity(Intent(this, RuleEditActivity::class.java).putExtra(
+            RuleEditActivity.EXTRA_PROTECTION_PACKAGE, selectedProtectedApp
+        ))
+    }
+
+    private fun openAddContactChooser(sourcePackage: String = selectedProtectedApp) {
+        selectedProtectedApp = sourcePackage
+        dashboardStatePrefs.edit().putString("selected_protected_app", sourcePackage).apply()
+        updateProtectedAppSelector()
+        switchTab(TAB_CHATS)
         VeilDialogs.showProtectTargetChooser(
             activity = this,
-            onQuickManual = { showQuickManualAddDialog() },
-            onPickContacts = { launchContactPickerFlow() },
-            onAdvancedRule = { startActivity(Intent(this, RuleEditActivity::class.java)) }
+            onQuickManual = { showQuickManualAddDialog(sourcePackage) },
+            onPickContacts = { launchContactPickerFlow(sourcePackage) },
+            onAdvancedRule = {
+                startActivity(Intent(this, RuleEditActivity::class.java).putExtra(
+                    RuleEditActivity.EXTRA_PROTECTION_PACKAGE, sourcePackage
+                ))
+            }
         )
     }
 
