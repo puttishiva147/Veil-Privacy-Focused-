@@ -542,6 +542,13 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private fun openWhatsAppChatDirectly(prefilledText: String = "") {
         try {
+            if (sourcePackage != com.veil.privacy.model.SupportedApp.PKG_WHATSAPP &&
+                sourcePackage != com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS) {
+                val sourceLaunchIntent = packageManager.getLaunchIntentForPackage(sourcePackage)
+                if (sourceLaunchIntent != null) startActivity(sourceLaunchIntent)
+                else Toast.makeText(this, "${com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)} is not installed", Toast.LENGTH_SHORT).show()
+                return
+            }
             val phoneDigits = ProtectedContact.extractDigits(contactPhoneNumber)
             if (phoneDigits.isNotBlank()) {
                 val encodedText = if (prefilledText.isNotBlank()) "&text=" + Uri.encode(prefilledText) else ""
@@ -575,7 +582,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             confirmText = "Wipe Messages",
             onConfirm = {
                 lifecycleScope.launch(Dispatchers.IO) {
-                    database.protectedEventDao().deleteConversation(conversationId)
+                    database.protectedEventDao().deleteSourceConversation(conversationId, sourcePackage)
                     withContext(Dispatchers.Main) {
                         Toast.makeText(this@ProtectedChatConversationActivity, "Conversation cleared", Toast.LENGTH_SHORT).show()
                     }
