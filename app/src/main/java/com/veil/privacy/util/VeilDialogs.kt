@@ -100,6 +100,9 @@ object VeilDialogs {
         initialName: String = "",
         initialPhone: String = "",
         initialPin: String = "",
+        targetNameHint: String = "WhatsApp Contact or Chat Name *",
+        targetPhoneHint: String = "Phone Number (Optional - High Confidence)",
+        showPhoneField: Boolean = true,
         onConfirmed: (name: String, phone: String, decoyIdentity: String, decoyMessage: String, contactPin: String) -> Unit
     ) {
         val dialog = BottomSheetDialog(activity, R.style.Theme_Veil_BottomSheetDialog)
@@ -110,8 +113,12 @@ object VeilDialogs {
 
         val tilName = view.findViewById<TextInputLayout>(R.id.tilContactName)
         val etName = view.findViewById<TextInputEditText>(R.id.etContactName)
+        val tilPhone = view.findViewById<TextInputLayout>(R.id.tilContactPhone)
         val etPhone = view.findViewById<TextInputEditText>(R.id.etContactPhone)
         val etPin = view.findViewById<TextInputEditText>(R.id.etContactPin)
+        tilName.hint = targetNameHint
+        tilPhone.hint = targetPhoneHint
+        tilPhone.visibility = if (showPhoneField) View.VISIBLE else View.GONE
         val chipGroup = view.findViewById<ChipGroup>(R.id.chipGroupPersona)
         val tvPreviewTitle = view.findViewById<TextView>(R.id.tvPreviewDecoyTitle)
         val tvPreviewBody = view.findViewById<TextView>(R.id.tvPreviewDecoyBody)
