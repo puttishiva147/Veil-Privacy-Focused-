@@ -173,6 +173,7 @@ class VeilNotificationManager(private val context: Context) {
             putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, event.realSender)
             putExtra(ProtectedChatConversationActivity.EXTRA_EVENT_ID, event.id)
             putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, event.sourcePackage)
+            putExtra(ProtectedChatConversationActivity.EXTRA_CONVERSATION_ID, event.conversationId)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
 
