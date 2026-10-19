@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -61,6 +62,9 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var rulesAdapter: ProtectionRuleAdapter
 
     private var currentTab: Int = TAB_CHATS
+    private var selectedProtectedApp: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+    private var edgeDownX = 0f
+    private var edgeDownY = 0f
     private val dashboardStatePrefs by lazy {
         getSharedPreferences("veil_privacy_prefs", MODE_PRIVATE)
     }
@@ -74,6 +78,7 @@ class DashboardActivity : AppCompatActivity() {
         const val TAB_NOTIFICATIONS = 1
         const val TAB_CONTACTS = 2
         const val TAB_SETTINGS = 3
+        private const val EDGE_SWIPE_THRESHOLD_DP = 72
     }
 
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -261,6 +266,8 @@ class DashboardActivity : AppCompatActivity() {
                             onUnlocked = {
                                 val intent = Intent(this@DashboardActivity, ProtectedChatConversationActivity::class.java).apply {
                                     putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, thread.contactName)
+                            putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
+                                    putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
                                 }
                                 startActivity(intent)
                             }
@@ -684,36 +691,93 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun refreshChatThreads() {
-        // Trigger re-read to update live reply indicators
         lifecycleScope.launch(Dispatchers.IO) {
             val rules = database.protectionRuleDao().getAllRulesSync()
             val events = database.protectedEventDao().getAllSync()
-            val threads = rules.map { rule ->
-                val conversationEvents = events.filter {
-                    it.conversationId == rule.contactName.lowercase().trim()
+            val threads = if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
+                selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS) {
+                rules.map { rule ->
+                    val sourceEvents = events.filter {
+                        (it.sourcePackage == selectedProtectedApp ||
+                            (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP &&
+                                it.sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS)) &&
+                            it.conversationId == rule.contactName.lowercase().trim()
+                    }
+                    val latestEvent = sourceEvents.maxByOrNull { it.timestamp }
+                    ProtectedChatThread(
+                        contactName = rule.contactName,
+                        contactPhoneNumber = rule.contactPhoneNumber,
+                        lastMessage = latestEvent?.realMessage ?: "No messages captured yet",
+                        lastTimestamp = latestEvent?.timestamp ?: rule.createdAt,
+                        isLiveReplyAvailable = NotificationReplyRegistry.isReplyActionLive(rule.contactName),
+                        disguiseMode = rule.disguiseMode,
+                        decoyIdentity = rule.decoyIdentity,
+                        sourcePackage = selectedProtectedApp
+                    )
                 }
-                val latestEvent = conversationEvents.maxByOrNull { it.timestamp }
-                val lastMessage = latestEvent?.realMessage ?: "No messages captured yet"
-                val lastTime = latestEvent?.timestamp ?: rule.createdAt
-                val isLive = NotificationReplyRegistry.isReplyActionLive(rule.contactName)
-
-                ProtectedChatThread(
-                    contactName = rule.contactName,
-                    contactPhoneNumber = rule.contactPhoneNumber,
-                    lastMessage = lastMessage,
-                    lastTimestamp = lastTime,
-                    isLiveReplyAvailable = isLive,
-                    disguiseMode = rule.disguiseMode,
-                    decoyIdentity = rule.decoyIdentity
-                )
+            } else {
+                events.filter { it.sourcePackage == selectedProtectedApp }
+                    .groupBy { it.conversationId }
+                    .mapNotNull { (conversationId, conversationEvents) ->
+                        val latestEvent = conversationEvents.maxByOrNull { it.timestamp } ?: return@mapNotNull null
+                        val displayName = latestEvent.realSender.ifBlank { conversationId }
+                        ProtectedChatThread(
+                            contactName = displayName,
+                            lastMessage = latestEvent.realMessage,
+                            lastTimestamp = latestEvent.timestamp,
+                            isLiveReplyAvailable = NotificationReplyRegistry.isReplyActionLive(displayName),
+                            disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
+                            decoyIdentity = latestEvent.decoySender,
+                            sourcePackage = selectedProtectedApp
+                        )
+                    }
             }.sortedByDescending { it.lastTimestamp }
 
             withContext(Dispatchers.Main) {
                 chatThreadsAdapter.submitList(threads)
-                binding.tvChatsHeaderCount.text = "${threads.size} PROTECTED CONVERSATIONS"
+                binding.tvChatsHeaderCount.text = "${threads.size} ${com.veil.privacy.model.SupportedApp.getAppDisplayName(selectedProtectedApp).uppercase()} PROTECTED CONVERSATIONS"
                 binding.layoutEmptyChats.visibility = if (threads.isEmpty()) View.VISIBLE else View.GONE
             }
         }
+    }
+
+    private fun showProtectedAppSwitcher() {
+        val packages = arrayOf(
+            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
+            com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM,
+            com.veil.privacy.model.SupportedApp.PKG_TELEGRAM
+        )
+        val labels = packages.map { com.veil.privacy.model.SupportedApp.getAppDisplayName(it) }.toTypedArray()
+        val selected = packages.indexOf(selectedProtectedApp).coerceAtLeast(0)
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Protected app")
+            .setSingleChoiceItems(labels, selected) { dialog, which ->
+                selectedProtectedApp = packages[which]
+                refreshChatThreads()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        val edgeSize = 24 * resources.displayMetrics.density
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                edgeDownX = event.x
+                edgeDownY = event.y
+            }
+            MotionEvent.ACTION_UP -> {
+                val deltaX = event.x - edgeDownX
+                val deltaY = kotlin.math.abs(event.y - edgeDownY)
+                if (edgeDownX <= edgeSize && deltaX >= EDGE_SWIPE_THRESHOLD_DP * resources.displayMetrics.density &&
+                    deltaX > deltaY * 1.25f) {
+                    showProtectedAppSwitcher()
+                    return true
+                }
+            }
+        }
+        return super.dispatchTouchEvent(event)
     }
 
     private fun openAddContactChooser() {
