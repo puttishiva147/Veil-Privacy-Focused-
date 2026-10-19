@@ -271,6 +271,8 @@ class DashboardActivity : AppCompatActivity() {
                                 val intent = Intent(this@DashboardActivity, ProtectedChatConversationActivity::class.java).apply {
                                     putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, thread.contactName)
                                     putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
+                            putExtra(ProtectedChatConversationActivity.EXTRA_CONVERSATION_ID, thread.conversationId)
+                                    putExtra(ProtectedChatConversationActivity.EXTRA_CONVERSATION_ID, thread.conversationId)
                                 }
                                 startActivity(intent)
                             }
@@ -715,7 +717,8 @@ class DashboardActivity : AppCompatActivity() {
                         isLiveReplyAvailable = NotificationReplyRegistry.isReplyActionLive(rule.contactName),
                         disguiseMode = rule.disguiseMode,
                         decoyIdentity = rule.decoyIdentity,
-                        sourcePackage = selectedProtectedApp
+                        sourcePackage = selectedProtectedApp,
+                        conversationId = rule.contactName.lowercase().trim()
                     )
                 }
             } else {
@@ -731,7 +734,8 @@ class DashboardActivity : AppCompatActivity() {
                             isLiveReplyAvailable = NotificationReplyRegistry.isReplyActionLive(displayName, selectedProtectedApp),
                             disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
                             decoyIdentity = latestEvent.decoySender,
-                            sourcePackage = selectedProtectedApp
+                            sourcePackage = selectedProtectedApp,
+                            conversationId = conversationId
                         )
                     }
             }.sortedByDescending { it.lastTimestamp }
