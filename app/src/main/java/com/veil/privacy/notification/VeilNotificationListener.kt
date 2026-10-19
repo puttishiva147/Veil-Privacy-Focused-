@@ -54,6 +54,10 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         private val _pipelineFlow = MutableSharedFlow<PipelineEvent>(extraBufferCapacity = 32)
         val pipelineFlow: SharedFlow<PipelineEvent> = _pipelineFlow.asSharedFlow()
 
+        // Prevent concurrent callbacks for the same notification/event from racing through
+        // the database deduplication check before either callback persists its event.
+        private val inFlightEventKeys = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
         fun emitDiagnostic(stage: String, message: String, isSuccess: Boolean = true) {
             _pipelineFlow.tryEmit(PipelineEvent(stage = stage, message = message, isSuccess = isSuccess))
         }
@@ -152,12 +156,30 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             emitDiagnostic("SENSOR", "Sender passed to Sensor Learning")
         }
 
-        // 7. Evaluate and process against configured VEIL rules
+        // 7. Evaluate and process against configured VEIL rules.
+        // Android can repost/update the same notification quickly. Claim an in-flight
+        // key before launching asynchronous work so two callbacks cannot both pass the
+        // database deduplication check and create duplicate protected events.
+        val eventGuardKey = parsed.notificationKey?.takeIf { it.isNotBlank() }
+            ?: listOf(
+                parsed.packageName,
+                parsed.sender.trim().lowercase(),
+                parsed.message.trim(),
+                parsed.timestamp.toString()
+            ).joinToString("|")
+
+        if (!inFlightEventKeys.add(eventGuardKey)) {
+            emitDiagnostic("DEDUP", "Ignored notification already being processed")
+            return
+        }
+
         serviceScope.launch {
             try {
                 processIncomingProtectedNotification(sbn, parsed, replyActionPair)
             } catch (e: Exception) {
                 emitDiagnostic("PROCESS", "Notification processing failed (${e.javaClass.simpleName})", false)
+            } finally {
+                inFlightEventKeys.remove(eventGuardKey)
             }
         }
     }
@@ -288,7 +310,9 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             hasKey || hasRecentContent
         }
         if (isDuplicate) {
-            emitDiagnostic("DEDUP", "Ignored duplicate notification event (${parsed.notificationKey ?: targetConversation})")
+            // Never include notification keys, contact names, or message-derived values
+            // in diagnostics; they can contain private identity information.
+            emitDiagnostic("DEDUP", "Ignored duplicate notification event")
             return
         }
 
