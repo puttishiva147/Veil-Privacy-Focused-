@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
  * Production Android NotificationListenerService for VEIL.
  *
  * Responsibilities:
- * - Detects incoming WhatsApp notifications.
+ * - Detects incoming notifications from supported messaging apps.
  * - Extracts Android notification inline-reply RemoteInput action and registers it in [NotificationReplyRegistry].
  * - Resolves the notification against independent configured [ProtectionRule]s.
  * - Dismisses/cancels the original WhatsApp notification where Android permits.
