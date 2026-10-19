@@ -227,7 +227,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun updateReplyTokenStatus() {
-        val action = NotificationReplyRegistry.getLiveReplyAction(contactName)
+        val action = NotificationReplyRegistry.getLiveReplyAction(contactName, sourcePackage)
         val isLive = action != null
         val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(action.sourcePackage) else "Messaging app"
 
@@ -253,7 +253,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun updateCallStatus() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall != null && (liveCall.answerIntent != null || liveCall.declineIntent != null)) {
             binding.cardLiveCallBanner.visibility = View.VISIBLE
             binding.tvLiveCallTitle.text = "Incoming WhatsApp Call from $contactName"
@@ -517,7 +517,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         }
 
         // Dispatch via Notification RemoteInput
-        val dispatched = NotificationReplyRegistry.sendReply(this, contactName, replyText)
+        val dispatched = NotificationReplyRegistry.sendReply(this, contactName, replyText, sourcePackage)
 
         if (dispatched) {
             binding.etReplyInput.text?.clear()
@@ -530,6 +530,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
                     isOutgoing = true,
                     replyStatus = "DISPATCHED_NOT_CONFIRMED",
                     conversationId = conversationId,
+                    sourcePackage = sourcePackage,
                     timestamp = System.currentTimeMillis()
                 )
                 database.protectedEventDao().insert(outgoingEvent)
