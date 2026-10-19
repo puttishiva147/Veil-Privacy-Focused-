@@ -12,5 +12,6 @@ data class ProtectedChatThread(
     val disguiseMode: String,
     val decoyIdentity: String,
     val unreadCount: Int = 0,
-    val sourcePackage: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+    val sourcePackage: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
+    val conversationId: String = contactName.lowercase().trim()
 )
