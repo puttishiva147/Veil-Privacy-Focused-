@@ -362,11 +362,11 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         binding.btnAddContactRuleTop.setOnClickListener {
-            startActivity(Intent(this, RuleEditActivity::class.java))
+            openRuleEditorForSelectedApp()
         }
 
         binding.btnEmptyAddContactRule.setOnClickListener {
-            startActivity(Intent(this, RuleEditActivity::class.java))
+            openRuleEditorForSelectedApp()
         }
 
         binding.btnClearNotificationsLog.setOnClickListener {
@@ -781,6 +781,12 @@ class DashboardActivity : AppCompatActivity() {
                 binding.layoutEmptyChats.visibility = if (threads.isEmpty()) View.VISIBLE else View.GONE
             }
         }
+    }
+
+    private fun openRuleEditorForSelectedApp() {
+        startActivity(Intent(this, RuleEditActivity::class.java).apply {
+            putExtra(RuleEditActivity.EXTRA_APP_PACKAGE, selectedSocialAppPackage())
+        })
     }
 
     private fun openAddContactChooser() {
