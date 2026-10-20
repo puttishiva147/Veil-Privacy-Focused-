@@ -21,7 +21,7 @@ class ProtectedChatThreadsAdapter(
     companion object {
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<ProtectedChatThread>() {
             override fun areItemsTheSame(oldItem: ProtectedChatThread, newItem: ProtectedChatThread): Boolean {
-                return oldItem.contactName == newItem.contactName
+                return oldItem.conversationId == newItem.conversationId && oldItem.sourcePackage == newItem.sourcePackage
             }
 
             override fun areContentsTheSame(oldItem: ProtectedChatThread, newItem: ProtectedChatThread): Boolean {
@@ -72,7 +72,7 @@ class ProtectedChatThreadsAdapter(
                 ivProfileIndicator.imageTintList = ContextCompat.getColorStateList(itemView.context, R.color.veil_accent_titanium)
                 ivProfileIndicator.contentDescription = "Profile Protected"
             }
-            tvName.text = thread.contactName
+            tvName.text = "${thread.contactName} · ${com.veil.privacy.model.SupportedApp.getAppDisplayName(thread.sourcePackage)}"
 
             if (thread.lastTimestamp > 0) {
                 val now = System.currentTimeMillis()

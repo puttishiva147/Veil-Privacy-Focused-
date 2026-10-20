@@ -70,7 +70,7 @@
                 android:insetBottom="0dp"
                 android:minWidth="0dp"
                 android:padding="0dp"
-                app:icon="@drawable/ic_notification_bell"
+                app:icon="@drawable/ic_menu_hamburger"
                 app:iconGravity="textStart"
                 app:iconPadding="0dp"
                 app:iconSize="22dp"
@@ -200,6 +200,7 @@
             android:id="@+id/viewTabChats"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_marginBottom="80dp"
             android:orientation="vertical"
             android:visibility="visible">
 
@@ -230,33 +231,101 @@
 
             </LinearLayout>
 
-            <!-- Protected Chat Threads List -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvProtectedChats"
+            <!-- Explicit app selector: does not launch the source apps; it switches VEIL's local protected inbox. -->
+            <LinearLayout
+                android:id="@+id/protectedAppSelector"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="8dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnProtectedWhatsApp"
+                    style="@style/Widget.Veil.Button.Primary"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="2dp"
+                    android:text="WhatsApp"
+                    android:textSize="11sp"
+                    app:icon="@drawable/ic_nav_chat"
+                    app:iconGravity="textStart"
+                    app:iconPadding="3dp"
+                    app:iconSize="14dp"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnProtectedInstagram"
+                    style="@style/Widget.Veil.Button.Secondary"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="2dp"
+                    android:text="Instagram"
+                    android:textSize="11sp"
+                    app:icon="@drawable/ic_nav_person"
+                    app:iconGravity="textStart"
+                    app:iconPadding="3dp"
+                    app:iconSize="14dp"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnProtectedTelegram"
+                    style="@style/Widget.Veil.Button.Secondary"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="2dp"
+                    android:text="Telegram"
+                    android:textSize="11sp"
+                    app:icon="@drawable/ic_nav_chat"
+                    app:iconGravity="textStart"
+                    app:iconPadding="3dp"
+                    app:iconSize="14dp"
+                    app:strokeWidth="0dp" />
+            </LinearLayout>
+
+            <!-- Shared remaining area: list and empty state are overlays, not
+                 competing weighted siblings. This keeps the empty state centered
+                 in the real content viewport instead of allocating it half the height. -->
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:clipToPadding="false"
-                android:paddingTop="4dp"
-                android:paddingBottom="92dp" />
+                android:clipToPadding="false">
 
-            <!-- Empty State for Protected Chats -->
-            <androidx.core.widget.NestedScrollView
-                android:id="@+id/layoutEmptyChats"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fillViewport="true"
-                android:visibility="gone">
-
-                <LinearLayout
+                <!-- Protected Chat Threads List -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvProtectedChats"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:gravity="center_horizontal|bottom"
-                    android:orientation="vertical"
-                    android:paddingStart="24dp"
-                    android:paddingTop="24dp"
-                    android:paddingEnd="24dp"
-                    android:paddingBottom="112dp">
+                    android:clipToPadding="false"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="92dp" />
+
+                <!-- Empty state centered in the usable area above bottom navigation. -->
+                <FrameLayout
+                    android:id="@+id/layoutEmptyChats"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginHorizontal="24dp"
+                        android:gravity="center"
+                        android:orientation="vertical">
 
                     <ImageView
                         android:layout_width="52dp"
@@ -271,24 +340,26 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
+                        android:gravity="center"
                         android:text="No Protected Chats Yet"
                         android:textColor="@color/veil_text_high"
                         android:textSize="17sp"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvEmptyChatsDescription"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:gravity="center"
                         android:lineSpacingExtra="3dp"
-                        android:text="Select WhatsApp contacts you want to protect. When they message you, VEIL disguises their notification and securely streams their conversation here with inline reply capability."
+                        android:text="Select a WhatsApp contact or enter their phone number to protect their notifications."
                         android:textColor="@color/veil_text_medium"
                         android:textSize="12.5sp" />
 
-
-                </LinearLayout>
-            </androidx.core.widget.NestedScrollView>
+                    </LinearLayout>
+                </FrameLayout>
+            </FrameLayout>
         </LinearLayout>
 
         <!-- ================= TAB 2: PROTECTED NOTIFICATIONS ================= -->
@@ -1060,7 +1131,46 @@
             android:layout_gravity="bottom|end"
             android:layout_marginEnd="20dp"
             android:layout_marginBottom="104dp"
-            android:contentDescription="Add protected chat"
+            android:contentDescription="Add protected WhatsApp chat"
+            android:src="@drawable/ic_add_plus"
+            android:visibility="gone"
+            app:backgroundTint="@color/veil_brand_silver"
+            app:elevation="2dp"
+            app:tint="@color/veil_canvas" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAddInstagramProtection"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="104dp"
+            android:contentDescription="Add protected Instagram username"
+            android:src="@drawable/ic_add_plus"
+            android:visibility="gone"
+            app:backgroundTint="@color/veil_brand_silver"
+            app:elevation="2dp"
+            app:tint="@color/veil_canvas" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAddTelegramProtection"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="104dp"
+            android:contentDescription="Add protected Telegram chat or channel"
+            android:src="@drawable/ic_add_plus"
+            android:visibility="gone"
+            app:backgroundTint="@color/veil_brand_silver"
+            app:elevation="2dp"
+            app:tint="@color/veil_canvas" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAddSnapchatProtection"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="104dp"
+            android:contentDescription="Add protected Snapchat account"
             android:src="@drawable/ic_add_plus"
             android:visibility="gone"
             app:backgroundTint="@color/veil_brand_silver"

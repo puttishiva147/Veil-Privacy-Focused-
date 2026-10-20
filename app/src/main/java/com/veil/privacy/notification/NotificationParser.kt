@@ -94,10 +94,16 @@ class NotificationParser {
         val isCall = isCallNotification(notification, extras)
 
         // 2. Extract sender and message
-        val extracted = extractSenderAndMessage(notification, extras) ?: return null
+        // Dedicated package adapters take precedence for the four primary integrations.
+        // Other legacy supported apps keep the generic compatibility parser.
+        val adapter = AppNotificationAdapters.forPackage(packageName)
+        val extracted = (adapter?.extract(notification, extras)
+            ?: if (adapter == null) extractSenderAndMessage(notification, extras) else null)
+            ?: return null
 
         val (rawSender, rawMessage) = extracted
-        val cleanSender = rawSender.trim()
+        val cleanSender = (adapter?.normalizeSender(rawSender) ?: normalizeSenderForSource(rawSender, packageName))
+            .trim()
         val cleanMessage = rawMessage.trim()
 
         if (cleanSender.isBlank()) {
@@ -115,6 +121,32 @@ class NotificationParser {
             timestamp = postTime,
             isMediaOrAttachment = isMedia
         )
+    }
+
+    /**
+     * Normalize sender labels that social apps append to notification titles.
+     * Keep parsing source-aware: never treat an Instagram "sent you a message" suffix,
+     * or a Telegram group title, as part of the contact identity used for rule matching.
+     */
+    private fun normalizeSenderForSource(rawSender: String, packageName: String): String {
+        var sender = rawSender.trim()
+        when {
+            packageName == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM -> {
+                sender = sender
+                    .replace(Regex("\\s*[•·|:]\\s*(?:sent you a message|sent a message|new message).*?$", RegexOption.IGNORE_CASE), "")
+                    .replace(Regex("^Instagram\\s*[:|-]\\s*", RegexOption.IGNORE_CASE), "")
+            }
+            packageName.startsWith("org.telegram.") -> {
+                sender = sender
+                    .replace(Regex("\\s*\\(\\d+\\s+(?:new\\s+)?messages?\\)$", RegexOption.IGNORE_CASE), "")
+                    .replace(Regex("^Telegram\\s*[:|-]\\s*", RegexOption.IGNORE_CASE), "")
+            }
+            packageName == com.veil.privacy.model.SupportedApp.PKG_MESSENGER -> {
+                sender = sender
+                    .replace(Regex("\\s*[•·|:]\\s*(?:sent you a message|sent a message|new message).*?$", RegexOption.IGNORE_CASE), "")
+            }
+        }
+        return sender.trim().trimEnd(':', '•', '·', '|').trim()
     }
 
     /**

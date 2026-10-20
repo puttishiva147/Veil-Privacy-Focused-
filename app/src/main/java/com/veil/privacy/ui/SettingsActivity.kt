@@ -260,14 +260,13 @@ class SettingsActivity : AppCompatActivity() {
         VeilDialogs.showInfoDialog(
             context = this,
             title = "System Architecture • NEXRO Series",
-            message = "VEIL (Variable Event Identity Layer)\n\n" +
+            message = "VEIL (Variable Event Identity Layer)\n" +
+                "Your Social World, in One Place.\n\n" +
                 "Version: " + com.veil.privacy.BuildConfig.VERSION_NAME + "\n" +
                 "Package: com.veil.privacy\n\n" +
-                "Target Subsystem: Multi-App Messaging Layer (WhatsApp, Telegram, Signal, SMS, Instagram)\n" +
-                "Interception Engine: Android NotificationListenerService & Foreground Shield\n" +
-                "Decoy Algorithm: Arrival-Time Dynamic Multi-Profile Rotation (Work, Calendar, Delivery, System)\n" +
-                "Persistence: Sandboxed Encrypted SQLite Room\n" +
-                "Telemetry: 0 bytes (Zero-Network Boundary)"
+                "Supported social platforms: WhatsApp, Instagram, Telegram, and Snapchat.\n\n" +
+                "VEIL uses Android's NotificationListenerService to inspect notification content exposed by each app. What can be detected or protected depends on the notification format, Android version, and permissions granted. Inline replies are available only when a source notification exposes a compatible RemoteInput action; support is not identical across all apps.\n\n" +
+                "Protection rules and event handling are managed inside VEIL. No claim is made that VEIL reads private app databases or intercepts messages that are not exposed through Android notifications."
         )
     }
 }

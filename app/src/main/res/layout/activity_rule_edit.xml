@@ -118,6 +118,70 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Source app for this rule: protection remains inside VEIL and is scoped to one app. -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:letterSpacing="0.08"
+                android:text="2. PROTECT IN APP"
+                android:textColor="@color/veil_accent_secure"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Choose which app this contact or username belongs to. This rule will only match notifications from that app."
+                android:textColor="@color/veil_text_medium"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnScopeWhatsApp"
+                    style="@style/Widget.Veil.Button.Primary"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="2dp"
+                    android:text="WhatsApp"
+                    android:textSize="11sp"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnScopeInstagram"
+                    style="@style/Widget.Veil.Button.Secondary"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="2dp"
+                    android:text="Instagram"
+                    android:textSize="11sp"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnScopeTelegram"
+                    style="@style/Widget.Veil.Button.Secondary"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="2dp"
+                    android:text="Telegram"
+                    android:textSize="11sp"
+                    app:strokeWidth="0dp" />
+            </LinearLayout>
+
             <!-- Decoy Section -->
             <TextView
                 android:layout_width="wrap_content"

@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -18,7 +19,7 @@ import kotlinx.coroutines.withContext
  * Production Android NotificationListenerService for VEIL.
  *
  * Responsibilities:
- * - Detects incoming WhatsApp notifications.
+ * - Detects incoming notifications from supported messaging apps.
  * - Extracts Android notification inline-reply RemoteInput action and registers it in [NotificationReplyRegistry].
  * - Resolves the notification against independent configured [ProtectionRule]s.
  * - Dismisses/cancels the original WhatsApp notification where Android permits.
@@ -30,6 +31,10 @@ class VeilNotificationListener : BaseNotificationListenerService() {
     private val ruleMatchingEngine = RuleMatchingEngine()
     private lateinit var inbox: VeilInbox
     private lateinit var notificationManager: VeilNotificationManager
+
+    // Room Flow invalidates this snapshot immediately when rules/contacts change.
+    @Volatile
+    private var cachedRuleSnapshot: List<ProtectionRule>? = null
 
     companion object {
         const val WHATSAPP_PACKAGE = "com.whatsapp"
@@ -54,6 +59,10 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         private val _pipelineFlow = MutableSharedFlow<PipelineEvent>(extraBufferCapacity = 32)
         val pipelineFlow: SharedFlow<PipelineEvent> = _pipelineFlow.asSharedFlow()
 
+        // Prevent concurrent callbacks for the same notification/event from racing through
+        // the database deduplication check before either callback persists its event.
+        private val inFlightEventKeys = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
         fun emitDiagnostic(stage: String, message: String, isSuccess: Boolean = true) {
             _pipelineFlow.tryEmit(PipelineEvent(stage = stage, message = message, isSuccess = isSuccess))
         }
@@ -63,6 +72,23 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         super.onCreate()
         inbox = VeilInbox.getInstance(this)
         notificationManager = VeilNotificationManager.getInstance(this)
+
+        serviceScope.launch {
+            kotlinx.coroutines.flow.combine(
+                database.protectionRuleDao().getEnabledRulesFlow(),
+                database.protectedContactDao().getAllFlow(),
+                database.selectedContactDao().getEnabledContactsFlow()
+            ) { rules, protectedContacts, selectedContacts ->
+                mergeRuleSnapshot(
+                    rules,
+                    protectedContacts.filter { it.isEnabled },
+                    selectedContacts
+                )
+            }.collect { snapshot ->
+                cachedRuleSnapshot = snapshot
+                emitDiagnostic("CACHE", "Protection configuration snapshot refreshed")
+            }
+        }
     }
 
     override fun onListenerConnected() {
@@ -91,6 +117,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         if (sbn == null) return
+        val eventReceivedElapsedMs = android.os.SystemClock.elapsedRealtime()
 
         val pkg = sbn.packageName ?: return
         val ownPackage = packageName
@@ -103,9 +130,14 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         val isRecognized = NotificationParser.isSupportedPackage(pkg, preferences.isProtectAnyApp)
         if (!isRecognized && !isSimulation) return
 
-        // 3. Master toggle check
+        // 3. Master and per-source-app toggles. A disabled app always passes through;
+        // it cannot inherit another app's enabled state.
         if (!preferences.isVeilEnabled) {
             emitDiagnostic("FILTER", "VEIL is currently paused. Passing notification through.")
+            return
+        }
+        if (!com.veil.privacy.model.ProtectionAppScope.isProtectionEnabled(applicationContext, pkg)) {
+            emitDiagnostic("FILTER", "Protection is disabled for this source app. Passing notification through.")
             return
         }
 
@@ -152,12 +184,32 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             emitDiagnostic("SENSOR", "Sender passed to Sensor Learning")
         }
 
-        // 7. Evaluate and process against configured VEIL rules
+        // 7. Evaluate and process against configured VEIL rules.
+        // Android can repost/update the same notification quickly. Claim an in-flight
+        // key before launching asynchronous work so two callbacks cannot both pass the
+        // database deduplication check and create duplicate protected events.
+        // A StatusBarNotification key identifies a notification slot, not a message.
+        // Messaging apps reuse that key when the notification is updated with a new message.
+        // Include postTime so a new update is not blocked by an older in-flight callback.
+        val eventGuardKey = listOf(
+            parsed.packageName,
+            parsed.notificationKey.orEmpty(),
+            parsed.timestamp.toString(),
+            parsed.message.hashCode().toString()
+        ).joinToString("|")
+
+        if (!inFlightEventKeys.add(eventGuardKey)) {
+            emitDiagnostic("DEDUP", "Ignored notification already being processed")
+            return
+        }
+
         serviceScope.launch {
             try {
-                processIncomingProtectedNotification(sbn, parsed, replyActionPair)
+                processIncomingProtectedNotification(sbn, parsed, replyActionPair, eventReceivedElapsedMs)
             } catch (e: Exception) {
                 emitDiagnostic("PROCESS", "Notification processing failed (${e.javaClass.simpleName})", false)
+            } finally {
+                inFlightEventKeys.remove(eventGuardKey)
             }
         }
     }
@@ -168,72 +220,33 @@ class VeilNotificationListener : BaseNotificationListenerService() {
     private suspend fun processIncomingProtectedNotification(
         sbn: StatusBarNotification,
         parsed: ParsedNotificationInfo,
-        replyActionPair: Pair<android.app.Notification.Action, android.app.RemoteInput>? = null
+        replyActionPair: Pair<android.app.Notification.Action, android.app.RemoteInput>? = null,
+        eventReceivedElapsedMs: Long = android.os.SystemClock.elapsedRealtime()
     ) {
-        // Fetch all active, enabled protection rules and contacts from Room database
-        val allRules = withContext(Dispatchers.IO) {
-            val rules = database.protectionRuleDao().getEnabledRulesSync().toMutableList()
-            val existingRulePhones = rules.map { it.normalizedPhoneNumber }.filter { it.isNotBlank() }.toSet()
-            val existingRuleNames = rules.map { it.normalizedContactName }.filter { it.isNotBlank() }.toSet()
+        // Use the Room-Flow-backed snapshot on the hot path. The first event may arrive
+        // before Flow's initial emission; in that case load once on IO and seed the cache.
+        val allRules = cachedRuleSnapshot ?: withContext(Dispatchers.IO) {
+            mergeRuleSnapshot(
+                database.protectionRuleDao().getEnabledRulesSync(),
+                database.protectedContactDao().getEnabledContactsSync(),
+                database.selectedContactDao().getEnabledContactsSync()
+            )
+        }.also { cachedRuleSnapshot = it }
 
-            val protectedContacts = database.protectedContactDao().getEnabledContactsSync()
-            for (c in protectedContacts) {
-                val normPhone = c.normalizedPhoneNumber
-                val normName = c.normalizedName
-                if ((normPhone.isBlank() || normPhone !in existingRulePhones) &&
-                    (normName.isBlank() || normName !in existingRuleNames)) {
-                    rules.add(
-                        ProtectionRule(
-                            contactId = c.contactId,
-                            contactName = c.displayName,
-                            contactPhoneNumber = c.selectedPhoneNumber,
-                            disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
-                            decoyIdentity = "Work",
-                            decoyMessage = "New message",
-                            isEnabled = c.isEnabled,
-                            source = c.source
-                        )
-                    )
-                }
-            }
-            // Include contacts selected in Triggered/quick-protect as well as the newer
-            // protected-contact table. This keeps the listener aligned with the user's
-            // selected-contact list instead of silently ignoring those selections.
-            val selectedContacts = database.selectedContactDao().getEnabledContactsSync()
-            val knownPhones = rules.map { it.normalizedPhoneNumber }.filter { it.isNotBlank() }.toMutableSet()
-            val knownNames = rules.map { it.normalizedContactName }.filter { it.isNotBlank() }.toMutableSet()
-            for (contact in selectedContacts) {
-                val phone = contact.normalizedPhoneNumber
-                val name = com.veil.privacy.model.ProtectedContact.normalizeName(contact.displayName)
-                val alreadyCovered = (phone.isNotBlank() && phone in knownPhones) ||
-                    (name.isNotBlank() && name in knownNames)
-                if (!alreadyCovered) {
-                    rules.add(
-                        ProtectionRule(
-                            contactId = contact.contactId,
-                            contactName = contact.displayName,
-                            contactPhoneNumber = contact.selectedPhoneNumber,
-                            disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
-                            decoyIdentity = "Work",
-                            decoyMessage = "New message",
-                            isEnabled = contact.isEnabled,
-                            source = contact.source
-                        )
-                    )
-                    if (phone.isNotBlank()) knownPhones.add(phone)
-                    if (name.isNotBlank()) knownNames.add(name)
-                }
-            }
-            rules
+        // Never let an Instagram/Telegram rule accidentally match a WhatsApp (or other app) alert.
+        val appScopedRules = allRules.filter {
+            com.veil.privacy.model.ProtectionAppScope.matches(
+                applicationContext, it.contactName, parsed.packageName, it.id
+            )
         }
 
-        if (allRules.isEmpty() && !preferences.isProtectAllSenders) {
+        if (appScopedRules.isEmpty() && !preferences.isProtectAllSenders) {
             emitDiagnostic("RULE", "No protection rules configured. Original alert left untouched.")
             return
         }
 
         // High-confidence matching evaluation
-        var matchedRule = ruleMatchingEngine.evaluateMatch(sbn, parsed, allRules)
+        var matchedRule = ruleMatchingEngine.evaluateMatch(sbn, parsed, appScopedRules)
 
         if (matchedRule == null && preferences.isProtectAllSenders) {
             matchedRule = ProtectionRule(
@@ -278,17 +291,18 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
         // Stable event identification and deduplication: prevent duplicate notification events
         val isDuplicate = withContext(Dispatchers.IO) {
-            val hasKey = !parsed.notificationKey.isNullOrBlank() &&
-                database.protectedEventDao().hasEventWithNotificationKey(parsed.notificationKey) > 0
-            val hasRecentContent = database.protectedEventDao().isRecentDuplicate(
-                conversationId = targetConversation,
-                realMessage = parsed.message,
-                minTimestamp = parsed.timestamp - 10000L
-            ) > 0
-            hasKey || hasRecentContent
+            // Notification keys identify an Android notification update/repost. Do not
+            // deduplicate on message text: two legitimate consecutive messages can have
+            // identical content (e.g. "OK") and must both appear in VEIL.
+            !parsed.notificationKey.isNullOrBlank() &&
+                database.protectedEventDao().hasEventWithNotificationKeyTimestampAndMessage(
+                    parsed.notificationKey, parsed.timestamp, parsed.message
+                ) > 0
         }
         if (isDuplicate) {
-            emitDiagnostic("DEDUP", "Ignored duplicate notification event (${parsed.notificationKey ?: targetConversation})")
+            // Never include notification keys, contact names, or message-derived values
+            // in diagnostics; they can contain private identity information.
+            emitDiagnostic("DEDUP", "Ignored duplicate notification event")
             return
         }
 
@@ -354,7 +368,24 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         }
         val eventWithId = protectedEvent.copy(id = insertedId)
 
-        // Persist first; suppress only this matched notification, never unchecked grouped siblings.
+        // Publish the protected presentation before requesting cancellation of the source alert.
+        // If VEIL cannot publish its replacement, leave the original visible rather than lose it.
+        val replacementAccepted = try {
+            notificationManager.postRuleDecoyNotification(eventWithId, matchedRule)
+        } catch (e: Exception) {
+            emitDiagnostic("POST", "Protected notification publication failed (${e.javaClass.simpleName}); original left untouched", false)
+            false
+        }
+        if (!replacementAccepted) {
+            emitDiagnostic("POST", "Android did not accept the VEIL replacement notification; original left untouched", false)
+            return
+        }
+        val latencyMs = (android.os.SystemClock.elapsedRealtime() - eventReceivedElapsedMs).coerceAtLeast(0L)
+        emitDiagnostic("POST", "Android accepted privacy-safe replacement notification")
+        emitDiagnostic("LATENCY", "Notification receipt-to-protected-publication: ${latencyMs}ms")
+
+        // Suppress only after the protected replacement was successfully handed to Android.
+        // Android/OEM policy can still refuse cancellation; that limitation is surfaced in diagnostics.
         if (preferences.isHideOriginalEnabled) {
             try {
                 sbn.key?.let { cancelNotification(it) }
@@ -366,12 +397,67 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             }
         }
 
-        // 4. Update interception counter
+        // 4. Update interception counter only after the protected notification was published.
         preferences.incrementInterceptionsCount()
+    }
 
-        // 5. Immediately post the replacement VEIL notification containing configured privacy disguise
-        notificationManager.postRuleDecoyNotification(eventWithId, matchedRule)
-        emitDiagnostic("POST", "Replacement alert posted: '$finalDecoySender: $finalDecoyMessage'")
+    private fun mergeRuleSnapshot(
+        enabledRules: List<ProtectionRule>,
+        protectedContacts: List<com.veil.privacy.model.ProtectedContact>,
+        selectedContacts: List<SelectedContact>
+    ): List<ProtectionRule> {
+        val rules = enabledRules.toMutableList()
+        val existingRulePhones = rules.map { it.normalizedPhoneNumber }.filter { it.isNotBlank() }.toMutableSet()
+        val existingRuleNames = rules.map { it.normalizedContactName }.filter { it.isNotBlank() }.toMutableSet()
+
+        for (contact in protectedContacts) {
+            val normPhone = contact.normalizedPhoneNumber
+            val normName = contact.normalizedName
+            if ((normPhone.isBlank() || normPhone !in existingRulePhones) &&
+                (normName.isBlank() || normName !in existingRuleNames)) {
+                rules.add(
+                    ProtectionRule(
+                        contactId = contact.contactId,
+                        contactName = contact.displayName,
+                        contactPhoneNumber = contact.selectedPhoneNumber,
+                        disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
+                        decoyIdentity = "Work",
+                        decoyMessage = "New message",
+                        isEnabled = contact.isEnabled,
+                        source = contact.source
+                    )
+                )
+                if (normPhone.isNotBlank()) existingRulePhones.add(normPhone)
+                if (normName.isNotBlank()) existingRuleNames.add(normName)
+            }
+        }
+
+        // Legacy selected-contact records remain supported for existing WhatsApp users.
+        val knownPhones = rules.map { it.normalizedPhoneNumber }.filter { it.isNotBlank() }.toMutableSet()
+        val knownNames = rules.map { it.normalizedContactName }.filter { it.isNotBlank() }.toMutableSet()
+        for (contact in selectedContacts) {
+            val phone = contact.normalizedPhoneNumber
+            val name = com.veil.privacy.model.ProtectedContact.normalizeName(contact.displayName)
+            val alreadyCovered = (phone.isNotBlank() && phone in knownPhones) ||
+                (name.isNotBlank() && name in knownNames)
+            if (!alreadyCovered) {
+                rules.add(
+                    ProtectionRule(
+                        contactId = contact.contactId,
+                        contactName = contact.displayName,
+                        contactPhoneNumber = contact.selectedPhoneNumber,
+                        disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
+                        decoyIdentity = "Work",
+                        decoyMessage = "New message",
+                        isEnabled = contact.isEnabled,
+                        source = contact.source
+                    )
+                )
+                if (phone.isNotBlank()) knownPhones.add(phone)
+                if (name.isNotBlank()) knownNames.add(name)
+            }
+        }
+        return rules
     }
 
     override suspend fun applyPrivacyTransformation(

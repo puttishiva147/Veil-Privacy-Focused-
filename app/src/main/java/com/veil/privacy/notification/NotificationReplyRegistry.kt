@@ -9,19 +9,11 @@ import android.os.Bundle
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Thread-safe registry that stores active Android notification reply tokens (PendingIntent + RemoteInput)
- * exposed by WhatsApp notifications.
- *
- * This allows VEIL's Protected Chats UI to transmit user replies legitimately through
- * Android's official Notification RemoteInput inline-reply mechanism.
- *
- * As required by Android security architecture:
- * - A reply can only be dispatched when WhatsApp currently exposes an active notification action.
- * - If the notification has been cancelled or cleared by the OS, this registry immediately flags the
- *   action as unavailable so VEIL does not pretend the message can be sent.
+ * Thread-safe registry for active Android notification reply tokens.
+ * Reply delivery is supported only when the source app exposes a live inline-reply
+ * PendingIntent and a free-form RemoteInput.
  */
 object NotificationReplyRegistry {
-
     data class LiveReplyAction(
         val notificationKey: String,
         val contactName: String,
@@ -41,58 +33,37 @@ object NotificationReplyRegistry {
         val capturedAt: Long = System.currentTimeMillis()
     )
 
-    // Keyed by normalized contact name (lowercase trimmed)
     private val liveActionsByContact = ConcurrentHashMap<String, LiveReplyAction>()
     private val liveCallsByContact = ConcurrentHashMap<String, LiveCallAction>()
-    // Keyed by notificationKey to allow swift removal when notification is cleared
     private val keyToContactMap = ConcurrentHashMap<String, String>()
 
-    /**
-     * Inspects a status notification's actions to locate an inline-reply action with RemoteInput.
-     */
+    /** Return only a RemoteInput action that accepts typed free-form text. */
     fun findReplyAction(notification: Notification?): Pair<Notification.Action, RemoteInput>? {
-        if (notification == null) return null
-        val actions = notification.actions ?: return null
-
+        val actions = notification?.actions ?: return null
         for (action in actions) {
-            val remoteInputs = action.remoteInputs ?: continue
-            for (remoteInput in remoteInputs) {
-                // Free-form reply text input
-                if (!remoteInput.resultKey.isNullOrBlank()) {
-                    return Pair(action, remoteInput)
-                }
-            }
+            val inputs = action.remoteInputs ?: continue
+            val input = inputs.firstOrNull { !it.resultKey.isNullOrBlank() && it.allowFreeFormInput }
+                ?: continue
+            return action to input
         }
         return null
     }
 
-    /**
-     * Inspects a status notification's actions to locate call Answer / Decline PendingIntents.
-     */
     fun findCallActions(notification: Notification?): Pair<PendingIntent?, PendingIntent?>? {
-        if (notification == null) return null
-        val actions = notification.actions ?: return null
+        val actions = notification?.actions ?: return null
         var answerIntent: PendingIntent? = null
         var declineIntent: PendingIntent? = null
-
         for (action in actions) {
-            val title = action.title?.toString()?.lowercase() ?: ""
+            val title = action.title?.toString()?.lowercase() ?: continue
             if (title.contains("answer") || title.contains("accept") || title.contains("call back")) {
                 answerIntent = action.actionIntent
             } else if (title.contains("decline") || title.contains("reject") || title.contains("dismiss")) {
                 declineIntent = action.actionIntent
             }
         }
-
-        if (answerIntent != null || declineIntent != null) {
-            return Pair(answerIntent, declineIntent)
-        }
-        return null
+        return if (answerIntent != null || declineIntent != null) answerIntent to declineIntent else null
     }
 
-    /**
-     * Registers an intercepted live notification call action for a protected contact.
-     */
     fun registerCall(
         contactName: String,
         notificationKey: String,
@@ -100,33 +71,27 @@ object NotificationReplyRegistry {
         declineIntent: PendingIntent?,
         sourcePackage: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
     ) {
-        val normalizedName = normalize(contactName)
-        val liveCall = LiveCallAction(
-            notificationKey = notificationKey,
-            contactName = contactName,
-            sourcePackage = sourcePackage,
-            answerIntent = answerIntent,
-            declineIntent = declineIntent
+        val normalizedName = normalize(contactName, sourcePackage)
+        liveCallsByContact[normalizedName] = LiveCallAction(
+            notificationKey, contactName, sourcePackage, answerIntent, declineIntent
         )
-        liveCallsByContact[normalizedName] = liveCall
         keyToContactMap[notificationKey] = normalizedName
-
     }
 
-    fun getLiveCallAction(contactName: String): LiveCallAction? {
-        val normalized = normalize(contactName)
-        val call = liveCallsByContact[normalized] ?: return null
-        // Call actions expire after 5 minutes
+    fun getLiveCallAction(contactName: String, sourcePackage: String? = null): LiveCallAction? {
+        val normalized = if (sourcePackage == null) normalize(contactName) else normalize(contactName, sourcePackage)
+        val call = liveCallsByContact[normalized]
+            ?: (if (sourcePackage == null) liveCallsByContact.values.filter {
+                it.contactName.equals(contactName, ignoreCase = true)
+            }.maxByOrNull { it.capturedAt } else null)
+            ?: return null
         if (System.currentTimeMillis() - call.capturedAt > 5 * 60 * 1000L) {
-            liveCallsByContact.remove(normalized)
+            liveCallsByContact.remove(normalize(call.contactName, call.sourcePackage), call)
             return null
         }
         return call
     }
 
-    /**
-     * Registers an intercepted live notification reply action for a protected contact.
-     */
     fun register(
         contactName: String,
         notificationKey: String,
@@ -134,90 +99,62 @@ object NotificationReplyRegistry {
         remoteInput: RemoteInput,
         sourcePackage: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
     ) {
-        val normalizedName = normalize(contactName)
-        val liveAction = LiveReplyAction(
-            notificationKey = notificationKey,
-            contactName = contactName,
-            sourcePackage = sourcePackage,
-            actionIntent = action.actionIntent,
-            remoteInput = remoteInput,
-            resultKey = remoteInput.resultKey
+        if (!remoteInput.allowFreeFormInput || remoteInput.resultKey.isBlank()) return
+        val normalizedName = normalize(contactName, sourcePackage)
+        liveActionsByContact[normalizedName] = LiveReplyAction(
+            notificationKey, contactName, sourcePackage, action.actionIntent, remoteInput, remoteInput.resultKey
         )
-        liveActionsByContact[normalizedName] = liveAction
         keyToContactMap[notificationKey] = normalizedName
-
     }
 
-    /**
-     * Checks if a live notification reply action is currently available for this contact.
-     */
-    fun isReplyActionLive(contactName: String): Boolean {
-        val normalized = normalize(contactName)
-        val action = liveActionsByContact[normalized] ?: return false
-        // Actions older than 2 hours are discarded to avoid stale PendingIntents
+    fun isReplyActionLive(contactName: String, sourcePackage: String? = null): Boolean {
+        val normalized = if (sourcePackage == null) normalize(contactName) else normalize(contactName, sourcePackage)
+        val action = liveActionsByContact[normalized]
+            ?: (if (sourcePackage == null) liveActionsByContact.values.filter {
+                it.contactName.equals(contactName, ignoreCase = true)
+            }.maxByOrNull { it.capturedAt } else null)
+            ?: return false
         if (System.currentTimeMillis() - action.capturedAt > 2 * 3600 * 1000L) {
-            liveActionsByContact.remove(normalized)
-            keyToContactMap.remove(action.notificationKey)
+            liveActionsByContact.remove(normalize(action.contactName, action.sourcePackage), action)
+            keyToContactMap.remove(action.notificationKey, normalize(action.contactName, action.sourcePackage))
             return false
         }
         return true
     }
 
-    /**
-     * Gets the live action details if available.
-     */
-    fun getLiveReplyAction(contactName: String): LiveReplyAction? {
-        val normalized = normalize(contactName)
-        return if (isReplyActionLive(normalized)) liveActionsByContact[normalized] else null
+    fun getLiveReplyAction(contactName: String, sourcePackage: String? = null): LiveReplyAction? {
+        if (!isReplyActionLive(contactName, sourcePackage)) return null
+        val normalized = if (sourcePackage == null) normalize(contactName) else normalize(contactName, sourcePackage)
+        return liveActionsByContact[normalized]
+            ?: if (sourcePackage == null) liveActionsByContact.values.filter {
+                it.contactName.equals(contactName, ignoreCase = true)
+            }.maxByOrNull { it.capturedAt } else null
     }
 
-    /**
-     * Dispatches an inline reply using Android's standard RemoteInput bundle through WhatsApp's PendingIntent.
-     *
-     * @return true if the reply was successfully handed over to the Android OS for delivery, false if token is expired/missing.
-     */
-    fun sendReply(context: Context, contactName: String, replyText: String): Boolean {
-        val action = getLiveReplyAction(contactName) ?: run {
-
-            return false
-        }
-
+    fun sendReply(context: Context, contactName: String, replyText: String, sourcePackage: String? = null): Boolean {
+        if (replyText.isBlank()) return false
+        val action = getLiveReplyAction(contactName, sourcePackage) ?: return false
         return try {
             val intent = Intent()
-            val bundle = Bundle()
-            bundle.putCharSequence(action.resultKey, replyText.trim())
-            RemoteInput.addResultsToIntent(arrayOf(action.remoteInput), intent, bundle)
-
-            // Send intent via PendingIntent
+            val results = Bundle().apply { putCharSequence(action.resultKey, replyText.trim()) }
+            RemoteInput.addResultsToIntent(arrayOf(action.remoteInput), intent, results)
             action.actionIntent.send(context, 0, intent)
-
             true
-        } catch (e: Exception) {
-
+        } catch (_: Exception) {
+            removeByKey(action.notificationKey)
             false
         }
     }
 
-    /**
-     * Removes cached action when Android cancels or removes the underlying notification.
-     */
     fun removeByKey(notificationKey: String) {
         keyToContactMap.remove(notificationKey)
-        // A single notification can be registered under both its parsed sender and a configured
-        // rule name. Remove every matching entry, but preserve newer tokens for the same contact.
         liveActionsByContact.entries.removeIf { it.value.notificationKey == notificationKey }
         liveCallsByContact.entries.removeIf { it.value.notificationKey == notificationKey }
-
     }
 
-    /**
-     * Clears call controls when a call notification ends. Reply tokens are kept separately because
-     * VEIL may itself dismiss the original message notification after extracting its RemoteInput.
-     */
     fun removeCallByKey(notificationKey: String) {
         liveCallsByContact.entries.removeIf { it.value.notificationKey == notificationKey }
         keyToContactMap.remove(notificationKey)
-
     }
 
     fun clearAll() {
@@ -227,4 +164,6 @@ object NotificationReplyRegistry {
     }
 
     private fun normalize(name: String): String = name.lowercase().trim()
+    private fun normalize(name: String, sourcePackage: String): String =
+        "${sourcePackage.trim().lowercase()}::${normalize(name)}"
 }

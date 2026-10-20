@@ -2,12 +2,18 @@ package com.veil.privacy.ui
 
 import android.Manifest
 import android.app.Activity
+import android.app.Dialog
+import android.view.Gravity
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.ImageView
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -61,6 +67,9 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var rulesAdapter: ProtectionRuleAdapter
 
     private var currentTab: Int = TAB_CHATS
+    private var selectedProtectedApp: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+    private var edgeDownX = 0f
+    private var edgeDownY = 0f
     private val dashboardStatePrefs by lazy {
         getSharedPreferences("veil_privacy_prefs", MODE_PRIVATE)
     }
@@ -74,6 +83,7 @@ class DashboardActivity : AppCompatActivity() {
         const val TAB_NOTIFICATIONS = 1
         const val TAB_CONTACTS = 2
         const val TAB_SETTINGS = 3
+        private const val EDGE_SWIPE_THRESHOLD_DP = 72
     }
 
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -185,15 +195,47 @@ class DashboardActivity : AppCompatActivity() {
         }
         binding.tabNotifications.setOnClickListener { switchTab(TAB_NOTIFICATIONS) }
         binding.tabContacts.setOnClickListener { switchTab(TAB_CONTACTS) }
-        binding.btnNotificationBell.setOnClickListener { switchTab(TAB_NOTIFICATIONS) }
+        binding.btnNotificationBell.setOnClickListener { showProtectedAppSwitcher() }
         binding.btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+
+        // Visible in-app selectors. These switch VEIL's protected inbox only; they never
+        // launch WhatsApp, Instagram, or Telegram.
+        selectedProtectedApp = dashboardStatePrefs.getString(
+            "selected_protected_app",
+            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+        ) ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+        binding.btnProtectedWhatsApp.setOnClickListener { selectProtectedApp(com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) }
+        binding.btnProtectedInstagram.setOnClickListener { selectProtectedApp(com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM) }
+        binding.btnProtectedTelegram.setOnClickListener { selectProtectedApp(com.veil.privacy.model.SupportedApp.PKG_TELEGRAM) }
+        updateProtectedAppSelector()
+
         if (VeilPrefs.isSessionUnlocked) {
             switchTab(TAB_CHATS)
         } else {
             switchTab(TAB_NOTIFICATIONS)
         }
+    }
+
+    private fun selectProtectedApp(packageName: String) {
+        selectedProtectedApp = packageName
+        dashboardStatePrefs.edit().putString("selected_protected_app", packageName).apply()
+        updateProtectedAppSelector()
+        binding.fabAddProtectedChat.visibility = if (currentTab == TAB_CHATS) View.VISIBLE else View.GONE
+        binding.fabAddInstagramProtection.visibility = View.GONE
+        binding.fabAddTelegramProtection.visibility = View.GONE
+        binding.fabAddSnapchatProtection.visibility = View.GONE
+        refreshChatThreads()
+    }
+
+    private fun updateProtectedAppSelector() {
+        applyTabStyle(binding.btnProtectedWhatsApp, selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP)
+        applyTabStyle(binding.btnProtectedInstagram, selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM)
+        applyTabStyle(binding.btnProtectedTelegram, selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_TELEGRAM)
+        binding.btnProtectedWhatsApp.contentDescription = "Show WhatsApp protected conversations"
+        binding.btnProtectedInstagram.contentDescription = "Show Instagram protected conversations"
+        binding.btnProtectedTelegram.contentDescription = "Show Telegram protected conversations"
     }
 
     private fun switchTab(tab: Int) {
@@ -212,7 +254,14 @@ class DashboardActivity : AppCompatActivity() {
         binding.viewTabContacts.visibility = if (tab == TAB_CONTACTS) View.VISIBLE else View.GONE
         binding.viewTabSettings.visibility = if (tab == TAB_SETTINGS) View.VISIBLE else View.GONE
 
-        binding.fabAddProtectedChat.visibility = if (tab == TAB_CHATS) View.VISIBLE else View.GONE
+        binding.fabAddProtectedChat.visibility =
+            if (tab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) View.VISIBLE else View.GONE
+        binding.fabAddInstagramProtection.visibility =
+            if (tab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM) View.VISIBLE else View.GONE
+        binding.fabAddTelegramProtection.visibility =
+            if (tab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_TELEGRAM) View.VISIBLE else View.GONE
+        binding.fabAddSnapchatProtection.visibility =
+            if (tab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT) View.VISIBLE else View.GONE
 
         applyTabStyle(binding.tabChats, tab == TAB_CHATS)
         applyTabStyle(binding.tabNotifications, tab == TAB_NOTIFICATIONS)
@@ -261,6 +310,8 @@ class DashboardActivity : AppCompatActivity() {
                             onUnlocked = {
                                 val intent = Intent(this@DashboardActivity, ProtectedChatConversationActivity::class.java).apply {
                                     putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, thread.contactName)
+                                    putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
+                                    putExtra(ProtectedChatConversationActivity.EXTRA_CONVERSATION_ID, thread.conversationId)
                                 }
                                 startActivity(intent)
                             }
@@ -268,6 +319,8 @@ class DashboardActivity : AppCompatActivity() {
                     } else {
                         val intent = Intent(this@DashboardActivity, ProtectedChatConversationActivity::class.java).apply {
                             putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, thread.contactName)
+                            putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
+                            putExtra(ProtectedChatConversationActivity.EXTRA_CONVERSATION_ID, thread.conversationId)
                         }
                         startActivity(intent)
                     }
@@ -313,17 +366,13 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun setupActions() {
-        binding.fabAddProtectedChat.setOnClickListener {
-            openAddContactChooser()
-        }
+        binding.fabAddProtectedChat.setOnClickListener { openAddContactChooser(selectedProtectedApp) }
+        binding.fabAddInstagramProtection.setOnClickListener { openAddContactChooser(selectedProtectedApp) }
+        binding.fabAddTelegramProtection.setOnClickListener { openAddContactChooser(selectedProtectedApp) }
+        binding.fabAddSnapchatProtection.setOnClickListener { openAddContactChooser(selectedProtectedApp) }
 
-        binding.btnAddContactRuleTop.setOnClickListener {
-            startActivity(Intent(this, RuleEditActivity::class.java))
-        }
-
-        binding.btnEmptyAddContactRule.setOnClickListener {
-            startActivity(Intent(this, RuleEditActivity::class.java))
-        }
+        binding.btnAddContactRuleTop.setOnClickListener { openRuleEditorForSelectedApp() }
+        binding.btnEmptyAddContactRule.setOnClickListener { openRuleEditorForSelectedApp() }
 
         binding.btnClearNotificationsLog.setOnClickListener {
             VeilDialogs.showConfirmationDialog(
@@ -650,78 +699,280 @@ class DashboardActivity : AppCompatActivity() {
                 }
                 binding.layoutEmptyNotifications.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
 
-                // Tab 1 Protected Chats Threads
-                val threads = mutableListOf<ProtectedChatThread>()
-                for (rule in rules) {
-                    val conversationEvents = events.filter {
-                        it.conversationId == rule.contactName.lowercase().trim()
-                    }
-                    val latestEvent = conversationEvents.maxByOrNull { it.timestamp }
-                    val lastMessage = latestEvent?.realMessage ?: "No messages captured yet"
-                    val lastTime = latestEvent?.timestamp ?: rule.createdAt
-                    val isLive = NotificationReplyRegistry.isReplyActionLive(rule.contactName)
-
-                    threads.add(
+                // Tab 1 Protected Chats Threads: only show rules assigned to this app.
+                val appRules = rules.filter {
+                    com.veil.privacy.model.ProtectionAppScope.matches(
+                        this@DashboardActivity, it.contactName, selectedProtectedApp, it.id
+                    )
+                }
+                val threads = (if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
+                    appRules.map { rule ->
+                        val sourceEvents = events.filter {
+                            it.sourcePackage == selectedProtectedApp &&
+                                it.conversationId == rule.contactName.lowercase().trim()
+                        }
+                        val latest = sourceEvents.maxByOrNull { it.timestamp }
                         ProtectedChatThread(
                             contactName = rule.contactName,
                             contactPhoneNumber = rule.contactPhoneNumber,
-                            lastMessage = lastMessage,
-                            lastTimestamp = lastTime,
-                            isLiveReplyAvailable = isLive,
+                            lastMessage = latest?.realMessage ?: "No messages captured yet",
+                            lastTimestamp = latest?.timestamp ?: rule.createdAt,
+                            isLiveReplyAvailable = NotificationReplyRegistry.isReplyActionLive(rule.contactName, selectedProtectedApp),
                             disguiseMode = rule.disguiseMode,
-                            decoyIdentity = rule.decoyIdentity
+                            decoyIdentity = rule.decoyIdentity,
+                            sourcePackage = selectedProtectedApp,
+                            conversationId = rule.contactName.lowercase().trim()
                         )
-                    )
+                    }
+                } else {
+                    events.filter { it.sourcePackage == selectedProtectedApp }
+                        .groupBy { it.conversationId }
+                        .mapNotNull { (conversationId, conversationEvents) ->
+                            val latest = conversationEvents.maxByOrNull { it.timestamp } ?: return@mapNotNull null
+                            val displayName = appRules.firstOrNull { it.contactName.lowercase().trim() == conversationId }?.contactName
+                                ?: latest.realSender.ifBlank { conversationId }
+                            ProtectedChatThread(
+                                contactName = displayName,
+                                lastMessage = latest.realMessage,
+                                lastTimestamp = latest.timestamp,
+                                isLiveReplyAvailable = NotificationReplyRegistry.isReplyActionLive(displayName, selectedProtectedApp),
+                                disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
+                                decoyIdentity = latest.decoySender,
+                                sourcePackage = selectedProtectedApp,
+                                conversationId = conversationId
+                            )
+                        }
+                }).sortedByDescending { it.lastTimestamp }
+                chatThreadsAdapter.submitList(threads)
+                binding.tvChatsHeaderCount.text = "${threads.size} ${com.veil.privacy.model.SupportedApp.getAppDisplayName(selectedProtectedApp).uppercase()} PROTECTED CONVERSATIONS"
+                binding.layoutEmptyChats.visibility = if (threads.isEmpty()) View.VISIBLE else View.GONE
+                binding.tvEmptyChatsDescription.text = when (selectedProtectedApp) {
+                    com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM -> "Add an Instagram username to protect its Direct notifications."
+                    com.veil.privacy.model.SupportedApp.PKG_TELEGRAM -> "Add a Telegram username or chat to protect its notifications."
+                    com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT -> "Add a Snapchat username to protect available notification details."
+                    else -> "Select a WhatsApp contact or enter their phone number to protect their notifications."
                 }
-
-                // Sort threads by latest activity
-                val sortedThreads = threads.sortedByDescending { it.lastTimestamp }
-                chatThreadsAdapter.submitList(sortedThreads)
-                binding.tvChatsHeaderCount.text = "${sortedThreads.size} PROTECTED CONVERSATIONS"
-                binding.layoutEmptyChats.visibility = if (sortedThreads.isEmpty()) View.VISIBLE else View.GONE
             }
         }
     }
 
     private fun refreshChatThreads() {
-        // Trigger re-read to update live reply indicators
         lifecycleScope.launch(Dispatchers.IO) {
             val rules = database.protectionRuleDao().getAllRulesSync()
             val events = database.protectedEventDao().getAllSync()
-            val threads = rules.map { rule ->
-                val conversationEvents = events.filter {
-                    it.conversationId == rule.contactName.lowercase().trim()
-                }
-                val latestEvent = conversationEvents.maxByOrNull { it.timestamp }
-                val lastMessage = latestEvent?.realMessage ?: "No messages captured yet"
-                val lastTime = latestEvent?.timestamp ?: rule.createdAt
-                val isLive = NotificationReplyRegistry.isReplyActionLive(rule.contactName)
-
-                ProtectedChatThread(
-                    contactName = rule.contactName,
-                    contactPhoneNumber = rule.contactPhoneNumber,
-                    lastMessage = lastMessage,
-                    lastTimestamp = lastTime,
-                    isLiveReplyAvailable = isLive,
-                    disguiseMode = rule.disguiseMode,
-                    decoyIdentity = rule.decoyIdentity
+            val appRules = rules.filter {
+                com.veil.privacy.model.ProtectionAppScope.matches(
+                    this@DashboardActivity, it.contactName, selectedProtectedApp, it.id
                 )
-            }.sortedByDescending { it.lastTimestamp }
+            }
+            val threads = (if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
+                appRules.map { rule ->
+                    val sourceEvents = events.filter {
+                        it.sourcePackage == selectedProtectedApp &&
+                            it.conversationId == rule.contactName.lowercase().trim()
+                    }
+                    val latestEvent = sourceEvents.maxByOrNull { it.timestamp }
+                    ProtectedChatThread(
+                        contactName = rule.contactName,
+                        contactPhoneNumber = rule.contactPhoneNumber,
+                        lastMessage = latestEvent?.realMessage ?: "No messages captured yet",
+                        lastTimestamp = latestEvent?.timestamp ?: rule.createdAt,
+                        isLiveReplyAvailable = NotificationReplyRegistry.isReplyActionLive(rule.contactName, selectedProtectedApp),
+                        disguiseMode = rule.disguiseMode,
+                        decoyIdentity = rule.decoyIdentity,
+                        sourcePackage = selectedProtectedApp,
+                        conversationId = rule.contactName.lowercase().trim()
+                    )
+                }
+            } else {
+                events.filter { it.sourcePackage == selectedProtectedApp }
+                    .groupBy { it.conversationId }
+                    .mapNotNull { (conversationId, conversationEvents) ->
+                        val latestEvent = conversationEvents.maxByOrNull { it.timestamp } ?: return@mapNotNull null
+                        val displayName = rules.firstOrNull { it.contactName.lowercase().trim() == conversationId }?.contactName
+                            ?: latestEvent.realSender.ifBlank { conversationId }
+                        ProtectedChatThread(
+                            contactName = displayName,
+                            lastMessage = latestEvent.realMessage,
+                            lastTimestamp = latestEvent.timestamp,
+                            isLiveReplyAvailable = NotificationReplyRegistry.isReplyActionLive(displayName, selectedProtectedApp),
+                            disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
+                            decoyIdentity = latestEvent.decoySender,
+                            sourcePackage = selectedProtectedApp,
+                            conversationId = conversationId
+                        )
+                    }
+            }).sortedByDescending { it.lastTimestamp }
 
             withContext(Dispatchers.Main) {
                 chatThreadsAdapter.submitList(threads)
-                binding.tvChatsHeaderCount.text = "${threads.size} PROTECTED CONVERSATIONS"
+                binding.tvChatsHeaderCount.text = "${threads.size} ${com.veil.privacy.model.SupportedApp.getAppDisplayName(selectedProtectedApp).uppercase()} PROTECTED CONVERSATIONS"
                 binding.layoutEmptyChats.visibility = if (threads.isEmpty()) View.VISIBLE else View.GONE
             }
         }
     }
 
-    private fun openAddContactChooser() {
+    private fun showProtectedAppSwitcher() {
+        val packages = arrayOf(
+            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
+            com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM,
+            com.veil.privacy.model.SupportedApp.PKG_TELEGRAM,
+            com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT
+        )
+        val panel = Dialog(this)
+        val density = resources.displayMetrics.density
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((20 * density).toInt(), (32 * density).toInt(), (16 * density).toInt(), (20 * density).toInt())
+            setBackgroundColor(ContextCompat.getColor(this@DashboardActivity, R.color.veil_surface))
+        }
+        val title = TextView(this).apply {
+            text = "PROTECTED APPS"
+            textSize = 13f
+            letterSpacing = 0.12f
+            setTextColor(ContextCompat.getColor(this@DashboardActivity, R.color.veil_text_medium))
+            setPadding(0, 0, 0, (18 * density).toInt())
+        }
+        container.addView(title)
+        packages.forEach { sourcePackage ->
+            val selected = sourcePackage == selectedProtectedApp
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding((12 * density).toInt(), (12 * density).toInt(), (8 * density).toInt(), (12 * density).toInt())
+                isClickable = true
+                isFocusable = true
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    cornerRadius = 18 * density
+                    setColor(ContextCompat.getColor(this@DashboardActivity,
+                        if (selected) R.color.veil_surface_card else R.color.veil_surface))
+                    setStroke((if (selected) 1.5f else 1f).let { (it * density).toInt() },
+                        ContextCompat.getColor(this@DashboardActivity,
+                            if (selected) R.color.veil_accent_secure else R.color.veil_hairline))
+                }
+                setOnClickListener {
+                    selectProtectedApp(sourcePackage)
+                    switchTab(TAB_CHATS)
+                    panel.dismiss()
+                }
+            }
+            val appIcon = ImageView(this).apply {
+                layoutParams = LinearLayout.LayoutParams((32 * density).toInt(), (32 * density).toInt())
+                scaleType = ImageView.ScaleType.FIT_CENTER
+                setImageDrawable(
+                    try {
+                        packageManager.getApplicationIcon(sourcePackage)
+                    } catch (_: android.content.pm.PackageManager.NameNotFoundException) {
+                        ContextCompat.getDrawable(this@DashboardActivity, R.drawable.veil_official_logo)
+                    }
+                )
+                contentDescription = com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)
+            }
+            val labelColumn = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding((12 * density).toInt(), 0, (8 * density).toInt(), 0)
+            }
+            val label = TextView(this).apply {
+                text = com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)
+                textSize = 16f
+                setTextColor(ContextCompat.getColor(this@DashboardActivity,
+                    if (selected) R.color.veil_text_high else R.color.veil_text_medium))
+            }
+            labelColumn.addView(label)
+            if (selected) {
+                labelColumn.addView(TextView(this).apply {
+                    text = "SELECTED"
+                    textSize = 9f
+                    letterSpacing = 0.08f
+                    setTypeface(typeface, android.graphics.Typeface.BOLD)
+                    setTextColor(ContextCompat.getColor(this@DashboardActivity, R.color.veil_accent_secure))
+                    setPadding(0, (3 * density).toInt(), 0, 0)
+                    contentDescription = "This app is selected; the switch controls protection"
+                })
+            }
+            row.addView(appIcon)
+            row.addView(labelColumn, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            val protectionToggle = com.google.android.material.materialswitch.MaterialSwitch(this).apply {
+                isChecked = com.veil.privacy.model.ProtectionAppScope.isProtectionEnabled(this@DashboardActivity, sourcePackage)
+                contentDescription = "Toggle app-specific protection"
+                setOnCheckedChangeListener { _, enabled ->
+                    com.veil.privacy.model.ProtectionAppScope.setProtectionEnabled(this@DashboardActivity, sourcePackage, enabled)
+                    val state = if (enabled) "enabled" else "disabled"
+                    Toast.makeText(this@DashboardActivity, com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage) + " protection " + state, Toast.LENGTH_SHORT).show()
+                }
+            }
+            row.addView(protectionToggle)
+            container.addView(row, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+            ))
+        }
+        val hint = TextView(this).apply {
+            text = "WhatsApp, Instagram, Telegram and Snapchat have dedicated protection sections. Notification actions depend on what each source app exposes to Android."
+            textSize = 12f
+            setTextColor(ContextCompat.getColor(this@DashboardActivity, R.color.veil_text_low))
+            setPadding((12 * density).toInt(), (24 * density).toInt(), (8 * density).toInt(), 0)
+        }
+        container.addView(hint)
+        panel.setContentView(container)
+        panel.window?.let { window ->
+            window.setBackgroundDrawableResource(android.R.color.transparent)
+            window.setLayout((300 * density).toInt(), android.view.ViewGroup.LayoutParams.MATCH_PARENT)
+            window.setGravity(Gravity.START)
+            window.setDimAmount(0.45f)
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        }
+        panel.show()
+        panel.window?.setLayout((300 * density).toInt(), android.view.ViewGroup.LayoutParams.MATCH_PARENT)
+        panel.window?.setGravity(Gravity.START)
+    }
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        val edgeSize = 24 * resources.displayMetrics.density
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                edgeDownX = event.x
+                edgeDownY = event.y
+            }
+            MotionEvent.ACTION_UP -> {
+                val deltaX = event.x - edgeDownX
+                val deltaY = kotlin.math.abs(event.y - edgeDownY)
+                if (edgeDownX <= edgeSize && deltaX >= EDGE_SWIPE_THRESHOLD_DP * resources.displayMetrics.density &&
+                    deltaX > deltaY * 1.25f) {
+                    showProtectedAppSwitcher()
+                    return true
+                }
+            }
+        }
+        return super.dispatchTouchEvent(event)
+    }
+
+    private fun openRuleEditorForSelectedApp() {
+        startActivity(Intent(this, RuleEditActivity::class.java).putExtra(
+            RuleEditActivity.EXTRA_PROTECTION_PACKAGE, selectedProtectedApp
+        ))
+    }
+
+    private fun openAddContactChooser(sourcePackage: String = selectedProtectedApp) {
+        selectedProtectedApp = sourcePackage
+        dashboardStatePrefs.edit().putString("selected_protected_app", sourcePackage).apply()
+        updateProtectedAppSelector()
+        switchTab(TAB_CHATS)
+
+        // Instagram and Telegram protection is based on usernames/chat titles, not phone contacts.
+        // Open their app-scoped rule editor directly so the rule is saved against the correct app.
+        if (sourcePackage != com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
+            startActivity(Intent(this, RuleEditActivity::class.java).putExtra(
+                RuleEditActivity.EXTRA_PROTECTION_PACKAGE, sourcePackage
+            ))
+            return
+        }
+
         VeilDialogs.showProtectTargetChooser(
             activity = this,
             onQuickManual = { showQuickManualAddDialog() },
             onPickContacts = { launchContactPickerFlow() },
-            onAdvancedRule = { startActivity(Intent(this, RuleEditActivity::class.java)) }
+            onAdvancedRule = { openRuleEditorForSelectedApp() }
         )
     }
 

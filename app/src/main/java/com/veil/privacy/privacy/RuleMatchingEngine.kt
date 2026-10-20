@@ -26,7 +26,7 @@ class RuleMatchingEngine {
     }
 
     /**
-     * Evaluates an incoming WhatsApp notification against active VEIL protection rules.
+     * Evaluates a supported-app notification against active VEIL protection rules.
      * Returns the matched [ProtectionRule] only if matching confidence is high, or null otherwise.
      */
     fun evaluateMatch(
@@ -60,7 +60,9 @@ class RuleMatchingEngine {
         val isGroup = isGroupConversation(extras)
 
         // Safety Guard 1: Ignore WhatsApp system/service notifications
-        if (isWhatsAppServiceNotification(parsed.sender, parsed.message)) {
+        if ((parsed.packageName == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
+                parsed.packageName == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS) &&
+            isWhatsAppServiceNotification(parsed.sender, parsed.message)) {
             return MatchResult.LowConfidenceRejected("WhatsApp system service alert")
         }
 
@@ -75,8 +77,19 @@ class RuleMatchingEngine {
         // NEVER match if the group title merely contains the contact's name.
         if (isGroup) {
             val authorOnlyMatch = findRuleMatchingIdentity(resolvedAuthor, enabledRules)
-            return if (authorOnlyMatch != null) {
-                MatchResult.Matched(authorOnlyMatch, "Group message author verified: $resolvedAuthor")
+            if (authorOnlyMatch != null) {
+                return MatchResult.Matched(authorOnlyMatch, "Group message author verified")
+            }
+
+            // Telegram group/channel rules may explicitly target the chat title entered by the
+            // user in VEIL's app-scoped rule editor. WhatsApp keeps the stricter author-only
+            // guard so a group title can never accidentally expose an unrelated conversation.
+            val isTelegram = parsed.packageName.startsWith("org.telegram.")
+            val explicitTelegramChatMatch = if (isTelegram) {
+                findRuleMatchingIdentity(parsed.sender, enabledRules)
+            } else null
+            return if (explicitTelegramChatMatch != null) {
+                MatchResult.Matched(explicitTelegramChatMatch, "Explicit Telegram chat rule matched")
             } else {
                 MatchResult.NoMatch
             }

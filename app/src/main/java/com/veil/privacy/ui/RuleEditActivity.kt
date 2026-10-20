@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import com.veil.privacy.R
 import com.veil.privacy.databinding.ActivityRuleEditBinding
 import com.veil.privacy.model.ProtectionRule
+import com.veil.privacy.model.ProtectionAppScope
 import com.veil.privacy.model.SelectedContact
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.util.ContactSelectionHelper
@@ -31,6 +32,7 @@ class RuleEditActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_RULE_ID = "extra_rule_id"
+        const val EXTRA_PROTECTION_PACKAGE = "extra_protection_package"
     }
 
     private lateinit var binding: ActivityRuleEditBinding
@@ -41,6 +43,7 @@ class RuleEditActivity : AppCompatActivity() {
     private var selectedContactName: String = ""
     private var selectedContactPhone: String = ""
     private var selectedSource: String = ProtectionRule.SOURCE_ANDROID_CONTACTS
+    private var selectedProtectionPackage: String = ProtectionAppScope.WHATSAPP
 
     // Contact Picker Launcher
     private val pickContactLauncher = registerForActivityResult(
@@ -71,6 +74,9 @@ class RuleEditActivity : AppCompatActivity() {
 
         db = VeilDatabase.getInstance(this)
         editingRuleId = intent.getLongExtra(EXTRA_RULE_ID, 0)
+        selectedProtectionPackage = intent.getStringExtra(EXTRA_PROTECTION_PACKAGE)
+            ?.takeIf { it == ProtectionAppScope.WHATSAPP || it == ProtectionAppScope.INSTAGRAM || it == ProtectionAppScope.TELEGRAM || it == ProtectionAppScope.SNAPCHAT }
+            ?: ProtectionAppScope.WHATSAPP
 
         setupUI()
         setupListeners()
@@ -87,6 +93,31 @@ class RuleEditActivity : AppCompatActivity() {
 
     private fun setupUI() {
         binding.toolbarRuleEdit.setNavigationOnClickListener { finish() }
+
+        val isWhatsApp = selectedProtectionPackage == ProtectionAppScope.WHATSAPP
+        binding.btnScopeWhatsApp.visibility = View.GONE
+        binding.btnScopeInstagram.visibility = View.GONE
+        binding.btnScopeTelegram.visibility = View.GONE
+        // Source app is chosen by the dashboard app switcher; do not show a second selector.
+        binding.btnPickContact.visibility = if (isWhatsApp) View.VISIBLE else View.GONE
+        binding.btnManualContact.text = when (selectedProtectionPackage) {
+            ProtectionAppScope.INSTAGRAM -> "Enter Instagram username"
+            ProtectionAppScope.TELEGRAM -> "Enter Telegram username / chat"
+            ProtectionAppScope.SNAPCHAT -> "Enter Snapchat username"
+            else -> "Enter phone number manually"
+        }
+        binding.tvSelectedContactName.text = when (selectedProtectionPackage) {
+            ProtectionAppScope.INSTAGRAM -> "No Instagram username selected"
+            ProtectionAppScope.TELEGRAM -> "No Telegram contact selected"
+            ProtectionAppScope.SNAPCHAT -> "No Snapchat account selected"
+            else -> "No contact selected"
+        }
+        binding.tvSelectedContactPhone.text = when (selectedProtectionPackage) {
+            ProtectionAppScope.INSTAGRAM -> "Use the exact Instagram username"
+            ProtectionAppScope.TELEGRAM -> "Use the Telegram username or chat name"
+            ProtectionAppScope.SNAPCHAT -> "Use the exact Snapchat username"
+            else -> "Select a contact or enter a phone number"
+        }
 
         if (editingRuleId > 0) {
             binding.toolbarRuleEdit.title = "Edit Protection Rule"
@@ -109,6 +140,11 @@ class RuleEditActivity : AppCompatActivity() {
         binding.btnManualContact.setOnClickListener {
             showManualEntryDialog()
         }
+
+        binding.btnScopeWhatsApp.setOnClickListener { selectProtectionPackage(ProtectionAppScope.WHATSAPP) }
+        binding.btnScopeInstagram.setOnClickListener { selectProtectionPackage(ProtectionAppScope.INSTAGRAM) }
+        binding.btnScopeTelegram.setOnClickListener { selectProtectionPackage(ProtectionAppScope.TELEGRAM) }
+        updateProtectionPackageButtons()
 
         binding.switchCustomPinEnabled.setOnCheckedChangeListener { _, isChecked ->
             binding.tilContactLockPin.visibility = if (isChecked) View.VISIBLE else View.GONE
@@ -172,6 +208,28 @@ class RuleEditActivity : AppCompatActivity() {
         }
     }
 
+    private fun selectProtectionPackage(packageName: String) {
+        selectedProtectionPackage = packageName
+        updateProtectionPackageButtons()
+    }
+
+    private fun updateProtectionPackageButtons() {
+        val selectedColor = ContextCompat.getColor(this, R.color.veil_button_primary_bg)
+        val idleColor = ContextCompat.getColor(this, R.color.veil_surface)
+        val selectedText = ContextCompat.getColor(this, R.color.veil_button_primary_text)
+        val idleText = ContextCompat.getColor(this, R.color.veil_text_medium)
+        listOf(
+            binding.btnScopeWhatsApp to ProtectionAppScope.WHATSAPP,
+            binding.btnScopeInstagram to ProtectionAppScope.INSTAGRAM,
+            binding.btnScopeTelegram to ProtectionAppScope.TELEGRAM
+        ).forEach { (button, packageName) ->
+            val selected = selectedProtectionPackage == packageName
+            button.backgroundTintList = android.content.res.ColorStateList.valueOf(if (selected) selectedColor else idleColor)
+            button.setTextColor(if (selected) selectedText else idleText)
+            button.isSelected = selected
+        }
+    }
+
     private fun updatePreview() {
         val identity = binding.etDecoyIdentity.text?.toString()?.trim()
         val message = binding.etDecoyMessage.text?.toString()?.trim()
@@ -223,13 +281,24 @@ class RuleEditActivity : AppCompatActivity() {
     }
 
     private fun showManualEntryDialog(initialName: String = "") {
+        val isWhatsApp = selectedProtectionPackage == ProtectionAppScope.WHATSAPP
+        val targetHint = when (selectedProtectionPackage) {
+            ProtectionAppScope.INSTAGRAM -> "Exact Instagram username *"
+            ProtectionAppScope.TELEGRAM -> "Telegram username or chat name *"
+            ProtectionAppScope.SNAPCHAT -> "Snapchat username *"
+            else -> "WhatsApp Contact or Chat Name *"
+        }
+        val phoneHint = if (isWhatsApp) "Phone Number (Optional - High Confidence)" else "Not used for this app"
         VeilDialogs.showQuickProtectBottomSheet(
             activity = this,
             initialName = initialName,
+            targetNameHint = targetHint,
+            targetPhoneHint = phoneHint,
+            showPhoneField = isWhatsApp,
             onConfirmed = { name, phone, decoyIdentity, decoyMessage, pin ->
                 setContactTarget(
                     name = name,
-                    phone = phone,
+                    phone = if (isWhatsApp) phone else "",
                     contactId = "",
                     source = ProtectionRule.SOURCE_MANUAL
                 )
@@ -267,6 +336,9 @@ class RuleEditActivity : AppCompatActivity() {
                     contactId = rule.contactId,
                     source = rule.source
                 )
+                selectedProtectionPackage = ProtectionAppScope.get(this@RuleEditActivity, rule.contactName, rule.id)
+                setupUI()
+                updateProtectionPackageButtons()
                 binding.etDecoyIdentity.setText(rule.decoyIdentity)
                 binding.etDecoyMessage.setText(rule.decoyMessage)
                 binding.switchRuleSound.isChecked = rule.soundEnabled
@@ -354,22 +426,26 @@ class RuleEditActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                withContext(Dispatchers.IO) {
+                val savedRuleId = withContext(Dispatchers.IO) {
                     val normalizedPhone = ProtectionRule.normalizePhone(rule.contactPhoneNumber)
-                    val duplicateByPhone = if (normalizedPhone.isNotBlank()) {
+                    // Phone-number uniqueness is meaningful for WhatsApp contacts only.
+                    val duplicateByPhone = if (selectedProtectionPackage == ProtectionAppScope.WHATSAPP && normalizedPhone.isNotBlank()) {
                         db.protectionRuleDao().findByNormalizedPhoneSync(normalizedPhone)
                     } else null
                     val duplicateByName = db.protectionRuleDao().findByNormalizedNameSync(
                         ProtectionRule.normalizeName(rule.contactName)
-                    )
+                    )?.takeIf { existing ->
+                        ProtectionAppScope.get(this@RuleEditActivity, existing.contactName, existing.id) == selectedProtectionPackage
+                    }
                     val duplicate = listOfNotNull(duplicateByPhone, duplicateByName)
                         .firstOrNull { it.id != editingRuleId }
                     if (duplicate != null) {
                         throw IllegalStateException("A protection rule already exists for this contact or number")
                     }
 
-                    if (editingRuleId > 0) {
+                    val savedId = if (editingRuleId > 0) {
                         db.protectionRuleDao().update(rule)
+                        editingRuleId
                     } else {
                         db.protectionRuleDao().insert(rule)
                     }
@@ -395,8 +471,10 @@ class RuleEditActivity : AppCompatActivity() {
                     isCustomLockEnabled = finalIsLock
                 )
                     db.protectedContactDao().insert(protectedModel)
+                    savedId
                 }
 
+                ProtectionAppScope.set(this@RuleEditActivity, selectedContactName, selectedProtectionPackage, savedRuleId)
                 Toast.makeText(
                     this@RuleEditActivity,
                     "Protection rule saved for ${rule.contactName}",
