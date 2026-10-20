@@ -103,15 +103,6 @@ class AppSwitcherActivity : AppCompatActivity() {
             val icon = android.widget.ImageView(this).apply {
                 setImageResource(app.icon)
                 contentDescription = "${app.label} icon"
-                if (app.packageName == SupportedApp.PKG_WHATSAPP) {
-                    // WhatsApp's white glyph needs its familiar green badge to remain
-                    // instantly recognizable beside VEIL's monochrome platform glyphs.
-                    background = GradientDrawable().apply {
-                        shape = GradientDrawable.OVAL
-                        setColor(Color.parseColor("#25D366"))
-                    }
-                    setPadding(dp(4), dp(4), dp(4), dp(4))
-                }
                 layoutParams = LinearLayout.LayoutParams(dp(28), dp(28)).apply {
                     marginStart = dp(4)
                     marginEnd = dp(10)
