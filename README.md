@@ -2,7 +2,9 @@
   <img src="app/src/main/res/drawable/veil_official_logo.jpg" alt="VEIL Logo" width="180" />
 </p>
 
-# VEIL — Variable Event Identity Layer
+# VEIL — Your Social World, in One Place
+
+**Project tagline:** *VEIL — Your Social World, in One Place.*
 
 <p align="center">
 
@@ -10,15 +12,27 @@
 
 </p>
 
-VEIL is an Android privacy utility designed to help users manage how selected app notifications are handled on their device. The project includes protected-contact rules, notification-listener integration, a private inbox/event interface, biometric support, and a protection service.
+VEIL is an Android privacy utility for managing selected-contact protection and notification events across four social platforms: WhatsApp, Instagram, Telegram, and Snapchat. It uses Android's NotificationListenerService to process notification content exposed by the source app, applies configured protection rules, and provides a private event interface. Actual behavior depends on each app's notification format, Android version, and permissions granted.
 
 > **Current source version:** **4.5.2** (version code **36**), from `app/build.gradle.kts`. Official signed APK releases are published through the GitHub Releases page linked below after the release workflow succeeds.
+
+## Supported Platforms
+
+VEIL includes package-specific notification parsing adapters for the following platforms:
+
+- **WhatsApp**
+- **Instagram**
+- **Telegram**
+- **Snapchat**
+
+This list describes source-level notification parsing support, not a guarantee that every feature behaves identically on every platform. Detection depends on the payload Android exposes. Inline replies work only when a notification supplies a compatible free-form RemoteInput action; do not assume reply, call, media, or notification-dismissal behavior is identical across all four apps.
 
 ## What is in the app?
 
 Features visible in the current source and Android manifest include:
 
 - **Selected-contact protection rules** for contacts the user chooses.
+- **Package-aware notification parsing** for WhatsApp, Instagram, Telegram, and Snapchat, with app-specific extraction and sender normalization.
 - **Notification handling** through Android's Notification Listener permission.
 - **Private inbox and event-detail screens** for app-managed notification events.
 - **Biometric capability** using AndroidX Biometric / Android biometric permission.
@@ -26,7 +40,7 @@ Features visible in the current source and Android manifest include:
 - **Security and configuration screens**, including a lock/authentication flow.
 - **Dark, app-specific Android UI** with launcher identity resources already present in the project.
 
-Actual behavior depends on Android version, user-granted permissions, source configuration, and the originating app's notification behavior. VEIL cannot reliably observe messages typed inside another app unless that app exposes an event through an accessible Android API or notification. It should not be described as a universal message interceptor.
+Actual behavior depends on Android version, user-granted permissions, source configuration, and the originating app's notification behavior. VEIL cannot reliably observe messages typed inside another app unless that app exposes an event through an accessible Android API or notification. It is not a universal message interceptor and does not access private app databases.
 
 ## Requirements
 
@@ -100,6 +114,12 @@ This README is not a privacy audit or a guarantee that the app is fully offline.
 - `app/src/main/res/` — Android layouts, strings, themes, and launcher resources
 - `gradle/libs.versions.toml` — dependency and plugin version catalog
 - `app/build.gradle.kts` — Android application build configuration
+
+## Project status and future scope
+
+**Current scope:** Android notification processing, app-aware parsing adapters for the four platforms listed above, selected-contact rules, and a private event interface are present in source. Platform-specific notification payloads vary, so some senders or message formats may not be recognized. A source adapter does not by itself prove full end-to-end protection or reply support on every device.
+
+**Future scope:** Improve and test platform-specific notification recognition, reply-route reliability where Android exposes a compatible action, and device/version coverage. Any feature should be documented as supported only after implementation and testing confirm it.
 
 ## Development notes
 
