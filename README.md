@@ -14,6 +14,16 @@ VEIL is an Android privacy utility designed to help users manage how selected ap
 
 > **Current source version:** **4.5.5** (version code **38**), from `app/build.gradle.kts`. Official signed APK releases are published through the GitHub Releases page linked below after the release workflow succeeds.
 
+## VEIL Advertisement Gallery
+
+<p align="center">
+  <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3BvbTfd0Ur59KTcMMTRcfphnn9V/477f1a72-e522-4e5b-9ae0-83b22c723fce.png" alt="VEIL notification protection advertisement" width="80%" />
+</p>
+
+<p align="center">
+  <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3BvbTfd0Ur59KTcMMTRcfphnn9V/e4090485-9b6d-4826-8240-13c57feb89ef.png" alt="VEIL privacy by design advertisement" width="80%" />
+</p>
+
 ## What is in the app?
 
 Features visible in the current source and Android manifest include:
@@ -179,9 +189,4 @@ Avoid committing secrets, generated build output, signing materials, or private 
 
 No repository license file was found during this README update. Until a license is added by the project owner, do not assume that the source is licensed for redistribution or reuse. Add a license only after choosing the terms you want to apply.
 
-## VEIL Advertisement Gallery
 
-<p align="center">
-  <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3BvbTfd0Ur59KTcMMTRcfphnn9V/477f1a72-e522-4e5b-9ae0-83b22c723fce.png" alt="VEIL notification protection advertisement" width="48%" />
-  <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3BvbTfd0Ur59KTcMMTRcfphnn9V/e4090485-9b6d-4826-8240-13c57feb89ef.png" alt="VEIL privacy by design advertisement" width="48%" />
-</p>
