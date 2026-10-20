@@ -61,6 +61,7 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var rulesAdapter: ProtectionRuleAdapter
 
     private var currentTab: Int = TAB_CHATS
+    private var lastSelectedSocialAppPackage: String = ""
     private val dashboardStatePrefs by lazy {
         getSharedPreferences("veil_privacy_prefs", MODE_PRIVATE)
     }
@@ -127,6 +128,7 @@ class DashboardActivity : AppCompatActivity() {
 
         notificationsLastViewedAt = dashboardStatePrefs.getLong(KEY_NOTIFICATIONS_LAST_VIEWED_AT, 0L)
         setupTabs()
+        lastSelectedSocialAppPackage = selectedSocialAppPackage()
         setupRecyclerViews()
         setupActions()
         setupSettingsControls()
@@ -156,6 +158,13 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        val selectedPackage = selectedSocialAppPackage()
+        if (lastSelectedSocialAppPackage.isNotBlank() && selectedPackage != lastSelectedSocialAppPackage) {
+            recreate()
+            return
+        }
+        lastSelectedSocialAppPackage = selectedPackage
+        updateSelectedAppUI()
         NotificationUtils.ensureListenerBound(this)
         updateNotificationListenerStatus()
         refreshChatThreads()
@@ -184,7 +193,7 @@ class DashboardActivity : AppCompatActivity() {
             }
         }
         // Bottom-bar middle item is the App Switcher. Notifications stay on the top bell.
-        binding.tabNotifications.setOnClickListener { showAppSwitcherDialog() }
+        binding.tabNotifications.setOnClickListener { startActivity(Intent(this, AppSwitcherActivity::class.java)) }
         binding.tabContacts.setOnClickListener { switchTab(TAB_CONTACTS) }
         binding.btnNotificationBell.setOnClickListener { switchTab(TAB_NOTIFICATIONS) }
         updateSelectedAppUI()
@@ -248,99 +257,10 @@ class DashboardActivity : AppCompatActivity() {
         binding.tvTopSubtitle.text = "Variable Event Identity Layer"
         binding.tabNotifications.text = "Apps: ${selected.label}"
         binding.tabNotifications.contentDescription = "App switcher. Selected app: ${selected.label}"
-        // Hide the legacy address-book destination outside WhatsApp.
-        binding.tabContacts.visibility = if (selected.packageName == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) View.VISIBLE else View.GONE
-    }
-
-    private fun showAppSwitcherDialog() {
-        val density = resources.displayMetrics.density
-        fun dp(value: Int) = (value * density).toInt()
-        val root = android.widget.LinearLayout(this).apply {
-            orientation = android.widget.LinearLayout.VERTICAL
-            setPadding(dp(4), dp(4), dp(4), dp(4))
-        }
-        val scroll = android.widget.ScrollView(this).apply {
-            isFillViewport = true
-            addView(root)
-        }
-        val radioButtons = mutableMapOf<String, android.widget.RadioButton>()
-        val switches = mutableMapOf<String, com.google.android.material.materialswitch.MaterialSwitch>()
-
-        fun refreshSelection() {
-            val selected = selectedSocialAppPackage()
-            radioButtons.forEach { (pkg, radio) -> radio.isChecked = pkg == selected }
-            switches.forEach { (pkg, toggle) ->
-                toggle.isChecked = prefs.isSocialAppEnabled(pkg)
-            }
-        }
-
-        socialAppOptions.forEach { app ->
-            val row = android.widget.LinearLayout(this).apply {
-                orientation = android.widget.LinearLayout.HORIZONTAL
-                gravity = android.view.Gravity.CENTER_VERTICAL
-                setPadding(dp(8), dp(8), dp(4), dp(8))
-                isClickable = true
-                isFocusable = true
-                background = ContextCompat.getDrawable(this@DashboardActivity, R.drawable.bg_circle_icon)
-            }
-            val radio = android.widget.RadioButton(this).apply {
-                contentDescription = "Select ${app.label}"
-                isChecked = app.packageName == selectedSocialAppPackage()
-            }
-            radioButtons[app.packageName] = radio
-            val icon = android.widget.ImageView(this).apply {
-                setImageResource(app.iconRes)
-                contentDescription = app.label
-                layoutParams = android.widget.LinearLayout.LayoutParams(dp(28), dp(28)).apply {
-                    marginStart = dp(4)
-                    marginEnd = dp(10)
-                }
-            }
-            val label = android.widget.TextView(this).apply {
-                text = app.label
-                textSize = 14f
-                setTextColor(ContextCompat.getColor(this@DashboardActivity, R.color.veil_text_high))
-                layoutParams = android.widget.LinearLayout.LayoutParams(0, dp(48), 1f)
-                gravity = android.view.Gravity.CENTER_VERTICAL
-            }
-            val toggle = com.google.android.material.materialswitch.MaterialSwitch(this).apply {
-                contentDescription = "Enable protection for ${app.label}"
-                isChecked = prefs.isSocialAppEnabled(app.packageName)
-                setOnCheckedChangeListener { _, enabled ->
-                    prefs.setSocialAppEnabled(app.packageName, enabled)
-                    if (enabled) {
-                        Toast.makeText(this@DashboardActivity, "${app.label} protection enabled", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this@DashboardActivity, "${app.label} protection disabled", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-            switches[app.packageName] = toggle
-
-            val selectApp = {
-                dashboardStatePrefs.edit().putString("selected_social_app", app.packageName).apply()
-                refreshSelection()
-                updateSelectedAppUI()
-                recreate()
-                Unit
-            }
-            radio.setOnClickListener { selectApp() }
-            row.setOnClickListener { selectApp() }
-            row.addView(radio)
-            row.addView(icon)
-            row.addView(label)
-            row.addView(toggle)
-            root.addView(row, android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, dp(64)
-            ).apply { bottomMargin = dp(4) })
-        }
-
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("App Switcher")
-            .setMessage("Choose the app shown in VEIL. Use each switch to enable or disable its notification protection.")
-            .setView(scroll)
-            .setNegativeButton("Close", null)
-            .show()
+        // Rules are available for every supported app; the list itself is filtered by platform.
+        binding.tabContacts.visibility = View.VISIBLE
+        binding.tabContacts.text = "Rules"
+        binding.tabContacts.contentDescription = "Edit protection rules for ${selected.label}"
     }
 
     private fun applyTabStyle(button: com.google.android.material.button.MaterialButton, isSelected: Boolean) {
