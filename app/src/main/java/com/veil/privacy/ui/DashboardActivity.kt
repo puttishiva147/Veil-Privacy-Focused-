@@ -244,7 +244,9 @@ class DashboardActivity : AppCompatActivity() {
     private fun updateSelectedAppUI() {
         val selected = socialAppOptions.firstOrNull { it.packageName == selectedSocialAppPackage() }
             ?: socialAppOptions.first()
-        binding.tvTopSubtitle.text = "Selected app: ${selected.label}"
+        // Preserve VEIL's original brand subtitle; show the active platform in the bottom slot.
+        binding.tvTopSubtitle.text = "Variable Event Identity Layer"
+        binding.tabNotifications.text = "Apps: ${selected.label}"
         binding.tabNotifications.contentDescription = "App switcher. Selected app: ${selected.label}"
     }
 
