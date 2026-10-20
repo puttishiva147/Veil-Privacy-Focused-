@@ -250,7 +250,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
         if (liveCall != null && (liveCall.answerIntent != null || liveCall.declineIntent != null)) {
             binding.cardLiveCallBanner.visibility = View.VISIBLE
-            binding.tvLiveCallTitle.text = "Incoming WhatsApp Call from $contactName"
+            binding.tvLiveCallTitle.text = "Incoming Call from $contactName"
         } else {
             binding.cardLiveCallBanner.visibility = View.GONE
         }
@@ -262,14 +262,14 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             try {
                 liveCall.answerIntent.send()
                 NotificationReplyRegistry.removeCallByKey(liveCall.notificationKey)
-                Toast.makeText(this, "Answer action sent to WhatsApp; call state is not confirmed by VEIL", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Answer action handed to the source app; call state is not confirmed by VEIL", Toast.LENGTH_LONG).show()
                 binding.cardLiveCallBanner.visibility = View.GONE
             } catch (_: Exception) {
-                Toast.makeText(this, "Could not answer from this notification. Open WhatsApp to check the call.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Could not answer from this notification. Open the source app to check the call.", Toast.LENGTH_LONG).show()
                 updateCallStatus()
             }
         } else {
-            Toast.makeText(this, "No active answer action. Open WhatsApp to check the call.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "No active answer action. Open the source app to check the call.", Toast.LENGTH_LONG).show()
             updateCallStatus()
         }
     }
@@ -280,7 +280,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             try {
                 liveCall.declineIntent.send()
                 NotificationReplyRegistry.removeCallByKey(liveCall.notificationKey)
-                Toast.makeText(this, "Decline action sent to WhatsApp; call state is not confirmed by VEIL", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Decline action handed to the source app; call state is not confirmed by VEIL", Toast.LENGTH_LONG).show()
                 binding.cardLiveCallBanner.visibility = View.GONE
             } catch (_: Exception) {
                 Toast.makeText(this, "Could not decline from this notification", Toast.LENGTH_LONG).show()
@@ -443,7 +443,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             }
         }, android.widget.LinearLayout.LayoutParams(-1, dp(44)).apply { topMargin = dp(8) })
         root.addView(com.google.android.material.button.MaterialButton(this).apply {
-            text = "Open WhatsApp"
+            text = "Open Source App"
             setOnClickListener {
                 dialog.dismiss()
                 openWhatsAppChatDirectly()
@@ -606,9 +606,9 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             context = this,
             title = "VEIL Protected Architecture",
             message = "• VEIL is an autonomous notification disguise layer.\n\n" +
-                    "• When a protected WhatsApp message arrives, Android's NotificationListenerService detects it and VEIL immediately disguises the system notification.\n\n" +
+                    "• When a protected message arrives, Android's NotificationListenerService detects it and VEIL immediately disguises the system notification.\n\n" +
                     "• Messages displayed here are received exclusively through authorized Android notification events.\n\n" +
-                    "• Replies typed here are dispatched via Android's official RemoteInput inline-reply mechanism directly to WhatsApp's notification PendingIntent.\n\n" +
+                    "• Replies typed here are dispatched through Android's official RemoteInput action exposed by the source app.\n\n" +
                     "• Stickers and media attachments are shared via Android's official Photo Picker.\n\n" +
                     "• Calls can be answered or declined directly when call notifications are active.\n\n" +
                     "• All captured messages remain 100% locally on your device in encrypted sandboxed storage."
