@@ -42,6 +42,11 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".ui.AppSwitcherActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".ui.RealtimeTestStudioActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
