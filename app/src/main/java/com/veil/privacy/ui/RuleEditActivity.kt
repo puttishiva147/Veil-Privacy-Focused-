@@ -285,6 +285,7 @@ class RuleEditActivity : AppCompatActivity() {
         val targetHint = when (selectedProtectionPackage) {
             ProtectionAppScope.INSTAGRAM -> "Exact Instagram username *"
             ProtectionAppScope.TELEGRAM -> "Telegram username or chat name *"
+            ProtectionAppScope.SNAPCHAT -> "Snapchat username *"
             else -> "WhatsApp Contact or Chat Name *"
         }
         val phoneHint = if (isWhatsApp) "Phone Number (Optional - High Confidence)" else "Not used for this app"
@@ -427,12 +428,15 @@ class RuleEditActivity : AppCompatActivity() {
             try {
                 withContext(Dispatchers.IO) {
                     val normalizedPhone = ProtectionRule.normalizePhone(rule.contactPhoneNumber)
-                    val duplicateByPhone = if (normalizedPhone.isNotBlank()) {
+                    // Phone-number uniqueness is meaningful for WhatsApp contacts only.
+                    val duplicateByPhone = if (selectedProtectionPackage == ProtectionAppScope.WHATSAPP && normalizedPhone.isNotBlank()) {
                         db.protectionRuleDao().findByNormalizedPhoneSync(normalizedPhone)
                     } else null
                     val duplicateByName = db.protectionRuleDao().findByNormalizedNameSync(
                         ProtectionRule.normalizeName(rule.contactName)
-                    )
+                    )?.takeIf { existing ->
+                        ProtectionAppScope.get(this@RuleEditActivity, existing.contactName) == selectedProtectionPackage
+                    }
                     val duplicate = listOfNotNull(duplicateByPhone, duplicateByName)
                         .firstOrNull { it.id != editingRuleId }
                     if (duplicate != null) {
