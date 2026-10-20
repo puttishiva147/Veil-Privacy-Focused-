@@ -31,6 +31,10 @@ class VeilNotificationListener : BaseNotificationListenerService() {
     private lateinit var inbox: VeilInbox
     private lateinit var notificationManager: VeilNotificationManager
 
+    // Room Flow invalidates this snapshot immediately when rules/contacts change.
+    @Volatile
+    private var cachedRuleSnapshot: List<ProtectionRule>? = null
+
     companion object {
         const val WHATSAPP_PACKAGE = "com.whatsapp"
         const val WHATSAPP_BUSINESS_PACKAGE = "com.whatsapp.w4b"
@@ -67,6 +71,23 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         super.onCreate()
         inbox = VeilInbox.getInstance(this)
         notificationManager = VeilNotificationManager.getInstance(this)
+
+        serviceScope.launch {
+            kotlinx.coroutines.flow.combine(
+                database.protectionRuleDao().getEnabledRulesFlow(),
+                database.protectedContactDao().getAllFlow(),
+                database.selectedContactDao().getEnabledContactsFlow()
+            ) { rules, protectedContacts, selectedContacts ->
+                mergeRuleSnapshot(
+                    rules,
+                    protectedContacts.filter { it.isEnabled },
+                    selectedContacts
+                )
+            }.collect { snapshot ->
+                cachedRuleSnapshot = snapshot
+                emitDiagnostic("CACHE", "Protection configuration snapshot refreshed")
+            }
+        }
     }
 
     override fun onListenerConnected() {
@@ -199,62 +220,15 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         parsed: ParsedNotificationInfo,
         replyActionPair: Pair<android.app.Notification.Action, android.app.RemoteInput>? = null
     ) {
-        // Fetch all active, enabled protection rules and contacts from Room database
-        val allRules = withContext(Dispatchers.IO) {
-            val rules = database.protectionRuleDao().getEnabledRulesSync().toMutableList()
-            val existingRulePhones = rules.map { it.normalizedPhoneNumber }.filter { it.isNotBlank() }.toSet()
-            val existingRuleNames = rules.map { it.normalizedContactName }.filter { it.isNotBlank() }.toSet()
-
-            val protectedContacts = database.protectedContactDao().getEnabledContactsSync()
-            for (c in protectedContacts) {
-                val normPhone = c.normalizedPhoneNumber
-                val normName = c.normalizedName
-                if ((normPhone.isBlank() || normPhone !in existingRulePhones) &&
-                    (normName.isBlank() || normName !in existingRuleNames)) {
-                    rules.add(
-                        ProtectionRule(
-                            contactId = c.contactId,
-                            contactName = c.displayName,
-                            contactPhoneNumber = c.selectedPhoneNumber,
-                            disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
-                            decoyIdentity = "Work",
-                            decoyMessage = "New message",
-                            isEnabled = c.isEnabled,
-                            source = c.source
-                        )
-                    )
-                }
-            }
-            // Include contacts selected in Triggered/quick-protect as well as the newer
-            // protected-contact table. This keeps the listener aligned with the user's
-            // selected-contact list instead of silently ignoring those selections.
-            val selectedContacts = database.selectedContactDao().getEnabledContactsSync()
-            val knownPhones = rules.map { it.normalizedPhoneNumber }.filter { it.isNotBlank() }.toMutableSet()
-            val knownNames = rules.map { it.normalizedContactName }.filter { it.isNotBlank() }.toMutableSet()
-            for (contact in selectedContacts) {
-                val phone = contact.normalizedPhoneNumber
-                val name = com.veil.privacy.model.ProtectedContact.normalizeName(contact.displayName)
-                val alreadyCovered = (phone.isNotBlank() && phone in knownPhones) ||
-                    (name.isNotBlank() && name in knownNames)
-                if (!alreadyCovered) {
-                    rules.add(
-                        ProtectionRule(
-                            contactId = contact.contactId,
-                            contactName = contact.displayName,
-                            contactPhoneNumber = contact.selectedPhoneNumber,
-                            disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
-                            decoyIdentity = "Work",
-                            decoyMessage = "New message",
-                            isEnabled = contact.isEnabled,
-                            source = contact.source
-                        )
-                    )
-                    if (phone.isNotBlank()) knownPhones.add(phone)
-                    if (name.isNotBlank()) knownNames.add(name)
-                }
-            }
-            rules
-        }
+        // Use the Room-Flow-backed snapshot on the hot path. The first event may arrive
+        // before Flow's initial emission; in that case load once on IO and seed the cache.
+        val allRules = cachedRuleSnapshot ?: withContext(Dispatchers.IO) {
+            mergeRuleSnapshot(
+                database.protectionRuleDao().getEnabledRulesSync(),
+                database.protectedContactDao().getEnabledContactsSync(),
+                database.selectedContactDao().getEnabledContactsSync()
+            )
+        }.also { cachedRuleSnapshot = it }
 
         // Never let an Instagram/Telegram rule accidentally match a WhatsApp (or other app) alert.
         val appScopedRules = allRules.filter {
@@ -416,6 +390,63 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
         // 4. Update interception counter only after the protected notification was published.
         preferences.incrementInterceptionsCount()
+    }
+
+    private fun mergeRuleSnapshot(
+        enabledRules: List<ProtectionRule>,
+        protectedContacts: List<com.veil.privacy.model.ProtectedContact>,
+        selectedContacts: List<SelectedContact>
+    ): List<ProtectionRule> {
+        val rules = enabledRules.toMutableList()
+        val existingRulePhones = rules.map { it.normalizedPhoneNumber }.filter { it.isNotBlank() }.toSet()
+        val existingRuleNames = rules.map { it.normalizedContactName }.filter { it.isNotBlank() }.toSet()
+
+        for (contact in protectedContacts) {
+            val normPhone = contact.normalizedPhoneNumber
+            val normName = contact.normalizedName
+            if ((normPhone.isBlank() || normPhone !in existingRulePhones) &&
+                (normName.isBlank() || normName !in existingRuleNames)) {
+                rules.add(
+                    ProtectionRule(
+                        contactId = contact.contactId,
+                        contactName = contact.displayName,
+                        contactPhoneNumber = contact.selectedPhoneNumber,
+                        disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
+                        decoyIdentity = "Work",
+                        decoyMessage = "New message",
+                        isEnabled = contact.isEnabled,
+                        source = contact.source
+                    )
+                )
+            }
+        }
+
+        // Legacy selected-contact records remain supported for existing WhatsApp users.
+        val knownPhones = rules.map { it.normalizedPhoneNumber }.filter { it.isNotBlank() }.toMutableSet()
+        val knownNames = rules.map { it.normalizedContactName }.filter { it.isNotBlank() }.toMutableSet()
+        for (contact in selectedContacts) {
+            val phone = contact.normalizedPhoneNumber
+            val name = com.veil.privacy.model.ProtectedContact.normalizeName(contact.displayName)
+            val alreadyCovered = (phone.isNotBlank() && phone in knownPhones) ||
+                (name.isNotBlank() && name in knownNames)
+            if (!alreadyCovered) {
+                rules.add(
+                    ProtectionRule(
+                        contactId = contact.contactId,
+                        contactName = contact.displayName,
+                        contactPhoneNumber = contact.selectedPhoneNumber,
+                        disguiseMode = ProtectionRule.MODE_CUSTOM_DECOY,
+                        decoyIdentity = "Work",
+                        decoyMessage = "New message",
+                        isEnabled = contact.isEnabled,
+                        source = contact.source
+                    )
+                )
+                if (phone.isNotBlank()) knownPhones.add(phone)
+                if (name.isNotBlank()) knownNames.add(name)
+            }
+        }
+        return rules
     }
 
     override suspend fun applyPrivacyTransformation(
