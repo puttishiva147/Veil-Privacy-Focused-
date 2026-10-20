@@ -118,7 +118,7 @@ class AppSwitcherActivity : AppCompatActivity() {
                 bottomMargin = dp(8)
             })
         }
-        scroll.addView(list, ScrollView.LayoutParams(-1, -2))
+        scroll.addView(list, android.view.ViewGroup.LayoutParams(-1, -2))
         page.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
 
         val buttons = LinearLayout(this).apply {
