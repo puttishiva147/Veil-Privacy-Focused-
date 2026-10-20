@@ -336,7 +336,7 @@ class RuleEditActivity : AppCompatActivity() {
                     contactId = rule.contactId,
                     source = rule.source
                 )
-                selectedProtectionPackage = ProtectionAppScope.get(this@RuleEditActivity, rule.contactName)
+                selectedProtectionPackage = ProtectionAppScope.get(this@RuleEditActivity, rule.contactName, rule.id)
                 setupUI()
                 updateProtectionPackageButtons()
                 binding.etDecoyIdentity.setText(rule.decoyIdentity)
@@ -426,7 +426,7 @@ class RuleEditActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                withContext(Dispatchers.IO) {
+                val savedRuleId = withContext(Dispatchers.IO) {
                     val normalizedPhone = ProtectionRule.normalizePhone(rule.contactPhoneNumber)
                     // Phone-number uniqueness is meaningful for WhatsApp contacts only.
                     val duplicateByPhone = if (selectedProtectionPackage == ProtectionAppScope.WHATSAPP && normalizedPhone.isNotBlank()) {
@@ -435,7 +435,7 @@ class RuleEditActivity : AppCompatActivity() {
                     val duplicateByName = db.protectionRuleDao().findByNormalizedNameSync(
                         ProtectionRule.normalizeName(rule.contactName)
                     )?.takeIf { existing ->
-                        ProtectionAppScope.get(this@RuleEditActivity, existing.contactName) == selectedProtectionPackage
+                        ProtectionAppScope.get(this@RuleEditActivity, existing.contactName, existing.id) == selectedProtectionPackage
                     }
                     val duplicate = listOfNotNull(duplicateByPhone, duplicateByName)
                         .firstOrNull { it.id != editingRuleId }
@@ -443,8 +443,9 @@ class RuleEditActivity : AppCompatActivity() {
                         throw IllegalStateException("A protection rule already exists for this contact or number")
                     }
 
-                    if (editingRuleId > 0) {
+                    val savedId = if (editingRuleId > 0) {
                         db.protectionRuleDao().update(rule)
+                        editingRuleId
                     } else {
                         db.protectionRuleDao().insert(rule)
                     }
@@ -470,9 +471,10 @@ class RuleEditActivity : AppCompatActivity() {
                     isCustomLockEnabled = finalIsLock
                 )
                     db.protectedContactDao().insert(protectedModel)
+                    savedId
                 }
 
-                ProtectionAppScope.set(this@RuleEditActivity, selectedContactName, selectedProtectionPackage)
+                ProtectionAppScope.set(this@RuleEditActivity, selectedContactName, selectedProtectionPackage, savedRuleId)
                 Toast.makeText(
                     this@RuleEditActivity,
                     "Protection rule saved for ${rule.contactName}",
