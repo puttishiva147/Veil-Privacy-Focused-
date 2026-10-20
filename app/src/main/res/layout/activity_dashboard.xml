@@ -170,7 +170,7 @@
                     android:layout_marginTop="1dp"
                     android:ellipsize="end"
                     android:singleLine="true"
-                    android:text="Listening for incoming WhatsApp alerts"
+                    android:text="Listening for supported-app alerts"
                     android:textColor="@color/veil_text_medium"
                     android:textSize="10.5sp" />
             </LinearLayout>
@@ -282,7 +282,7 @@
                         android:layout_marginTop="8dp"
                         android:gravity="center"
                         android:lineSpacingExtra="3dp"
-                        android:text="Select WhatsApp contacts you want to protect. When they message you, VEIL disguises their notification and securely streams their conversation here with inline reply capability."
+                        android:text="Select protected contacts from supported messaging apps. VEIL disguises eligible notifications and securely stores available conversation events with inline reply support."
                         android:textColor="@color/veil_text_medium"
                         android:textSize="12.5sp" />
 
@@ -380,7 +380,7 @@
                         android:layout_marginTop="8dp"
                         android:gravity="center"
                         android:lineSpacingExtra="3dp"
-                        android:text="When protected WhatsApp notifications arrive, an audit trail of original dismissal status and decoy replacement will be logged here."
+                        android:text="When protected app notifications arrive, an audit trail of original dismissal status and decoy replacement will be logged here."
                         android:textColor="@color/veil_text_medium"
                         android:textSize="12.5sp" />
                 </LinearLayout>
@@ -482,7 +482,7 @@
                         android:layout_marginTop="8dp"
                         android:gravity="center"
                         android:lineSpacingExtra="3dp"
-                        android:text="Add WhatsApp contacts by name or phone number. You can customize the notification disguise mode for each contact independently."
+                        android:text="Add protected contacts by name or phone number. Customize the notification disguise mode for each contact independently."
                         android:textColor="@color/veil_text_medium"
                         android:textSize="12.5sp" />
 
@@ -552,7 +552,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Enables WhatsApp notification interception and disguise"
+                                android:text="Enables supported-app notification interception and disguise"
                                 android:textColor="@color/veil_text_medium"
                                 android:textSize="12sp" />
                         </LinearLayout>
@@ -653,7 +653,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="Protect WhatsApp, Telegram, Signal, SMS/Messages, and Instagram"
+                                    android:text="Protect WhatsApp, Instagram, Telegram, Snapchat, Signal and SMS/Messages"
                                     android:textColor="@color/veil_text_medium"
                                     android:textSize="12sp" />
                             </LinearLayout>
@@ -662,6 +662,94 @@
                                 android:id="@+id/switchProtectAllMessagingApps"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:orientation="vertical">
+                                <ImageView
+                                    android:layout_width="26dp"
+                                    android:layout_height="26dp"
+                                    android:contentDescription="WhatsApp"
+                                    android:src="@drawable/ic_app_whatsapp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="WhatsApp"
+                                    android:textColor="@color/veil_text_medium"
+                                    android:textSize="10sp" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:orientation="vertical">
+                                <ImageView
+                                    android:layout_width="26dp"
+                                    android:layout_height="26dp"
+                                    android:contentDescription="Instagram"
+                                    android:src="@drawable/ic_app_instagram" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="Instagram"
+                                    android:textColor="@color/veil_text_medium"
+                                    android:textSize="10sp" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:orientation="vertical">
+                                <ImageView
+                                    android:layout_width="26dp"
+                                    android:layout_height="26dp"
+                                    android:contentDescription="Telegram"
+                                    android:src="@drawable/ic_app_telegram" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="Telegram"
+                                    android:textColor="@color/veil_text_medium"
+                                    android:textSize="10sp" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:orientation="vertical">
+                                <ImageView
+                                    android:layout_width="26dp"
+                                    android:layout_height="26dp"
+                                    android:contentDescription="Snapchat"
+                                    android:src="@drawable/ic_app_snapchat" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="Snapchat"
+                                    android:textColor="@color/veil_text_medium"
+                                    android:textSize="10sp" />
+                            </LinearLayout>
                         </LinearLayout>
 
                         <View
@@ -849,7 +937,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:lineSpacingExtra="2dp"
-                            android:text="Required by Android for VEIL to detect incoming WhatsApp notifications and extract RemoteInput reply actions."
+                            android:text="Required by Android for VEIL to detect supported-app notifications and capture available RemoteInput reply actions."
                             android:textColor="@color/veil_text_medium"
                             android:textSize="12sp" />
 
@@ -901,7 +989,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Dismiss Original WhatsApp Notification"
+                                    android:text="Dismiss Original App Notification"
                                     android:textColor="@color/veil_text_high"
                                     android:textSize="15sp"
                                     android:textStyle="bold" />
@@ -910,7 +998,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="Cancels WhatsApp's notification when VEIL posts disguise"
+                                    android:text="Cancels the source app's notification when VEIL posts a disguise"
                                     android:textColor="@color/veil_text_medium"
                                     android:textSize="12sp" />
                             </LinearLayout>
@@ -1033,7 +1121,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             android:lineSpacingExtra="2dp"
-                            android:text="• VEIL is NOT a replacement WhatsApp client and does NOT access WhatsApp's private database.\n• VEIL only reads information legitimately provided in Android notifications.\n• Replies are dispatched via Android RemoteInput inline-reply mechanism.\n• All captured conversations remain 100% locally on your device in encrypted storage."
+                            android:text="• VEIL is not a replacement client for supported apps and does not access their private databases.\n• VEIL only reads information legitimately provided in Android notifications.\n• Replies use Android RemoteInput when the source app exposes a compatible action.\n• Captured conversation events remain in VEIL's local app storage."
                             android:textColor="@color/veil_text_medium"
                             android:textSize="12sp" />
                     </LinearLayout>
