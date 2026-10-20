@@ -749,6 +749,7 @@ class DashboardActivity : AppCompatActivity() {
                 binding.tvEmptyChatsDescription.text = when (selectedProtectedApp) {
                     com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM -> "Add an Instagram username to protect its Direct notifications."
                     com.veil.privacy.model.SupportedApp.PKG_TELEGRAM -> "Add a Telegram username or chat to protect its notifications."
+                    com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT -> "Add a Snapchat username to protect available notification details."
                     else -> "Select a WhatsApp contact or enter their phone number to protect their notifications."
                 }
             }
