@@ -172,9 +172,18 @@ object NotificationReplyRegistry {
      */
     fun getLiveReplyAction(contactName: String, sourcePackage: String? = null): LiveReplyAction? {
         val normalized = if (sourcePackage == null) normalize(contactName) else normalize(contactName, sourcePackage)
-        return if (isReplyActionLive(contactName, sourcePackage)) liveActionsByContact[normalized]
-            ?: liveActionsByContact.values.filter { it.contactName.equals(contactName, ignoreCase = true) }.maxByOrNull { it.capturedAt }
-        else null
+        if (!isReplyActionLive(contactName, sourcePackage)) return null
+
+        // When the caller specifies a source app, never fall back to a same-named
+        // contact from another app. Names like "Alex" can exist in all four apps.
+        return liveActionsByContact[normalized]
+            ?: if (sourcePackage == null) {
+                liveActionsByContact.values
+                    .filter { it.contactName.equals(contactName, ignoreCase = true) }
+                    .maxByOrNull { it.capturedAt }
+            } else {
+                null
+            }
     }
 
     /**
