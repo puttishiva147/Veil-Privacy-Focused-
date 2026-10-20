@@ -319,6 +319,7 @@ class DashboardActivity : AppCompatActivity() {
                 dashboardStatePrefs.edit().putString("selected_social_app", app.packageName).apply()
                 refreshSelection()
                 updateSelectedAppUI()
+                refreshChatThreads()
                 switchTab(TAB_CHATS)
                 Unit
             }
@@ -753,9 +754,15 @@ class DashboardActivity : AppCompatActivity() {
                 Pair(rules, events)
             }.collect { (rules, events) ->
                 // Tab 3 Rules
-                rulesAdapter.submitList(rules)
-                binding.tvContactsRuleCount.text = "${rules.size} RULES CONFIGURED"
-                binding.layoutEmptyContacts.visibility = if (rules.isEmpty()) View.VISIBLE else View.GONE
+                val selectedPackage = selectedSocialAppPackage()
+                val appRules = rules.filter { rule ->
+                    rule.appPackage == selectedPackage ||
+                        (rule.appPackage.isBlank() && selectedPackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP)
+                }
+                rulesAdapter.submitList(appRules)
+                val selectedLabel = socialAppOptions.firstOrNull { it.packageName == selectedPackage }?.label ?: "APP"
+                binding.tvContactsRuleCount.text = "${appRules.size} $selectedLabel RULES CONFIGURED"
+                binding.layoutEmptyContacts.visibility = if (appRules.isEmpty()) View.VISIBLE else View.GONE
 
                 // Tab 2 Notifications Log
                 notificationsAdapter.submitList(events)
@@ -774,7 +781,7 @@ class DashboardActivity : AppCompatActivity() {
 
                 // Tab 1 Protected Chats Threads
                 val threads = mutableListOf<ProtectedChatThread>()
-                for (rule in rules) {
+                for (rule in appRules) {
                     val conversationEvents = events.filter {
                         it.conversationId == rule.contactName.lowercase().trim()
                     }
@@ -810,7 +817,12 @@ class DashboardActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val rules = database.protectionRuleDao().getAllRulesSync()
             val events = database.protectedEventDao().getAllSync()
-            val threads = rules.map { rule ->
+            val selectedPackage = selectedSocialAppPackage()
+            val appRules = rules.filter { rule ->
+                rule.appPackage == selectedPackage ||
+                    (rule.appPackage.isBlank() && selectedPackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP)
+            }
+            val threads = appRules.map { rule ->
                 val conversationEvents = events.filter {
                     it.conversationId == rule.contactName.lowercase().trim()
                 }
@@ -839,11 +851,20 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun openAddContactChooser() {
+        val selectedPackage = selectedSocialAppPackage()
+        if (selectedPackage != com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
+            startActivity(Intent(this, RuleEditActivity::class.java).apply {
+                putExtra(RuleEditActivity.EXTRA_APP_PACKAGE, selectedPackage)
+            })
+            return
+        }
         VeilDialogs.showProtectTargetChooser(
             activity = this,
             onQuickManual = { showQuickManualAddDialog() },
             onPickContacts = { launchContactPickerFlow() },
-            onAdvancedRule = { startActivity(Intent(this, RuleEditActivity::class.java)) }
+            onAdvancedRule = { startActivity(Intent(this, RuleEditActivity::class.java).apply {
+                putExtra(RuleEditActivity.EXTRA_APP_PACKAGE, selectedPackage)
+            }) }
         )
     }
 
