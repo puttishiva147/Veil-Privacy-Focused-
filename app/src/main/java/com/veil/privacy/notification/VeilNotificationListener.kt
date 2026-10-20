@@ -398,8 +398,8 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         selectedContacts: List<SelectedContact>
     ): List<ProtectionRule> {
         val rules = enabledRules.toMutableList()
-        val existingRulePhones = rules.map { it.normalizedPhoneNumber }.filter { it.isNotBlank() }.toSet()
-        val existingRuleNames = rules.map { it.normalizedContactName }.filter { it.isNotBlank() }.toSet()
+        val existingRulePhones = rules.map { it.normalizedPhoneNumber }.filter { it.isNotBlank() }.toMutableSet()
+        val existingRuleNames = rules.map { it.normalizedContactName }.filter { it.isNotBlank() }.toMutableSet()
 
         for (contact in protectedContacts) {
             val normPhone = contact.normalizedPhoneNumber
@@ -418,6 +418,8 @@ class VeilNotificationListener : BaseNotificationListenerService() {
                         source = contact.source
                     )
                 )
+                if (normPhone.isNotBlank()) existingRulePhones.add(normPhone)
+                if (normName.isNotBlank()) existingRuleNames.add(normName)
             }
         }
 
