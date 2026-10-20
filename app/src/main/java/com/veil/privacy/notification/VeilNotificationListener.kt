@@ -391,7 +391,18 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         }
         val eventWithId = protectedEvent.copy(id = insertedId)
 
-        // Persist first; suppress only this matched notification, never unchecked grouped siblings.
+        // Publish the protected presentation before requesting cancellation of the source alert.
+        // If VEIL cannot publish its replacement, leave the original visible rather than lose it.
+        try {
+            notificationManager.postRuleDecoyNotification(eventWithId, matchedRule)
+            emitDiagnostic("POST", "Privacy-safe replacement alert posted")
+        } catch (e: Exception) {
+            emitDiagnostic("POST", "Protected notification publication failed (${e.javaClass.simpleName}); original left untouched", false)
+            return
+        }
+
+        // Suppress only after the protected replacement was successfully handed to Android.
+        // Android/OEM policy can still refuse cancellation; that limitation is surfaced in diagnostics.
         if (preferences.isHideOriginalEnabled) {
             try {
                 sbn.key?.let { cancelNotification(it) }
@@ -403,12 +414,8 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             }
         }
 
-        // 4. Update interception counter
+        // 4. Update interception counter only after the protected notification was published.
         preferences.incrementInterceptionsCount()
-
-        // 5. Immediately post the replacement VEIL notification containing configured privacy disguise
-        notificationManager.postRuleDecoyNotification(eventWithId, matchedRule)
-        emitDiagnostic("POST", "Privacy-safe replacement alert posted")
     }
 
     override suspend fun applyPrivacyTransformation(
