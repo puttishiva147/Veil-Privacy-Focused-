@@ -32,9 +32,12 @@ object ProtectionAppScope {
         if (contactName.isBlank()) return
         val safePackage = if (packageName in setOf(WHATSAPP, INSTAGRAM, TELEGRAM, SNAPCHAT)) packageName else WHATSAPP
         val editor = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-        // Keep legacy mapping for pre-existing rule rows; new rows use a stable rule-specific key.
-        editor.putString(keyFor(contactName), safePackage)
-        if (ruleId > 0L) editor.putString(keyForRule(ruleId), safePackage)
+        // Do not overwrite another same-name rule's legacy mapping when a stable ID exists.
+        if (ruleId > 0L) {
+            editor.putString(keyForRule(ruleId), safePackage)
+        } else {
+            editor.putString(keyFor(contactName), safePackage)
+        }
         editor.apply()
     }
 
