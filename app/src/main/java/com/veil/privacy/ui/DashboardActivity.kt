@@ -702,7 +702,7 @@ class DashboardActivity : AppCompatActivity() {
                 // Tab 1 Protected Chats Threads: only show rules assigned to this app.
                 val appRules = rules.filter {
                     com.veil.privacy.model.ProtectionAppScope.matches(
-                        this@DashboardActivity, it.contactName, selectedProtectedApp
+                        this@DashboardActivity, it.contactName, selectedProtectedApp, it.id
                     )
                 }
                 val threads = (if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
@@ -761,7 +761,7 @@ class DashboardActivity : AppCompatActivity() {
             val events = database.protectedEventDao().getAllSync()
             val appRules = rules.filter {
                 com.veil.privacy.model.ProtectionAppScope.matches(
-                    this@DashboardActivity, it.contactName, selectedProtectedApp
+                    this@DashboardActivity, it.contactName, selectedProtectedApp, it.id
                 )
             }
             val threads = (if (selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
