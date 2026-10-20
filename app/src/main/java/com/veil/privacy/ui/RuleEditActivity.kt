@@ -31,12 +31,14 @@ class RuleEditActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_RULE_ID = "extra_rule_id"
+        const val EXTRA_APP_PACKAGE = "extra_app_package"
     }
 
     private lateinit var binding: ActivityRuleEditBinding
     private lateinit var db: VeilDatabase
 
     private var editingRuleId: Long = 0
+    private var appPackage: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
     private var selectedContactId: String = ""
     private var selectedContactName: String = ""
     private var selectedContactPhone: String = ""
@@ -71,6 +73,7 @@ class RuleEditActivity : AppCompatActivity() {
 
         db = VeilDatabase.getInstance(this)
         editingRuleId = intent.getLongExtra(EXTRA_RULE_ID, 0)
+        appPackage = intent.getStringExtra(EXTRA_APP_PACKAGE) ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
 
         setupUI()
         setupListeners()
@@ -92,7 +95,19 @@ class RuleEditActivity : AppCompatActivity() {
             binding.toolbarRuleEdit.title = "Edit Protection Rule"
             binding.btnDeleteRule.visibility = View.VISIBLE
         } else {
-            binding.toolbarRuleEdit.title = "New Protection Rule"
+            val appName = when (appPackage) {
+                com.veil.privacy.model.SupportedApp.PKG_WHATSAPP -> "WhatsApp"
+                com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM -> "Instagram"
+                com.veil.privacy.model.SupportedApp.PKG_TELEGRAM -> "Telegram"
+                com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT -> "Snapchat"
+                else -> "Social App"
+            }
+            binding.toolbarRuleEdit.title = "New $appName Protection Rule"
+            if (appPackage != com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
+                binding.btnPickContact.visibility = View.GONE
+                binding.btnManualContact.text = "Enter username"
+                binding.tvSelectedContactPhone.text = "Enter the exact username or display name for $appName"
+            }
             binding.btnDeleteRule.visibility = View.GONE
         }
     }
@@ -349,7 +364,8 @@ class RuleEditActivity : AppCompatActivity() {
             source = selectedSource,
             lockPinHash = finalPinHash,
             lockPinSalt = finalPinSalt,
-            isCustomLockEnabled = finalIsLock
+            isCustomLockEnabled = finalIsLock,
+            appPackage = appPackage
         )
 
         lifecycleScope.launch {
@@ -363,7 +379,7 @@ class RuleEditActivity : AppCompatActivity() {
                         ProtectionRule.normalizeName(rule.contactName)
                     )
                     val duplicate = listOfNotNull(duplicateByPhone, duplicateByName)
-                        .firstOrNull { it.id != editingRuleId }
+                        .firstOrNull { it.id != editingRuleId && it.appPackage == appPackage }
                     if (duplicate != null) {
                         throw IllegalStateException("A protection rule already exists for this contact or number")
                     }
@@ -374,7 +390,8 @@ class RuleEditActivity : AppCompatActivity() {
                         db.protectionRuleDao().insert(rule)
                     }
 
-                    // Also update selectedContactDao and protectedContactDao so all UI views remain synchronized
+                    // Keep only WhatsApp phone contacts in the legacy global contact tables.
+                if (appPackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
                 val selectedModel = SelectedContact(
                     contactId = selectedContactId,
                     displayName = selectedContactName,
@@ -395,6 +412,7 @@ class RuleEditActivity : AppCompatActivity() {
                     isCustomLockEnabled = finalIsLock
                 )
                     db.protectedContactDao().insert(protectedModel)
+                }
                 }
 
                 Toast.makeText(
