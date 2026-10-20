@@ -825,12 +825,17 @@ class DashboardActivity : AppCompatActivity() {
             val rules = database.protectionRuleDao().getAllRulesSync()
             val events = database.protectedEventDao().getAllSync()
             val selectedPackage = selectedSocialAppPackage()
+            val appEvents = events.filter { event ->
+                event.sourcePackage == selectedPackage ||
+                    (selectedPackage == com.veil.privacy.model.SupportedApp.PKG_TELEGRAM && event.sourcePackage.startsWith("org.telegram")) ||
+                    (selectedPackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP && event.sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS)
+            }
             val appRules = rules.filter { rule ->
                 rule.appPackage == selectedPackage ||
                     (rule.appPackage.isBlank() && selectedPackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP)
             }
             val threads = appRules.map { rule ->
-                val conversationEvents = events.filter {
+                val conversationEvents = appEvents.filter {
                     it.conversationId == rule.contactName.lowercase().trim()
                 }
                 val latestEvent = conversationEvents.maxByOrNull { it.timestamp }
