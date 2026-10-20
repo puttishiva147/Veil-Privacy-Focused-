@@ -276,6 +276,7 @@ class RuleEditActivity : AppCompatActivity() {
                 db.protectionRuleDao().getRuleByIdSync(ruleId)
             }
             if (rule != null) {
+                appPackage = rule.appPackage.ifBlank { com.veil.privacy.model.SupportedApp.PKG_WHATSAPP }
                 setContactTarget(
                     name = rule.contactName,
                     phone = rule.contactPhoneNumber,
