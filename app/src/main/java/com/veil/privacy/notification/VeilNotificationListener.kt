@@ -160,13 +160,14 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         // Android can repost/update the same notification quickly. Claim an in-flight
         // key before launching asynchronous work so two callbacks cannot both pass the
         // database deduplication check and create duplicate protected events.
-        val eventGuardKey = parsed.notificationKey?.takeIf { it.isNotBlank() }
-            ?: listOf(
-                parsed.packageName,
-                parsed.sender.trim().lowercase(),
-                parsed.message.trim(),
-                parsed.timestamp.toString()
-            ).joinToString("|")
+        // A StatusBarNotification key identifies a notification slot, not a message.
+        // Messaging apps reuse that key when the notification is updated with a new message.
+        // Include postTime so a new update is not blocked by an older in-flight callback.
+        val eventGuardKey = listOf(
+            parsed.packageName,
+            parsed.notificationKey.orEmpty(),
+            parsed.timestamp.toString()
+        ).joinToString("|")
 
         if (!inFlightEventKeys.add(eventGuardKey)) {
             emitDiagnostic("DEDUP", "Ignored notification already being processed")
@@ -311,7 +312,9 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             // deduplicate on message text: two legitimate consecutive messages can have
             // identical content (e.g. "OK") and must both appear in VEIL.
             !parsed.notificationKey.isNullOrBlank() &&
-                database.protectedEventDao().hasEventWithNotificationKey(parsed.notificationKey) > 0
+                database.protectedEventDao().hasEventWithNotificationKeyAndTimestamp(
+                    parsed.notificationKey, parsed.timestamp
+                ) > 0
         }
         if (isDuplicate) {
             // Never include notification keys, contact names, or message-derived values
