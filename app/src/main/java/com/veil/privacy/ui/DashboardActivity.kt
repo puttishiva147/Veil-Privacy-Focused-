@@ -869,6 +869,16 @@ class DashboardActivity : AppCompatActivity() {
             }
             row.addView(appIcon)
             row.addView(label, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            val protectionToggle = com.google.android.material.materialswitch.MaterialSwitch(this).apply {
+                isChecked = com.veil.privacy.model.ProtectionAppScope.isProtectionEnabled(this@DashboardActivity, sourcePackage)
+                contentDescription = "Toggle app-specific protection"
+                setOnCheckedChangeListener { _, enabled ->
+                    com.veil.privacy.model.ProtectionAppScope.setProtectionEnabled(this@DashboardActivity, sourcePackage, enabled)
+                    val state = if (enabled) "enabled" else "disabled"
+                    Toast.makeText(this@DashboardActivity, com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage) + " protection " + state, Toast.LENGTH_SHORT).show()
+                }
+            }
+            row.addView(protectionToggle)
             container.addView(row, LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
             ))
