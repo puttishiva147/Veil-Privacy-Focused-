@@ -12,6 +12,7 @@ object ProtectionAppScope {
     const val WHATSAPP = SupportedApp.PKG_WHATSAPP
     const val INSTAGRAM = SupportedApp.PKG_INSTAGRAM
     const val TELEGRAM = SupportedApp.PKG_TELEGRAM
+    const val SNAPCHAT = SupportedApp.PKG_SNAPCHAT
 
     fun keyFor(contactName: String): String =
         PREFIX + contactName.trim().replace("\\s+".toRegex(), " ").lowercase()
@@ -22,7 +23,7 @@ object ProtectionAppScope {
 
     fun set(context: Context, contactName: String, packageName: String) {
         if (contactName.isBlank()) return
-        val safePackage = if (packageName in setOf(WHATSAPP, INSTAGRAM, TELEGRAM)) packageName else WHATSAPP
+        val safePackage = if (packageName in setOf(WHATSAPP, INSTAGRAM, TELEGRAM, SNAPCHAT)) packageName else WHATSAPP
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit().putString(keyFor(contactName), safePackage).apply()
     }
