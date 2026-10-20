@@ -10,13 +10,10 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Thread-safe registry for active Android notification reply tokens.
- *
- * Reply delivery is only supported when the source app exposes a live inline-reply
- * PendingIntent and a free-form RemoteInput. VEIL does not emulate or claim delivery
- * for apps that do not expose that Android-supported action.
+ * Reply delivery is supported only when the source app exposes a live inline-reply
+ * PendingIntent and a free-form RemoteInput.
  */
 object NotificationReplyRegistry {
-
     data class LiveReplyAction(
         val notificationKey: String,
         val contactName: String,
@@ -36,24 +33,17 @@ object NotificationReplyRegistry {
         val capturedAt: Long = System.currentTimeMillis()
     )
 
-    // Source package is part of each key so "Alex" in one app cannot route into another.
     private val liveActionsByContact = ConcurrentHashMap<String, LiveReplyAction>()
     private val liveCallsByContact = ConcurrentHashMap<String, LiveCallAction>()
     private val keyToContactMap = ConcurrentHashMap<String, String>()
 
-    /**
-     * Returns only an action capable of accepting free-form text. Some notifications
-     * expose RemoteInput for buttons/choices that cannot accept VEIL's typed reply.
-     */
+    /** Return only a RemoteInput action that accepts typed free-form text. */
     fun findReplyAction(notification: Notification?): Pair<Notification.Action, RemoteInput>? {
         val actions = notification?.actions ?: return null
         for (action in actions) {
-            val intent = action.actionIntent ?: continue
-            if (intent.isCancelled) continue
             val inputs = action.remoteInputs ?: continue
-            val input = inputs.firstOrNull {
-                !it.resultKey.isNullOrBlank() && it.allowFreeFormInput
-            } ?: continue
+            val input = inputs.firstOrNull { !it.resultKey.isNullOrBlank() && it.allowFreeFormInput }
+                ?: continue
             return action to input
         }
         return null
@@ -83,11 +73,7 @@ object NotificationReplyRegistry {
     ) {
         val normalizedName = normalize(contactName, sourcePackage)
         liveCallsByContact[normalizedName] = LiveCallAction(
-            notificationKey = notificationKey,
-            contactName = contactName,
-            sourcePackage = sourcePackage,
-            answerIntent = answerIntent,
-            declineIntent = declineIntent
+            notificationKey, contactName, sourcePackage, answerIntent, declineIntent
         )
         keyToContactMap[notificationKey] = normalizedName
     }
@@ -95,7 +81,9 @@ object NotificationReplyRegistry {
     fun getLiveCallAction(contactName: String, sourcePackage: String? = null): LiveCallAction? {
         val normalized = if (sourcePackage == null) normalize(contactName) else normalize(contactName, sourcePackage)
         val call = liveCallsByContact[normalized]
-            ?: (if (sourcePackage == null) liveCallsByContact.values.filter { it.contactName.equals(contactName, ignoreCase = true) }.maxByOrNull { it.capturedAt } else null)
+            ?: (if (sourcePackage == null) liveCallsByContact.values.filter {
+                it.contactName.equals(contactName, ignoreCase = true)
+            }.maxByOrNull { it.capturedAt } else null)
             ?: return null
         if (System.currentTimeMillis() - call.capturedAt > 5 * 60 * 1000L) {
             liveCallsByContact.remove(normalize(call.contactName, call.sourcePackage), call)
@@ -113,22 +101,18 @@ object NotificationReplyRegistry {
     ) {
         if (!remoteInput.allowFreeFormInput || remoteInput.resultKey.isBlank()) return
         val normalizedName = normalize(contactName, sourcePackage)
-        val liveAction = LiveReplyAction(
-            notificationKey = notificationKey,
-            contactName = contactName,
-            sourcePackage = sourcePackage,
-            actionIntent = action.actionIntent,
-            remoteInput = remoteInput,
-            resultKey = remoteInput.resultKey
+        liveActionsByContact[normalizedName] = LiveReplyAction(
+            notificationKey, contactName, sourcePackage, action.actionIntent, remoteInput, remoteInput.resultKey
         )
-        liveActionsByContact[normalizedName] = liveAction
         keyToContactMap[notificationKey] = normalizedName
     }
 
     fun isReplyActionLive(contactName: String, sourcePackage: String? = null): Boolean {
         val normalized = if (sourcePackage == null) normalize(contactName) else normalize(contactName, sourcePackage)
         val action = liveActionsByContact[normalized]
-            ?: (if (sourcePackage == null) liveActionsByContact.values.filter { it.contactName.equals(contactName, ignoreCase = true) }.maxByOrNull { it.capturedAt } else null)
+            ?: (if (sourcePackage == null) liveActionsByContact.values.filter {
+                it.contactName.equals(contactName, ignoreCase = true)
+            }.maxByOrNull { it.capturedAt } else null)
             ?: return false
         if (System.currentTimeMillis() - action.capturedAt > 2 * 3600 * 1000L) {
             liveActionsByContact.remove(normalize(action.contactName, action.sourcePackage), action)
@@ -142,9 +126,9 @@ object NotificationReplyRegistry {
         if (!isReplyActionLive(contactName, sourcePackage)) return null
         val normalized = if (sourcePackage == null) normalize(contactName) else normalize(contactName, sourcePackage)
         return liveActionsByContact[normalized]
-            ?: if (sourcePackage == null) liveActionsByContact.values
-                .filter { it.contactName.equals(contactName, ignoreCase = true) }
-                .maxByOrNull { it.capturedAt } else null
+            ?: if (sourcePackage == null) liveActionsByContact.values.filter {
+                it.contactName.equals(contactName, ignoreCase = true)
+            }.maxByOrNull { it.capturedAt } else null
     }
 
     fun sendReply(context: Context, contactName: String, replyText: String, sourcePackage: String? = null): Boolean {
