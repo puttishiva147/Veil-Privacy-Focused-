@@ -103,6 +103,18 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         val isRecognized = NotificationParser.isSupportedPackage(pkg, preferences.isProtectAnyApp)
         if (!isRecognized && !isSimulation) return
 
+        // Per-platform switches are independent; disabling one social app must not
+        // disable the other three or unrelated recognized notification sources.
+        val socialPackage = pkg == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
+            pkg == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS ||
+            pkg == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM ||
+            pkg == com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT ||
+            pkg.startsWith("org.telegram.")
+        if (socialPackage && !preferences.isSocialAppEnabled(pkg)) {
+            emitDiagnostic("FILTER", "Protection disabled for ${com.veil.privacy.model.SupportedApp.getAppDisplayName(pkg)}")
+            return
+        }
+
         // 3. Master toggle check
         if (!preferences.isVeilEnabled) {
             emitDiagnostic("FILTER", "VEIL is currently paused. Passing notification through.")
