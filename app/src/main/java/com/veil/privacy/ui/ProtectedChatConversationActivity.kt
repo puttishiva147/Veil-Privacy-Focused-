@@ -519,6 +519,8 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             // Record outgoing message in conversation thread
             lifecycleScope.launch(Dispatchers.IO) {
                 val outgoingEvent = ProtectedEvent(
+                    sourcePackage = action?.sourcePackage
+                        ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
                     realSender = "You",
                     realMessage = replyText,
                     isOutgoing = true,
