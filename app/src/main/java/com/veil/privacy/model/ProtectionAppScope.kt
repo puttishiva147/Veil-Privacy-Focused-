@@ -53,6 +53,8 @@ object ProtectionAppScope {
         return when (configured) {
             WHATSAPP -> notificationPackage == WHATSAPP ||
                 notificationPackage == SupportedApp.PKG_WHATSAPP_BUSINESS
+            TELEGRAM -> notificationPackage.startsWith("org.telegram.") ||
+                notificationPackage == SupportedApp.PKG_TELEGRAM_CH
             else -> notificationPackage == configured
         }
     }
