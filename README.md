@@ -20,7 +20,9 @@ Features visible in the current source and Android manifest include:
 
 - **Selected-contact protection rules** for contacts the user chooses.
 - **Four social messaging sources:** WhatsApp, Instagram, Telegram, and Snapchat are included in package recognition and the dashboard's supported-app UI.
-- **App switcher:** the bottom navigation slot selects WhatsApp, Instagram, Telegram, or Snapchat; the top notification bell remains dedicated to the notification log. Per-app protection switches are persisted independently.
+- **Full-screen app switcher:** choose WhatsApp, Instagram, Telegram, or Snapchat on its own page; each app's protection switch is persisted independently, and the dashboard filters conversations, events, and rules to the selected app.
+- **Editable Rules tab:** open and edit existing protection rules for any of the four supported apps, with add-rule actions scoped to the selected platform.
+- **Responsive empty states:** protected-chat, notification-log, and rules empty states occupy the available content area without pushing messages beneath the bottom navigation.
 - **Notification handling** through Android's Notification Listener permission.
 - **Private inbox and event-detail screens** for app-managed notification events.
 - **Biometric capability** using AndroidX Biometric / Android biometric permission.
