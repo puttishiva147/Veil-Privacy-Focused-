@@ -842,6 +842,14 @@ class DashboardActivity : AppCompatActivity() {
                 setPadding((12 * density).toInt(), (12 * density).toInt(), (8 * density).toInt(), (12 * density).toInt())
                 isClickable = true
                 isFocusable = true
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    cornerRadius = 18 * density
+                    setColor(ContextCompat.getColor(this@DashboardActivity,
+                        if (selected) R.color.veil_surface_card else R.color.veil_surface))
+                    setStroke((if (selected) 1.5f else 1f).let { (it * density).toInt() },
+                        ContextCompat.getColor(this@DashboardActivity,
+                            if (selected) R.color.veil_accent_secure else R.color.veil_hairline))
+                }
                 setOnClickListener {
                     selectProtectedApp(sourcePackage)
                     switchTab(TAB_CHATS)
@@ -860,16 +868,31 @@ class DashboardActivity : AppCompatActivity() {
                 )
                 contentDescription = com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)
             }
+            val labelColumn = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding((12 * density).toInt(), 0, (8 * density).toInt(), 0)
+            }
             val label = TextView(this).apply {
-                text = (if (selected) "●  " else "○  ") +
-                    com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)
+                text = com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)
                 textSize = 16f
                 setTextColor(ContextCompat.getColor(this@DashboardActivity,
                     if (selected) R.color.veil_text_high else R.color.veil_text_medium))
-                setPadding((12 * density).toInt(), 0, 0, 0)
+            }
+            labelColumn.addView(label)
+            if (selected) {
+                labelColumn.addView(TextView(this).apply {
+                    text = "SELECTED"
+                    textSize = 9f
+                    letterSpacing = 0.08f
+                    setTypeface(typeface, android.graphics.Typeface.BOLD)
+                    setTextColor(ContextCompat.getColor(this@DashboardActivity, R.color.veil_accent_secure))
+                    setPadding(0, (3 * density).toInt(), 0, 0)
+                    contentDescription = "This app is selected; the switch controls protection"
+                })
             }
             row.addView(appIcon)
-            row.addView(label, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            row.addView(labelColumn, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             val protectionToggle = com.google.android.material.materialswitch.MaterialSwitch(this).apply {
                 isChecked = com.veil.privacy.model.ProtectionAppScope.isProtectionEnabled(this@DashboardActivity, sourcePackage)
                 contentDescription = "Toggle app-specific protection"
