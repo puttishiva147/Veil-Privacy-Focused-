@@ -321,8 +321,7 @@ class DashboardActivity : AppCompatActivity() {
                 dashboardStatePrefs.edit().putString("selected_social_app", app.packageName).apply()
                 refreshSelection()
                 updateSelectedAppUI()
-                refreshChatThreads()
-                switchTab(TAB_CHATS)
+                recreate()
                 Unit
             }
             radio.setOnClickListener { selectApp() }
