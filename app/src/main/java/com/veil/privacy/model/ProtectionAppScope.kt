@@ -17,15 +17,25 @@ object ProtectionAppScope {
     fun keyFor(contactName: String): String =
         PREFIX + contactName.trim().replace("\\s+".toRegex(), " ").lowercase()
 
-    fun get(context: Context, contactName: String): String =
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(keyFor(contactName), WHATSAPP) ?: WHATSAPP
+    private fun keyForRule(ruleId: Long): String = PREFIX + "rule_" + ruleId
 
-    fun set(context: Context, contactName: String, packageName: String) {
+    fun get(context: Context, contactName: String, ruleId: Long = 0L): String {
+        val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        // Rule IDs prevent two apps with identically named contacts from overwriting one another.
+        if (ruleId > 0L) {
+            prefs.getString(keyForRule(ruleId), null)?.let { return it }
+        }
+        return prefs.getString(keyFor(contactName), WHATSAPP) ?: WHATSAPP
+    }
+
+    fun set(context: Context, contactName: String, packageName: String, ruleId: Long = 0L) {
         if (contactName.isBlank()) return
         val safePackage = if (packageName in setOf(WHATSAPP, INSTAGRAM, TELEGRAM, SNAPCHAT)) packageName else WHATSAPP
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit().putString(keyFor(contactName), safePackage).apply()
+        val editor = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+        // Keep legacy mapping for pre-existing rule rows; new rows use a stable rule-specific key.
+        editor.putString(keyFor(contactName), safePackage)
+        if (ruleId > 0L) editor.putString(keyForRule(ruleId), safePackage)
+        editor.apply()
     }
 
     fun isProtectionEnabled(context: Context, packageName: String): Boolean {
@@ -48,8 +58,8 @@ object ProtectionAppScope {
             .edit().putBoolean("protection_enabled_" + canonical, enabled).apply()
     }
 
-    fun matches(context: Context, contactName: String, notificationPackage: String): Boolean {
-        val configured = get(context, contactName)
+    fun matches(context: Context, contactName: String, notificationPackage: String, ruleId: Long = 0L): Boolean {
+        val configured = get(context, contactName, ruleId)
         return when (configured) {
             WHATSAPP -> notificationPackage == WHATSAPP ||
                 notificationPackage == SupportedApp.PKG_WHATSAPP_BUSINESS
