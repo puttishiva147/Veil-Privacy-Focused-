@@ -28,6 +28,26 @@ object ProtectionAppScope {
             .edit().putString(keyFor(contactName), safePackage).apply()
     }
 
+    fun isProtectionEnabled(context: Context, packageName: String): Boolean {
+        val canonical = when {
+            packageName == SupportedApp.PKG_WHATSAPP_BUSINESS -> WHATSAPP
+            packageName.startsWith("org.telegram.") -> TELEGRAM
+            else -> packageName
+        }
+        return context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getBoolean("protection_enabled_" + canonical, true)
+    }
+
+    fun setProtectionEnabled(context: Context, packageName: String, enabled: Boolean) {
+        val canonical = when {
+            packageName == SupportedApp.PKG_WHATSAPP_BUSINESS -> WHATSAPP
+            packageName.startsWith("org.telegram.") -> TELEGRAM
+            else -> packageName
+        }
+        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putBoolean("protection_enabled_" + canonical, enabled).apply()
+    }
+
     fun matches(context: Context, contactName: String, notificationPackage: String): Boolean {
         val configured = get(context, contactName)
         return when (configured) {
