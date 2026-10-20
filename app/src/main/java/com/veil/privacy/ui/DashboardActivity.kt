@@ -248,6 +248,8 @@ class DashboardActivity : AppCompatActivity() {
         binding.tvTopSubtitle.text = "Variable Event Identity Layer"
         binding.tabNotifications.text = "Apps: ${selected.label}"
         binding.tabNotifications.contentDescription = "App switcher. Selected app: ${selected.label}"
+        // Hide the legacy address-book destination outside WhatsApp.
+        binding.tabContacts.visibility = if (selected.packageName == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) View.VISIBLE else View.GONE
     }
 
     private fun showAppSwitcherDialog() {
