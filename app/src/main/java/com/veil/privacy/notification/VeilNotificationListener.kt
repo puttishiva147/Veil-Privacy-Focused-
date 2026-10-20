@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
  * Production Android NotificationListenerService for VEIL.
  *
  * Responsibilities:
- * - Detects incoming WhatsApp notifications.
+ * - Detects supported-app notifications and scopes protection rules to their source app.
  * - Extracts Android notification inline-reply RemoteInput action and registers it in [NotificationReplyRegistry].
  * - Resolves the notification against independent configured [ProtectionRule]s.
  * - Dismisses/cancels the original WhatsApp notification where Android permits.
@@ -245,10 +245,11 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         }
 
         // Legacy blank-package rules belong to WhatsApp; app-specific rules never cross platforms.
+        val sourcePackage = sbn.packageName.orEmpty()
         val platformRules = allRules.filter { rule ->
             val rulePackage = rule.appPackage.ifBlank { com.veil.privacy.model.SupportedApp.PKG_WHATSAPP }
-            rulePackage == sbn.packageName ||
-                (rulePackage == com.veil.privacy.model.SupportedApp.PKG_TELEGRAM && sbn.packageName.startsWith("org.telegram"))
+            rulePackage == sourcePackage ||
+                (rulePackage.startsWith("org.telegram.") && sourcePackage.startsWith("org.telegram."))
         }
         // High-confidence matching evaluation
         var matchedRule = ruleMatchingEngine.evaluateMatch(sbn, parsed, platformRules)
