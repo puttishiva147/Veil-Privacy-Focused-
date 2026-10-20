@@ -8,6 +8,8 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -184,6 +186,21 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun setupTabs() {
+        fun addInteractionFeedback(view: View) {
+            view.setOnTouchListener { touched, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        touched.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                        touched.animate().cancel()
+                        touched.animate().scaleX(0.97f).scaleY(0.97f).setDuration(75L).start()
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        touched.animate().scaleX(1f).scaleY(1f).setDuration(120L).start()
+                    }
+                }
+                false
+            }
+        }
         binding.tabChats.setOnClickListener {
             if (!VeilPrefs.isSessionUnlocked) {
                 val intent = Intent(this, AuthLockActivity::class.java)
@@ -200,6 +217,8 @@ class DashboardActivity : AppCompatActivity() {
         binding.btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+        listOf(binding.tabChats, binding.tabNotifications, binding.tabContacts,
+            binding.btnNotificationBell, binding.btnSettings).forEach(::addInteractionFeedback)
         if (VeilPrefs.isSessionUnlocked) {
             switchTab(TAB_CHATS)
         } else {
@@ -358,18 +377,22 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun setupActions() {
         binding.fabAddProtectedChat.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             openAddContactChooser()
         }
 
         binding.btnAddContactRuleTop.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             openRuleEditorForSelectedApp()
         }
 
         binding.btnEmptyAddContactRule.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             openRuleEditorForSelectedApp()
         }
 
         binding.btnClearNotificationsLog.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             VeilDialogs.showConfirmationDialog(
                 context = this,
                 title = "Clear Notification Log",
@@ -387,7 +410,8 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun setupSettingsControls() {
         binding.switchVeilMaster.isChecked = prefs.isVeilEnabled
-        binding.switchVeilMaster.setOnCheckedChangeListener { _, isChecked ->
+        binding.switchVeilMaster.setOnCheckedChangeListener { button, isChecked ->
+            button.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             prefs.isVeilEnabled = isChecked
             Toast.makeText(this, if (isChecked) "VEIL Protection Enabled" else "VEIL Protection Paused", Toast.LENGTH_SHORT).show()
             if (prefs.isPersistentShieldEnabled && NotificationUtils.isNotificationAccessGranted(this)) {
@@ -397,7 +421,8 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         binding.switchPersistentShield.isChecked = prefs.isPersistentShieldEnabled
-        binding.switchPersistentShield.setOnCheckedChangeListener { _, isChecked ->
+        binding.switchPersistentShield.setOnCheckedChangeListener { button, isChecked ->
+            button.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             prefs.isPersistentShieldEnabled = isChecked
             if (isChecked && NotificationUtils.isNotificationAccessGranted(this)) {
                 com.veil.privacy.service.VeilProtectionService.startService(this)
