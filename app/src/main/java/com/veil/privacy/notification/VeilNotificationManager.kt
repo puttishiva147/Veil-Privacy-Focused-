@@ -169,8 +169,11 @@ class VeilNotificationManager(private val context: Context) {
         val notificationManager = NotificationManagerCompat.from(context)
 
         // PendingIntent to launch ProtectedChatConversationActivity
+        // Keep the protected conversation keyed to the matched rule, not the raw
+        // notification title. Group chats and renamed contacts can have different labels.
+        val protectedContactName = rule.contactName.trim().ifBlank { event.realSender }
         val intent = Intent(context, ProtectedChatConversationActivity::class.java).apply {
-            putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, event.realSender)
+            putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, protectedContactName)
             putExtra(ProtectedChatConversationActivity.EXTRA_EVENT_ID, event.id)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -222,11 +225,17 @@ class VeilNotificationManager(private val context: Context) {
             .setGroup(NOTIFICATION_GROUP_KEY)
             .setColor(context.getColor(R.color.veil_accent_secure))
 
-        // Attach Android RemoteInput inline reply action if live WhatsApp reply token is active
-        if (!event.isCall && NotificationReplyRegistry.isReplyActionLive(event.realSender)) {
+        // Resolve the live token using the same contact key used by the conversation.
+        // A configured rule name may differ from the sender title in the source notification.
+        val replyContactName = when {
+            NotificationReplyRegistry.isReplyActionLive(protectedContactName) -> protectedContactName
+            NotificationReplyRegistry.isReplyActionLive(event.realSender) -> event.realSender
+            else -> null
+        }
+        if (!event.isCall && replyContactName != null) {
             val replyBroadcastIntent = Intent(context, VeilNotificationReplyReceiver::class.java).apply {
                 action = VeilNotificationReplyReceiver.ACTION_REPLY
-                putExtra(VeilNotificationReplyReceiver.EXTRA_CONTACT_NAME, event.realSender)
+                putExtra(VeilNotificationReplyReceiver.EXTRA_CONTACT_NAME, replyContactName)
                 putExtra(VeilNotificationReplyReceiver.EXTRA_CONVERSATION_ID, event.conversationId)
                 putExtra(VeilNotificationReplyReceiver.EXTRA_NOTIFICATION_ID, notificationId)
             }
