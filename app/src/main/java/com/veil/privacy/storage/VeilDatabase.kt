@@ -16,7 +16,7 @@ import com.veil.privacy.model.SelectedContact
         ProtectedContact::class,
         ProtectedEvent::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class VeilDatabase : RoomDatabase() {
@@ -44,6 +44,12 @@ abstract class VeilDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_6_7 = object : androidx.room.migration.Migration(6, 7) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE protection_rules ADD COLUMN appPackage TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         fun getInstance(context: Context): VeilDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -51,7 +57,7 @@ abstract class VeilDatabase : RoomDatabase() {
                     VeilDatabase::class.java,
                     "veil_privacy_database.db"
                 )
-                    .addMigrations(MIGRATION_5_6)
+                    .addMigrations(MIGRATION_5_6, MIGRATION_6_7)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
