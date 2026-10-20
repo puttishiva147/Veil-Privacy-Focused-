@@ -116,6 +116,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         if (sbn == null) return
+        val eventReceivedElapsedMs = android.os.SystemClock.elapsedRealtime()
 
         val pkg = sbn.packageName ?: return
         val ownPackage = packageName
@@ -203,7 +204,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
         serviceScope.launch {
             try {
-                processIncomingProtectedNotification(sbn, parsed, replyActionPair)
+                processIncomingProtectedNotification(sbn, parsed, replyActionPair, eventReceivedElapsedMs)
             } catch (e: Exception) {
                 emitDiagnostic("PROCESS", "Notification processing failed (${e.javaClass.simpleName})", false)
             } finally {
@@ -218,7 +219,8 @@ class VeilNotificationListener : BaseNotificationListenerService() {
     private suspend fun processIncomingProtectedNotification(
         sbn: StatusBarNotification,
         parsed: ParsedNotificationInfo,
-        replyActionPair: Pair<android.app.Notification.Action, android.app.RemoteInput>? = null
+        replyActionPair: Pair<android.app.Notification.Action, android.app.RemoteInput>? = null,
+        eventReceivedElapsedMs: Long = android.os.SystemClock.elapsedRealtime()
     ) {
         // Use the Room-Flow-backed snapshot on the hot path. The first event may arrive
         // before Flow's initial emission; in that case load once on IO and seed the cache.
@@ -369,7 +371,9 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         // If VEIL cannot publish its replacement, leave the original visible rather than lose it.
         try {
             notificationManager.postRuleDecoyNotification(eventWithId, matchedRule)
+            val latencyMs = (android.os.SystemClock.elapsedRealtime() - eventReceivedElapsedMs).coerceAtLeast(0L)
             emitDiagnostic("POST", "Privacy-safe replacement alert posted")
+            emitDiagnostic("LATENCY", "Notification receipt-to-protected-publication: ${latencyMs}ms")
         } catch (e: Exception) {
             emitDiagnostic("POST", "Protected notification publication failed (${e.javaClass.simpleName}); original left untouched", false)
             return
