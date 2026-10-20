@@ -1,5 +1,6 @@
 package com.veil.privacy.model
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -41,6 +42,7 @@ data class ProtectionRule(
     val isCustomLockEnabled: Boolean = false,
     val photoUri: String = "",
     val createdAt: Long = System.currentTimeMillis(),
+    @ColumnInfo(defaultValue = "'com.whatsapp'")
     val appPackage: String = SupportedApp.PKG_WHATSAPP
 ) {
     companion object {
