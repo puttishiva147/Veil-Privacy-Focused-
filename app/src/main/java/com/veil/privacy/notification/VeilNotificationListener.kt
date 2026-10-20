@@ -244,8 +244,14 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             return
         }
 
+        // Legacy blank-package rules belong to WhatsApp; app-specific rules never cross platforms.
+        val platformRules = allRules.filter { rule ->
+            val rulePackage = rule.appPackage.ifBlank { com.veil.privacy.model.SupportedApp.PKG_WHATSAPP }
+            rulePackage == sbn.packageName ||
+                (rulePackage == com.veil.privacy.model.SupportedApp.PKG_TELEGRAM && sbn.packageName.startsWith("org.telegram"))
+        }
         // High-confidence matching evaluation
-        var matchedRule = ruleMatchingEngine.evaluateMatch(sbn, parsed, allRules)
+        var matchedRule = ruleMatchingEngine.evaluateMatch(sbn, parsed, platformRules)
 
         if (matchedRule == null && preferences.isProtectAllSenders) {
             matchedRule = ProtectionRule(
