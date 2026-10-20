@@ -46,7 +46,7 @@ abstract class VeilDatabase : RoomDatabase() {
 
         val MIGRATION_6_7 = object : androidx.room.migration.Migration(6, 7) {
             override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE protection_rules ADD COLUMN appPackage TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE protection_rules ADD COLUMN appPackage TEXT NOT NULL DEFAULT 'com.whatsapp'")
             }
         }
 
