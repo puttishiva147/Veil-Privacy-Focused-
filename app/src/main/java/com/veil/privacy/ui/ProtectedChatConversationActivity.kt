@@ -547,9 +547,10 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
                     ?.sourcePackage
             }
             val supported = com.veil.privacy.model.SupportedApp
-            val targetPackage = when (sourcePackage) {
+            val resolvedSourcePackage = sourcePackage ?: supported.PKG_WHATSAPP
+            val targetPackage = when (resolvedSourcePackage) {
                 supported.PKG_WHATSAPP, supported.PKG_WHATSAPP_BUSINESS,
-                supported.PKG_TELEGRAM, supported.PKG_INSTAGRAM, supported.PKG_SNAPCHAT -> sourcePackage
+                supported.PKG_TELEGRAM, supported.PKG_INSTAGRAM, supported.PKG_SNAPCHAT -> resolvedSourcePackage
                 else -> supported.PKG_WHATSAPP
             }
 
