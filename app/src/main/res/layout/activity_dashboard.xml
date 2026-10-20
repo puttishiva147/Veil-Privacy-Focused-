@@ -1163,6 +1163,19 @@
             app:backgroundTint="@color/veil_brand_silver"
             app:elevation="2dp"
             app:tint="@color/veil_canvas" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAddSnapchatProtection"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="104dp"
+            android:contentDescription="Add protected Snapchat account"
+            android:src="@drawable/ic_add_plus"
+            android:visibility="gone"
+            app:backgroundTint="@color/veil_brand_silver"
+            app:elevation="2dp"
+            app:tint="@color/veil_canvas" />
         <LinearLayout
             android:id="@+id/floatingBottomNavigation"
             android:layout_width="match_parent"
