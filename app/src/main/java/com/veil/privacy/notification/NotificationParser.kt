@@ -97,8 +97,8 @@ class NotificationParser {
         // Dedicated package adapters take precedence for the four primary integrations.
         // Other legacy supported apps keep the generic compatibility parser.
         val adapter = AppNotificationAdapters.forPackage(packageName)
-        val extracted = adapter?.extract(notification, extras)
-            ?: if (adapter == null) extractSenderAndMessage(notification, extras) else null
+        val extracted = (adapter?.extract(notification, extras)
+            ?: if (adapter == null) extractSenderAndMessage(notification, extras) else null)
             ?: return null
 
         val (rawSender, rawMessage) = extracted
