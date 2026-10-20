@@ -75,7 +75,7 @@ class RuleEditActivity : AppCompatActivity() {
         db = VeilDatabase.getInstance(this)
         editingRuleId = intent.getLongExtra(EXTRA_RULE_ID, 0)
         selectedProtectionPackage = intent.getStringExtra(EXTRA_PROTECTION_PACKAGE)
-            ?.takeIf { it == ProtectionAppScope.WHATSAPP || it == ProtectionAppScope.INSTAGRAM || it == ProtectionAppScope.TELEGRAM }
+            ?.takeIf { it == ProtectionAppScope.WHATSAPP || it == ProtectionAppScope.INSTAGRAM || it == ProtectionAppScope.TELEGRAM || it == ProtectionAppScope.SNAPCHAT }
             ?: ProtectionAppScope.WHATSAPP
 
         setupUI()
@@ -103,16 +103,19 @@ class RuleEditActivity : AppCompatActivity() {
         binding.btnManualContact.text = when (selectedProtectionPackage) {
             ProtectionAppScope.INSTAGRAM -> "Enter Instagram username"
             ProtectionAppScope.TELEGRAM -> "Enter Telegram username / chat"
+            ProtectionAppScope.SNAPCHAT -> "Enter Snapchat username"
             else -> "Enter phone number manually"
         }
         binding.tvSelectedContactName.text = when (selectedProtectionPackage) {
             ProtectionAppScope.INSTAGRAM -> "No Instagram username selected"
             ProtectionAppScope.TELEGRAM -> "No Telegram contact selected"
+            ProtectionAppScope.SNAPCHAT -> "No Snapchat account selected"
             else -> "No contact selected"
         }
         binding.tvSelectedContactPhone.text = when (selectedProtectionPackage) {
             ProtectionAppScope.INSTAGRAM -> "Use the exact Instagram username"
             ProtectionAppScope.TELEGRAM -> "Use the Telegram username or chat name"
+            ProtectionAppScope.SNAPCHAT -> "Use the exact Snapchat username"
             else -> "Select a contact or enter a phone number"
         }
 
