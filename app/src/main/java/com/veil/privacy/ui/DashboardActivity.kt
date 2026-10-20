@@ -225,6 +225,7 @@ class DashboardActivity : AppCompatActivity() {
         binding.fabAddProtectedChat.visibility = if (currentTab == TAB_CHATS) View.VISIBLE else View.GONE
         binding.fabAddInstagramProtection.visibility = View.GONE
         binding.fabAddTelegramProtection.visibility = View.GONE
+        binding.fabAddSnapchatProtection.visibility = View.GONE
         refreshChatThreads()
     }
 
@@ -259,6 +260,8 @@ class DashboardActivity : AppCompatActivity() {
             if (tab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM) View.VISIBLE else View.GONE
         binding.fabAddTelegramProtection.visibility =
             if (tab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_TELEGRAM) View.VISIBLE else View.GONE
+        binding.fabAddSnapchatProtection.visibility =
+            if (tab == TAB_CHATS && selectedProtectedApp == com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT) View.VISIBLE else View.GONE
 
         applyTabStyle(binding.tabChats, tab == TAB_CHATS)
         applyTabStyle(binding.tabNotifications, tab == TAB_NOTIFICATIONS)
@@ -366,6 +369,7 @@ class DashboardActivity : AppCompatActivity() {
         binding.fabAddProtectedChat.setOnClickListener { openAddContactChooser(selectedProtectedApp) }
         binding.fabAddInstagramProtection.setOnClickListener { openAddContactChooser(selectedProtectedApp) }
         binding.fabAddTelegramProtection.setOnClickListener { openAddContactChooser(selectedProtectedApp) }
+        binding.fabAddSnapchatProtection.setOnClickListener { openAddContactChooser(selectedProtectedApp) }
 
         binding.btnAddContactRuleTop.setOnClickListener { openRuleEditorForSelectedApp() }
         binding.btnEmptyAddContactRule.setOnClickListener { openRuleEditorForSelectedApp() }
@@ -811,7 +815,8 @@ class DashboardActivity : AppCompatActivity() {
         val packages = arrayOf(
             com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
             com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM,
-            com.veil.privacy.model.SupportedApp.PKG_TELEGRAM
+            com.veil.privacy.model.SupportedApp.PKG_TELEGRAM,
+            com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT
         )
         val panel = Dialog(this)
         val density = resources.displayMetrics.density
@@ -869,7 +874,7 @@ class DashboardActivity : AppCompatActivity() {
             ))
         }
         val hint = TextView(this).apply {
-            text = "WhatsApp, Instagram and Telegram have dedicated protection sections. Other recognized apps may appear in the notification log, but app-specific rule setup is currently available for these three."
+            text = "WhatsApp, Instagram, Telegram and Snapchat have dedicated protection sections. Notification actions depend on what each source app exposes to Android."
             textSize = 12f
             setTextColor(ContextCompat.getColor(this@DashboardActivity, R.color.veil_text_low))
             setPadding((12 * density).toInt(), (24 * density).toInt(), (8 * density).toInt(), 0)
