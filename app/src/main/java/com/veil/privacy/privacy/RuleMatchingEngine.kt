@@ -26,7 +26,7 @@ class RuleMatchingEngine {
     }
 
     /**
-     * Evaluates an incoming WhatsApp notification against active VEIL protection rules.
+     * Evaluates an incoming supported-app notification against rules scoped to that app.
      * Returns the matched [ProtectionRule] only if matching confidence is high, or null otherwise.
      */
     fun evaluateMatch(
@@ -50,8 +50,15 @@ class RuleMatchingEngine {
         parsed: ParsedNotificationInfo,
         activeRules: List<ProtectionRule>
     ): MatchResult {
-        // Filter only enabled rules
-        val enabledRules = activeRules.filter { it.isEnabled }
+        // Scope rules to the notification's originating app. This defensive check
+        // prevents cross-platform matches even if a caller passes mixed rules.
+        val sourcePackage = sbn.packageName.orEmpty()
+        val enabledRules = activeRules.filter { rule ->
+            if (!rule.isEnabled) return@filter false
+            val rulePackage = rule.appPackage.ifBlank { com.veil.privacy.model.SupportedApp.PKG_WHATSAPP }
+            rulePackage == sourcePackage ||
+                (rulePackage.startsWith("org.telegram.") && sourcePackage.startsWith("org.telegram."))
+        }
         if (enabledRules.isEmpty()) {
             return MatchResult.NoMatch
         }
@@ -59,8 +66,12 @@ class RuleMatchingEngine {
         val extras = sbn.notification.extras ?: Bundle.EMPTY
         val isGroup = isGroupConversation(extras)
 
-        // Safety Guard 1: Ignore WhatsApp system/service notifications
-        if (isWhatsAppServiceNotification(parsed.sender, parsed.message)) {
+        // WhatsApp-specific service filtering must not reject notifications from
+        // Instagram, Telegram, Snapchat, or other apps that mention WhatsApp.
+        if ((sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
+             sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS) &&
+            isWhatsAppServiceNotification(parsed.sender, parsed.message)
+        ) {
             return MatchResult.LowConfidenceRejected("WhatsApp system service alert")
         }
 
