@@ -6,7 +6,11 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -103,12 +107,27 @@ class RuleEditActivity : AppCompatActivity() {
                 else -> "Social App"
             }
             binding.toolbarRuleEdit.title = "New $appName Protection Rule"
-            if (appPackage != com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
-                binding.btnPickContact.visibility = View.GONE
-                binding.btnManualContact.text = "Enter username"
-                binding.tvSelectedContactPhone.text = "Enter the exact username or display name for $appName"
-            }
+            configureTargetEntryUi(appName)
             binding.btnDeleteRule.visibility = View.GONE
+        }
+    }
+
+    private fun appDisplayName(): String = when (appPackage) {
+        com.veil.privacy.model.SupportedApp.PKG_WHATSAPP -> "WhatsApp"
+        com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM -> "Instagram"
+        com.veil.privacy.model.SupportedApp.PKG_TELEGRAM -> "Telegram"
+        com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT -> "Snapchat"
+        else -> "Social App"
+    }
+
+    private fun configureTargetEntryUi(appName: String = appDisplayName()) {
+        val isWhatsApp = appPackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+        binding.btnPickContact.visibility = if (isWhatsApp) View.VISIBLE else View.GONE
+        binding.btnManualContact.text = if (isWhatsApp) "Enter manually" else "Enter username"
+        if (!isWhatsApp) {
+            binding.tvSelectedContactPhone.text =
+                if (selectedContactName.isBlank()) "Enter the exact username or display name for $appName"
+                else "Username / display name · no phone number required"
         }
     }
 
@@ -122,7 +141,11 @@ class RuleEditActivity : AppCompatActivity() {
         }
 
         binding.btnManualContact.setOnClickListener {
-            showManualEntryDialog()
+            if (appPackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
+                showManualEntryDialog()
+            } else {
+                showUsernameEntryDialog()
+            }
         }
 
         binding.switchCustomPinEnabled.setOnCheckedChangeListener { _, isChecked ->
@@ -237,6 +260,54 @@ class RuleEditActivity : AppCompatActivity() {
         binding.tvSelectedContactPhone.text = if (phone.isNotBlank()) phone else "Direct display name matching"
     }
 
+    private fun showUsernameEntryDialog() {
+        val appName = appDisplayName()
+        val input = EditText(this).apply {
+            hint = if (appPackage == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM) {
+                "Instagram username (with or without @)"
+            } else {
+                appName + " username or display name"
+            }
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            imeOptions = EditorInfo.IME_ACTION_DONE
+            setSingleLine(true)
+            setText(if (selectedContactPhone.isBlank()) selectedContactName else "")
+            setSelection(text?.length ?: 0)
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val horizontal = (resources.displayMetrics.density * 24).toInt()
+            val vertical = (resources.displayMetrics.density * 8).toInt()
+            setPadding(horizontal, vertical, horizontal, vertical)
+            addView(input, LinearLayout.LayoutParams(-1, -2))
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Enter " + appName + " username")
+            .setMessage("Use the exact username or display name shown by " + appName + ". A phone number is not required.")
+            .setView(content)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Use username", null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val username = input.text?.toString()?.trim().orEmpty()
+                if (username.isBlank()) {
+                    input.error = "Enter a username or display name"
+                    return@setOnClickListener
+                }
+                setContactTarget(
+                    name = username,
+                    phone = "",
+                    contactId = "",
+                    source = ProtectionRule.SOURCE_MANUAL
+                )
+                dialog.dismiss()
+            }
+        }
+        dialog.show()
+    }
+
     private fun showManualEntryDialog(initialName: String = "") {
         VeilDialogs.showQuickProtectBottomSheet(
             activity = this,
@@ -277,6 +348,7 @@ class RuleEditActivity : AppCompatActivity() {
             }
             if (rule != null) {
                 appPackage = rule.appPackage.ifBlank { com.veil.privacy.model.SupportedApp.PKG_WHATSAPP }
+                configureTargetEntryUi()
                 setContactTarget(
                     name = rule.contactName,
                     phone = rule.contactPhoneNumber,
