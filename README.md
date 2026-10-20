@@ -12,13 +12,15 @@
 
 VEIL is an Android privacy utility designed to help users manage how selected app notifications are handled on their device. The project includes protected-contact rules, notification-listener integration, a private inbox/event interface, biometric support, and a protection service.
 
-> **Current source version:** **4.5.2** (version code **36**), from `app/build.gradle.kts`. Official signed APK releases are published through the GitHub Releases page linked below after the release workflow succeeds.
+> **Current source version:** **4.5.3** (version code **37**), from `app/build.gradle.kts`. Official signed APK releases are published through the GitHub Releases page linked below after the release workflow succeeds.
 
 ## What is in the app?
 
 Features visible in the current source and Android manifest include:
 
 - **Selected-contact protection rules** for contacts the user chooses.
+- **Four social messaging sources:** WhatsApp, Instagram, Telegram, and Snapchat are included in package recognition and the dashboard's supported-app UI.
+- **Source-app-aware conversation routing:** opening a protected conversation attempts to launch the app that produced its stored notification event; inline replies require a compatible active Android RemoteInput action.
 - **Notification handling** through Android's Notification Listener permission.
 - **Private inbox and event-detail screens** for app-managed notification events.
 - **Biometric capability** using AndroidX Biometric / Android biometric permission.
@@ -26,7 +28,7 @@ Features visible in the current source and Android manifest include:
 - **Security and configuration screens**, including a lock/authentication flow.
 - **Dark, app-specific Android UI** with launcher identity resources already present in the project.
 
-Actual behavior depends on Android version, user-granted permissions, source configuration, and the originating app's notification behavior. VEIL cannot reliably observe messages typed inside another app unless that app exposes an event through an accessible Android API or notification. It should not be described as a universal message interceptor.
+Actual behavior depends on Android version, user-granted permissions, source configuration, and the originating app's notification behavior. VEIL cannot reliably observe messages typed inside another app unless that app exposes an event through an accessible Android API or notification. It should not be described as a universal message interceptor. Support for an app does not guarantee every notification format, reply action, call action, or media-sharing flow; these capabilities depend on what that app exposes to Android.
 
 ## Requirements
 
@@ -118,8 +120,8 @@ The app's source defines the name **VEIL** and expands it as **Variable Event Id
 
 ## Release and version information
 
-- Source version: **4.5.2** (version code **36**).
-- The version is authoritative in `app/build.gradle.kts`; release tags must match the version name, for example `v4.5.2`.
+- Source version: **4.5.3** (version code **37**).
+- The version is authoritative in `app/build.gradle.kts`; release tags must match the version name, for example `v4.5.3`.
 - Official release assets are published at [GitHub Releases](https://github.com/puttishiva147/Veil-Privacy-Focused-/releases) only after the release workflow succeeds.
 - A source version or successful debug build is not the same as a published, production-signed release.
 
@@ -146,8 +148,8 @@ After adding the secrets, securely remove the temporary base64 file and retain t
 From the repository root, after the four Actions secrets are configured and after confirming that the tag does not already exist:
 
 ```bash
-git tag -a v4.5.2 -m "VEIL 4.5.2"
-git push origin v4.5.2
+git tag -a v4.5.3 -m "VEIL 4.5.3"
+git push origin v4.5.3
 ```
 
 The tag must match the current `versionName` in `app/build.gradle.kts`. The workflow checks that match before building and publishing.
