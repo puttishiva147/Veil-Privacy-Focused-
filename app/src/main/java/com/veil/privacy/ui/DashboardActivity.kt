@@ -690,6 +690,7 @@ class DashboardActivity : AppCompatActivity() {
                 binding.tvEmptyChatsDescription.text =
                     "Select protected contacts from $selectedLabel. VEIL disguises eligible notifications and stores available conversation events with inline reply support."
                 binding.tvContactsRuleCount.text = "${appRules.size} $selectedLabel RULES CONFIGURED"
+                binding.rvContactRules.visibility = if (appRules.isEmpty()) View.GONE else View.VISIBLE
                 binding.layoutEmptyContacts.visibility = if (appRules.isEmpty()) View.VISIBLE else View.GONE
 
                 // Tab 2 Notifications Log
@@ -705,6 +706,7 @@ class DashboardActivity : AppCompatActivity() {
                 } else {
                     "Notifications"
                 }
+                binding.rvNotifications.visibility = if (appEvents.isEmpty()) View.GONE else View.VISIBLE
                 binding.layoutEmptyNotifications.visibility = if (appEvents.isEmpty()) View.VISIBLE else View.GONE
 
                 // Tab 1 Protected Chats Threads
@@ -734,7 +736,8 @@ class DashboardActivity : AppCompatActivity() {
                 // Sort threads by latest activity
                 val sortedThreads = threads.sortedByDescending { it.lastTimestamp }
                 chatThreadsAdapter.submitList(sortedThreads)
-                binding.tvChatsHeaderCount.text = "${sortedThreads.size} PROTECTED CONVERSATIONS"
+                binding.tvChatsHeaderCount.text = "${sortedThreads.size} $selectedLabel PROTECTED CONVERSATIONS"
+                binding.rvProtectedChats.visibility = if (sortedThreads.isEmpty()) View.GONE else View.VISIBLE
                 binding.layoutEmptyChats.visibility = if (sortedThreads.isEmpty()) View.VISIBLE else View.GONE
             }
         }
