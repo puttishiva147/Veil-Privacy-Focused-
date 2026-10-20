@@ -107,9 +107,14 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         val isRecognized = NotificationParser.isSupportedPackage(pkg, preferences.isProtectAnyApp)
         if (!isRecognized && !isSimulation) return
 
-        // 3. Master toggle check
+        // 3. Master and per-source-app toggles. A disabled app always passes through;
+        // it cannot inherit another app's enabled state.
         if (!preferences.isVeilEnabled) {
             emitDiagnostic("FILTER", "VEIL is currently paused. Passing notification through.")
+            return
+        }
+        if (!com.veil.privacy.model.ProtectionAppScope.isProtectionEnabled(applicationContext, pkg)) {
+            emitDiagnostic("FILTER", "Protection is disabled for this source app. Passing notification through.")
             return
         }
 
