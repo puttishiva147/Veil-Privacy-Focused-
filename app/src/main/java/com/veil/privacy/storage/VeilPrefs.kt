@@ -41,6 +41,7 @@ class VeilPrefs(context: Context) {
         private const val KEY_PROTECT_ALL_MESSAGING_APPS = "key_protect_all_messaging_apps"
         private const val KEY_PROTECT_ANY_APP = "key_protect_any_app"
         private const val KEY_ENABLED_APP_PACKAGES = "key_enabled_app_packages"
+        private const val KEY_DISABLED_SOCIAL_APP_PACKAGES = "key_disabled_social_app_packages"
         private const val KEY_DECOY_PRESET_THEME = "key_decoy_preset_theme"
         private const val KEY_ENABLED_DECOY_PROFILES = "key_enabled_decoy_profiles"
         private const val KEY_TOTAL_INTERCEPTIONS = "key_total_interceptions"
@@ -343,6 +344,28 @@ class VeilPrefs(context: Context) {
     var isProtectAllMessagingApps: Boolean
         get() = prefs.getBoolean(KEY_PROTECT_ALL_MESSAGING_APPS, true)
         set(value) = prefs.edit().putBoolean(KEY_PROTECT_ALL_MESSAGING_APPS, value).apply()
+
+    private fun socialAppFamily(packageName: String): String = when {
+        packageName == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
+            packageName == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS ->
+            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+        packageName.startsWith("org.telegram.") ->
+            com.veil.privacy.model.SupportedApp.PKG_TELEGRAM
+        else -> packageName
+    }
+
+    fun isSocialAppEnabled(packageName: String): Boolean {
+        val family = socialAppFamily(packageName)
+        val disabled = prefs.getStringSet(KEY_DISABLED_SOCIAL_APP_PACKAGES, emptySet()).orEmpty()
+        return family !in disabled
+    }
+
+    fun setSocialAppEnabled(packageName: String, enabled: Boolean) {
+        val family = socialAppFamily(packageName)
+        val disabled = prefs.getStringSet(KEY_DISABLED_SOCIAL_APP_PACKAGES, emptySet()).orEmpty().toMutableSet()
+        if (enabled) disabled.remove(family) else disabled.add(family)
+        prefs.edit().putStringSet(KEY_DISABLED_SOCIAL_APP_PACKAGES, disabled).apply()
+    }
 
     var isProtectAnyApp: Boolean
         get() = prefs.getBoolean(KEY_PROTECT_ANY_APP, false)
