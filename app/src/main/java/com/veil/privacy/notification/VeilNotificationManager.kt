@@ -165,7 +165,7 @@ class VeilNotificationManager(private val context: Context) {
      * Builds and posts a privacy-safe VEIL replacement notification tailored to the matched [ProtectionRule].
      * Tapping launches ProtectedChatConversationActivity directly.
      */
-    fun postRuleDecoyNotification(event: ProtectedEvent, rule: ProtectionRule) {
+    fun postRuleDecoyNotification(event: ProtectedEvent, rule: ProtectionRule): Boolean {
         val notificationManager = NotificationManagerCompat.from(context)
 
         // PendingIntent to launch ProtectedChatConversationActivity
@@ -262,10 +262,20 @@ class VeilNotificationManager(private val context: Context) {
             builder.setVibrate(longArrayOf(0))
         }
 
-        try {
-            notificationManager.notify(notificationId, builder.build())
+        return try {
+            // This confirms that Android accepted the notify request, not that the OS
+            // displayed it to the user (channels/OEM policy may still suppress it).
+            if (!notificationManager.areNotificationsEnabled()) {
+                false
+            } else {
+                notificationManager.notify(notificationId, builder.build())
+                true
+            }
         } catch (_: SecurityException) {
-            // Handled gracefully: POST_NOTIFICATIONS runtime permission on Android 13+
+            // Do not let the listener cancel the source notification if VEIL cannot post.
+            false
+        } catch (_: RuntimeException) {
+            false
         }
     }
 
