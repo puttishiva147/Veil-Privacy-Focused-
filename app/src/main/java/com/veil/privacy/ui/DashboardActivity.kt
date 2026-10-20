@@ -759,17 +759,22 @@ class DashboardActivity : AppCompatActivity() {
                     rule.appPackage == selectedPackage ||
                         (rule.appPackage.isBlank() && selectedPackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP)
                 }
+                val appEvents = events.filter { event ->
+                    event.sourcePackage == selectedPackage ||
+                        (selectedPackage == com.veil.privacy.model.SupportedApp.PKG_TELEGRAM && event.sourcePackage.startsWith("org.telegram")) ||
+                        (selectedPackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP && event.sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS)
+                }
                 rulesAdapter.submitList(appRules)
                 val selectedLabel = socialAppOptions.firstOrNull { it.packageName == selectedPackage }?.label ?: "APP"
                 binding.tvContactsRuleCount.text = "${appRules.size} $selectedLabel RULES CONFIGURED"
                 binding.layoutEmptyContacts.visibility = if (appRules.isEmpty()) View.VISIBLE else View.GONE
 
                 // Tab 2 Notifications Log
-                notificationsAdapter.submitList(events)
+                notificationsAdapter.submitList(appEvents)
                 // Derive unread state from actual stored events and persisted last-viewed time.
                 // The current ProtectedEvent model has no per-event read flag; opening the
                 // Notifications destination marks the inbox viewed without altering the vault.
-                val notificationCount = events.count { it.timestamp > notificationsLastViewedAt }
+                val notificationCount = appEvents.count { it.timestamp > notificationsLastViewedAt }
                 binding.tvUnreadNotificationCount.visibility = if (notificationCount > 0) View.VISIBLE else View.GONE
                 binding.tvUnreadNotificationCount.text = if (notificationCount > 99) "99+" else notificationCount.toString()
                 binding.btnNotificationBell.contentDescription = if (notificationCount > 0) {
@@ -777,12 +782,12 @@ class DashboardActivity : AppCompatActivity() {
                 } else {
                     "Notifications"
                 }
-                binding.layoutEmptyNotifications.visibility = if (events.isEmpty()) View.VISIBLE else View.GONE
+                binding.layoutEmptyNotifications.visibility = if (appEvents.isEmpty()) View.VISIBLE else View.GONE
 
                 // Tab 1 Protected Chats Threads
                 val threads = mutableListOf<ProtectedChatThread>()
                 for (rule in appRules) {
-                    val conversationEvents = events.filter {
+                    val conversationEvents = appEvents.filter {
                         it.conversationId == rule.contactName.lowercase().trim()
                     }
                     val latestEvent = conversationEvents.maxByOrNull { it.timestamp }
