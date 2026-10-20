@@ -2,7 +2,7 @@
     <!-- Brand & System Identity -->
     <string name="app_name">VEIL</string>
     <string name="app_full_name">Variable Event Identity Layer</string>
-    <string name="app_tagline">Autonomous Notification Disguise Architecture</string>
+    <string name="app_tagline">Your Social World, in One Place.</string>
     <string name="app_version_name">VEIL Core • Production Release 4.5.2</string>
 
     <!-- General Navigation & Actions -->
@@ -52,7 +52,7 @@
     <!-- Protected Contact / Selection Architecture -->
     <string name="contact_card_header">PROTECTED CONTACT</string>
     <string name="contact_no_selection">No contact selected</string>
-    <string name="contact_no_selection_desc">Choose the real contact whose incoming WhatsApp notifications and calls should be intercepted and disguised with decoys.</string>
+    <string name="contact_no_selection_desc">Choose the real contact whose supported app notifications should be intercepted and disguised with decoys.</string>
     <string name="contact_btn_select">Select Contact</string>
     <string name="contact_btn_change">Change Contact</string>
     <string name="contact_btn_remove">Remove Contact</string>
@@ -155,7 +155,7 @@
     <!-- Privacy Architecture Dialog -->
     <string name="privacy_title">VEIL Architectural Model</string>
     <string name="privacy_point_1_title">1. Android NotificationListener API Only</string>
-    <string name="privacy_point_1_desc">VEIL inspects notifications strictly via the official Android NotificationListenerService framework. It does not tamper with app binaries, query WhatsApp internal databases, or require root permissions.</string>
+    <string name="privacy_point_1_desc">VEIL inspects notification content exposed through Android NotificationListenerService. It does not tamper with app binaries, access private social-app databases, or require root permissions.</string>
     <string name="privacy_point_2_title">2. Absolute Zero-Network Boundary</string>
     <string name="privacy_point_2_desc">All rules, decoys, and event logs remain strictly on this device inside sandboxed storage. The application contains zero network request libraries, zero analytics SDKs, and zero telemetry.</string>
     <string name="privacy_point_3_title">3. Nonce Decoy Generation</string>
