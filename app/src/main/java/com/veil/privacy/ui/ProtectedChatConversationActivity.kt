@@ -537,29 +537,49 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun openWhatsAppChatDirectly(prefilledText: String = "") {
-        try {
-            val phoneDigits = ProtectedContact.extractDigits(contactPhoneNumber)
-            if (phoneDigits.isNotBlank()) {
-                val encodedText = if (prefilledText.isNotBlank()) "&text=" + Uri.encode(prefilledText) else ""
-                val uri = Uri.parse("https://api.whatsapp.com/send?phone=$phoneDigits$encodedText")
-                val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-                    setPackage("com.whatsapp")
+        // Resolve the source app from the conversation's stored events. The old fallback
+        // always launched WhatsApp, even when this thread came from Telegram, Instagram or Snapchat.
+        lifecycleScope.launch {
+            val sourcePackage = withContext(Dispatchers.IO) {
+                database.protectedEventDao()
+                    .getMessagesForConversationSync(conversationId)
+                    .lastOrNull { it.sourcePackage.isNotBlank() }
+                    ?.sourcePackage
+            }
+            val supported = com.veil.privacy.model.SupportedApp
+            val targetPackage = when (sourcePackage) {
+                supported.PKG_WHATSAPP, supported.PKG_WHATSAPP_BUSINESS,
+                supported.PKG_TELEGRAM, supported.PKG_INSTAGRAM, supported.PKG_SNAPCHAT -> sourcePackage
+                else -> supported.PKG_WHATSAPP
+            }
+
+            try {
+                if ((targetPackage == supported.PKG_WHATSAPP ||
+                        targetPackage == supported.PKG_WHATSAPP_BUSINESS) &&
+                    contactPhoneNumber.isNotBlank()
+                ) {
+                    val phoneDigits = ProtectedContact.extractDigits(contactPhoneNumber)
+                    if (phoneDigits.isNotBlank()) {
+                        val encodedText = if (prefilledText.isNotBlank()) "&text=" + Uri.encode(prefilledText) else ""
+                        val uri = Uri.parse("https://api.whatsapp.com/send?phone=$phoneDigits$encodedText")
+                        startActivity(Intent(Intent.ACTION_VIEW, uri).setPackage(targetPackage))
+                        return@launch
+                    }
                 }
-                startActivity(intent)
-                return
-            }
 
-            val launchIntent = packageManager.getLaunchIntentForPackage("com.whatsapp")
-                ?: packageManager.getLaunchIntentForPackage("com.whatsapp.w4b")
-
-            if (launchIntent != null) {
-                startActivity(launchIntent)
-            } else {
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://api.whatsapp.com/"))
-                startActivity(browserIntent)
+                val launchIntent = packageManager.getLaunchIntentForPackage(targetPackage)
+                if (launchIntent != null) {
+                    startActivity(launchIntent)
+                } else {
+                    Toast.makeText(
+                        this@ProtectedChatConversationActivity,
+                        "${com.veil.privacy.model.SupportedApp.getAppDisplayName(targetPackage)} is not installed",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (_: Exception) {
+                Toast.makeText(this@ProtectedChatConversationActivity, "Unable to open the source messaging app", Toast.LENGTH_SHORT).show()
             }
-        } catch (_: Exception) {
-            Toast.makeText(this, "WhatsApp is not installed on this device", Toast.LENGTH_SHORT).show()
         }
     }
 
