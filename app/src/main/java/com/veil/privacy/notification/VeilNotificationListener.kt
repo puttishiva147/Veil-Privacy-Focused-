@@ -370,15 +370,19 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
         // Publish the protected presentation before requesting cancellation of the source alert.
         // If VEIL cannot publish its replacement, leave the original visible rather than lose it.
-        try {
+        val replacementAccepted = try {
             notificationManager.postRuleDecoyNotification(eventWithId, matchedRule)
-            val latencyMs = (android.os.SystemClock.elapsedRealtime() - eventReceivedElapsedMs).coerceAtLeast(0L)
-            emitDiagnostic("POST", "Privacy-safe replacement alert posted")
-            emitDiagnostic("LATENCY", "Notification receipt-to-protected-publication: ${latencyMs}ms")
         } catch (e: Exception) {
             emitDiagnostic("POST", "Protected notification publication failed (${e.javaClass.simpleName}); original left untouched", false)
+            false
+        }
+        if (!replacementAccepted) {
+            emitDiagnostic("POST", "Android did not accept the VEIL replacement notification; original left untouched", false)
             return
         }
+        val latencyMs = (android.os.SystemClock.elapsedRealtime() - eventReceivedElapsedMs).coerceAtLeast(0L)
+        emitDiagnostic("POST", "Android accepted privacy-safe replacement notification")
+        emitDiagnostic("LATENCY", "Notification receipt-to-protected-publication: ${latencyMs}ms")
 
         // Suppress only after the protected replacement was successfully handed to Android.
         // Android/OEM policy can still refuse cancellation; that limitation is surfaced in diagnostics.
