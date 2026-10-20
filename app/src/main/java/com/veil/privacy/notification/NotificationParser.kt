@@ -94,10 +94,16 @@ class NotificationParser {
         val isCall = isCallNotification(notification, extras)
 
         // 2. Extract sender and message
-        val extracted = extractSenderAndMessage(notification, extras) ?: return null
+        // Dedicated package adapters take precedence for the four primary integrations.
+        // Other legacy supported apps keep the generic compatibility parser.
+        val adapter = AppNotificationAdapters.forPackage(packageName)
+        val extracted = adapter?.extract(notification, extras)
+            ?: if (adapter == null) extractSenderAndMessage(notification, extras) else null
+            ?: return null
 
         val (rawSender, rawMessage) = extracted
-        val cleanSender = normalizeSenderForSource(rawSender, packageName)
+        val cleanSender = (adapter?.normalizeSender(rawSender) ?: normalizeSenderForSource(rawSender, packageName))
+            .trim()
         val cleanMessage = rawMessage.trim()
 
         if (cleanSender.isBlank()) {
