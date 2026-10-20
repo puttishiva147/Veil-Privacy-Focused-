@@ -216,6 +216,45 @@ class NotificationParserTest {
     }
 
     @Test
+    fun testParsesSnapchatNotificationWithAppSpecificAdapter() {
+        val notification = NotificationCompat.Builder(context, "test")
+            .setContentTitle("Mira")
+            .setContentText("Sent you a Snap")
+            .build()
+
+        val result = parser.parseNotification(
+            notification = notification,
+            packageName = com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT,
+            notificationKey = "snap_1",
+            postTime = 12000L,
+            ownPackageName = "com.veil.privacy"
+        )
+
+        assertNotNull(result)
+        assertEquals("Mira", result?.sender)
+        assertEquals("Sent you a Snap", result?.message)
+        assertEquals(com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT, result?.packageName)
+    }
+
+    @Test
+    fun testDoesNotTreatGenericSnapchatTitleAsSender() {
+        val notification = NotificationCompat.Builder(context, "test")
+            .setContentTitle("Snapchat")
+            .setContentText("Unparseable generic alert")
+            .build()
+
+        val result = parser.parseNotification(
+            notification = notification,
+            packageName = com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT,
+            notificationKey = "snap_generic",
+            postTime = 13000L,
+            ownPackageName = "com.veil.privacy"
+        )
+
+        assertNull(result)
+    }
+
+    @Test
     fun testParsesSimulationNotifications() {
         val simNotif = NotificationCompat.Builder(context, "test")
             .setContentTitle("Test Sender")
