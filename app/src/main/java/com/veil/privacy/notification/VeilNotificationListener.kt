@@ -166,7 +166,8 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         val eventGuardKey = listOf(
             parsed.packageName,
             parsed.notificationKey.orEmpty(),
-            parsed.timestamp.toString()
+            parsed.timestamp.toString(),
+            parsed.message.hashCode().toString()
         ).joinToString("|")
 
         if (!inFlightEventKeys.add(eventGuardKey)) {
@@ -312,8 +313,8 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             // deduplicate on message text: two legitimate consecutive messages can have
             // identical content (e.g. "OK") and must both appear in VEIL.
             !parsed.notificationKey.isNullOrBlank() &&
-                database.protectedEventDao().hasEventWithNotificationKeyAndTimestamp(
-                    parsed.notificationKey, parsed.timestamp
+                database.protectedEventDao().hasEventWithNotificationKeyTimestampAndMessage(
+                    parsed.notificationKey, parsed.timestamp, parsed.message
                 ) > 0
         }
         if (isDuplicate) {
