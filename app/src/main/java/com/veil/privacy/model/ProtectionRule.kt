@@ -40,7 +40,8 @@ data class ProtectionRule(
     val lockPinSalt: String = "",
     val isCustomLockEnabled: Boolean = false,
     val photoUri: String = "",
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val appPackage: String = SupportedApp.PKG_WHATSAPP
 ) {
     companion object {
         const val MODE_GENERIC_PROTECTED = "GENERIC_PROTECTED"
