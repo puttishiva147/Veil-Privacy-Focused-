@@ -259,7 +259,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         // Never let an Instagram/Telegram rule accidentally match a WhatsApp (or other app) alert.
         val appScopedRules = allRules.filter {
             com.veil.privacy.model.ProtectionAppScope.matches(
-                applicationContext, it.contactName, parsed.packageName
+                applicationContext, it.contactName, parsed.packageName, it.id
             )
         }
 
