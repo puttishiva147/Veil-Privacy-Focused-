@@ -42,7 +42,9 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
         val conversationId = intent.getStringExtra(EXTRA_CONVERSATION_ID) ?: contactName.lowercase().trim()
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
 
-        // 1. Dispatch through official Android RemoteInput to WhatsApp
+        // Capture the source package before dispatch so outgoing history preserves the
+        // actual app (not ProtectedEvent's WhatsApp default) for future source-app routing.
+        val liveAction = NotificationReplyRegistry.getLiveReplyAction(contactName)
         val dispatched = NotificationReplyRegistry.sendReply(context, contactName, replyText)
         Log.d(TAG, "Inline reply dispatch attempted; acceptedByPendingIntent=$dispatched (delivery is not confirmed)")
 
@@ -50,6 +52,8 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
         val db = VeilDatabase.getInstance(context)
         CoroutineScope(Dispatchers.IO).launch {
             val outgoingEvent = ProtectedEvent(
+                sourcePackage = liveAction?.sourcePackage
+                    ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
                 realSender = "You",
                 realMessage = replyText,
                 isOutgoing = true,
