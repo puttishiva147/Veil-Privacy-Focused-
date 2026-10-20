@@ -687,6 +687,8 @@ class DashboardActivity : AppCompatActivity() {
                 }
                 rulesAdapter.submitList(appRules)
                 val selectedLabel = socialAppOptions.firstOrNull { it.packageName == selectedPackage }?.label ?: "APP"
+                binding.tvEmptyChatsDescription.text =
+                    "Select protected contacts from $selectedLabel. VEIL disguises eligible notifications and stores available conversation events with inline reply support."
                 binding.tvContactsRuleCount.text = "${appRules.size} $selectedLabel RULES CONFIGURED"
                 binding.layoutEmptyContacts.visibility = if (appRules.isEmpty()) View.VISIBLE else View.GONE
 
