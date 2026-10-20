@@ -56,6 +56,6 @@ interface ProtectedEventDao {
     @Query("SELECT COUNT(*) FROM protected_events WHERE conversationId = :conversationId AND realMessage = :realMessage AND timestamp >= :minTimestamp")
     fun isRecentDuplicate(conversationId: String, realMessage: String, minTimestamp: Long): Int
 
-    @Query("SELECT COUNT(*) FROM protected_events WHERE originalNotificationKey = :notificationKey AND originalNotificationKey IS NOT NULL AND originalNotificationKey != ''")
-    fun hasEventWithNotificationKey(notificationKey: String): Int
+    @Query("SELECT COUNT(*) FROM protected_events WHERE originalNotificationKey = :notificationKey AND timestamp = :timestamp AND originalNotificationKey IS NOT NULL AND originalNotificationKey != ''")
+    fun hasEventWithNotificationKeyAndTimestamp(notificationKey: String, timestamp: Long): Int
 }
