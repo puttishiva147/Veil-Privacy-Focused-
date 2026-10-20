@@ -16,8 +16,8 @@ android {
     applicationId = "com.veil.privacy"
     minSdk = 26
     targetSdk = 35
-    versionCode = 37
-    versionName = "4.5.3"
+    versionCode = 38
+    versionName = "4.5.4"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
