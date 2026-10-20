@@ -12,7 +12,7 @@
 
 VEIL is an Android privacy utility designed to help users manage how selected app notifications are handled on their device. The project includes protected-contact rules, notification-listener integration, a private inbox/event interface, biometric support, and a protection service.
 
-> **Current source version:** **4.5.4** (version code **38**), from `app/build.gradle.kts`. Official signed APK releases are published through the GitHub Releases page linked below after the release workflow succeeds.
+> **Current source version:** **4.5.5** (version code **38**), from `app/build.gradle.kts`. Official signed APK releases are published through the GitHub Releases page linked below after the release workflow succeeds.
 
 ## What is in the app?
 
@@ -120,8 +120,8 @@ The app's source defines the name **VEIL** and expands it as **Variable Event Id
 
 ## Release and version information
 
-- Source version: **4.5.4** (version code **38**).
-- The version is authoritative in `app/build.gradle.kts`; release tags must match the version name, for example `v4.5.4`.
+- Source version: **4.5.5** (version code **38**).
+- The version is authoritative in `app/build.gradle.kts`; release tags must match the version name, for example `v4.5.5`.
 - Official release assets are published at [GitHub Releases](https://github.com/puttishiva147/Veil-Privacy-Focused-/releases) only after the release workflow succeeds.
 - A source version or successful debug build is not the same as a published, production-signed release.
 
@@ -148,8 +148,8 @@ After adding the secrets, securely remove the temporary base64 file and retain t
 From the repository root, after the four Actions secrets are configured and after confirming that the tag does not already exist:
 
 ```bash
-git tag -a v4.5.4 -m "VEIL 4.5.4"
-git push origin v4.5.4
+git tag -a v4.5.5 -m "VEIL 4.5.5"
+git push origin v4.5.5
 ```
 
 The tag must match the current `versionName` in `app/build.gradle.kts`. The workflow checks that match before building and publishing.
