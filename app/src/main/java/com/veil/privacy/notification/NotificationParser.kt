@@ -104,17 +104,39 @@ class NotificationParser {
             return null
         }
 
-        val isMedia = isMediaNotification(notification, extras, cleanMessage)
+        val isSnapchat = packageName == com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT
+        val snapEvent = if (isSnapchat) classifySnapchatEvent(cleanMessage) else null
+        val isMedia = isMediaNotification(notification, extras, cleanMessage) || snapEvent != null
 
         return ParsedNotificationInfo(
             sender = cleanSender,
-            message = if (cleanMessage.isBlank()) "New message" else cleanMessage,
+            // Notification access cannot expose/view the Snap media itself. Label known Snap
+            // lifecycle events explicitly so the Chat UI never presents them as ordinary text.
+            message = snapEvent ?: if (cleanMessage.isBlank()) "New message" else cleanMessage,
             isCall = isCall,
             packageName = packageName,
             notificationKey = notificationKey,
             timestamp = postTime,
             isMediaOrAttachment = isMedia
         )
+    }
+
+    private fun classifySnapchatEvent(message: String): String? {
+        val text = message.trim()
+        val lower = text.lowercase()
+        if (text.isBlank()) return "Snap event received — media is not available inside VEIL"
+        return when {
+            lower.contains("sent you a snap") || lower.contains("sent a snap") ||
+                lower.contains("received a snap") || lower.contains("snap received") ->
+                "Snap received — open Snapchat to view the media"
+            lower.contains("replayed your snap") || lower.contains("replayed a snap") ->
+                "Snap replay event — view status in Snapchat"
+            lower.contains("opened your snap") || lower.contains("opened a snap") ->
+                "Snap opened event — status reported by Snapchat"
+            lower.contains("screenshot") && lower.contains("snap") ->
+                "Snap screenshot event — details reported by Snapchat"
+            else -> null
+        }
     }
 
     /**
