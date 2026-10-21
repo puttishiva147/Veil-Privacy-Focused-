@@ -250,7 +250,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun updateCallStatus() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall != null && (liveCall.answerIntent != null || liveCall.declineIntent != null)) {
             binding.cardLiveCallBanner.visibility = View.VISIBLE
             binding.tvLiveCallTitle.text = "Incoming Call from $contactName"
@@ -260,7 +260,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleAnswerIncomingCall() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall?.answerIntent != null) {
             try {
                 liveCall.answerIntent.send()
@@ -278,7 +278,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleDeclineIncomingCall() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall?.declineIntent != null) {
             try {
                 liveCall.declineIntent.send()
@@ -296,7 +296,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleInitiateCall() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall != null) {
             handleAnswerIncomingCall()
             return
@@ -483,8 +483,22 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private fun observeConversation() {
         lifecycleScope.launch {
-            database.protectedEventDao().getMessagesForConversationFlow(conversationId)
-                .collectLatest { events ->
+            database.protectedEventDao().getAllFlow()
+                .collectLatest { allEvents ->
+                    // Include legacy unscoped rows only for this platform; never merge another
+                    // platform's same-named contact into the current conversation.
+                    val legacyConversationId = contactName.lowercase().trim()
+                    val events = allEvents
+                        .asSequence()
+                        .filter { event ->
+                            event.conversationId == conversationId ||
+                                (event.conversationId == legacyConversationId &&
+                                    (event.sourcePackage == sourcePackage ||
+                                        (sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP &&
+                                            event.sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS)))
+                        }
+                        .sortedBy { it.timestamp }
+                        .toList()
                     chatAdapter.submitList(events) {
                         if (events.isNotEmpty()) {
                             binding.rvMessages.scrollToPosition(events.size - 1)
