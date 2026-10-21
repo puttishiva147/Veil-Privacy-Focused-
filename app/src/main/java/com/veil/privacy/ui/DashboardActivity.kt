@@ -41,6 +41,7 @@ import com.veil.privacy.util.PermissionUtils
 import com.veil.privacy.util.VeilDialogs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -697,7 +698,7 @@ class DashboardActivity : AppCompatActivity() {
         lifecycleScope.launch {
             combine(
                 database.protectionRuleDao().getAllRulesFlow(),
-                database.protectedEventDao().getAllFlow()
+                database.protectedEventDao().getAllFlow().debounce(100)
             ) { rules, events ->
                 Pair(rules, events)
             }.collect { (rules, events) ->
