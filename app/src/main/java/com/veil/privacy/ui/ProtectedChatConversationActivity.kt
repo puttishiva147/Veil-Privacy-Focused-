@@ -46,6 +46,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private var contactName: String = ""
     private var conversationId: String = ""
+    private var sourcePackage: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
     private var contactPhoneNumber: String = ""
     private var isUnlockedForCurrentSession: Boolean = false
 
@@ -60,6 +61,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_CONTACT_NAME = "extra_contact_name"
         const val EXTRA_EVENT_ID = "extra_event_id"
+        const val EXTRA_SOURCE_PACKAGE = "extra_source_package"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +72,8 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         InsetsUtils.applySystemBarInsets(binding.root)
 
         contactName = intent.getStringExtra(EXTRA_CONTACT_NAME)?.trim() ?: "Protected Contact"
-        conversationId = contactName.lowercase().trim()
+        sourcePackage = intent.getStringExtra(EXTRA_SOURCE_PACKAGE) ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+        conversationId = "${sourcePackage.lowercase()}::${contactName.lowercase().trim()}"
         database = VeilDatabase.getInstance(this)
 
         setupUI()
@@ -221,7 +224,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun updateReplyTokenStatus() {
-        val action = NotificationReplyRegistry.getLiveReplyAction(contactName)
+        val action = NotificationReplyRegistry.getLiveReplyAction(contactName, sourcePackage)
         val isLive = action != null
         val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(action.sourcePackage) else "Messaging app"
 
@@ -503,14 +506,9 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         // Resolve this thread's platform before selecting a live RemoteInput token. Contact
         // names can repeat across apps, so never dispatch using contact name alone.
         lifecycleScope.launch {
-            val sourcePackage = withContext(Dispatchers.IO) {
-                database.protectedEventDao()
-                    .getMessagesForConversationSync(conversationId)
-                    .lastOrNull { it.sourcePackage.isNotBlank() }
-                    ?.sourcePackage
-            }
-            val action = NotificationReplyRegistry.getLiveReplyAction(contactName, sourcePackage)
-            val targetApp = sourcePackage?.let {
+            val conversationSourcePackage = sourcePackage
+            val action = NotificationReplyRegistry.getLiveReplyAction(contactName, conversationSourcePackage)
+            val targetApp = conversationSourcePackage.let {
                 com.veil.privacy.model.SupportedApp.getAppDisplayName(it)
             } ?: "Messaging app"
 
@@ -564,14 +562,8 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         // Resolve the source app from the conversation's stored events. The old fallback
         // always launched WhatsApp, even when this thread came from Telegram, Instagram or Snapchat.
         lifecycleScope.launch {
-            val sourcePackage = withContext(Dispatchers.IO) {
-                database.protectedEventDao()
-                    .getMessagesForConversationSync(conversationId)
-                    .lastOrNull { it.sourcePackage.isNotBlank() }
-                    ?.sourcePackage
-            }
             val supported = com.veil.privacy.model.SupportedApp
-            val resolvedSourcePackage = sourcePackage ?: supported.PKG_WHATSAPP
+            val resolvedSourcePackage = sourcePackage.ifBlank { supported.PKG_WHATSAPP }
             val targetPackage = when (resolvedSourcePackage) {
                 supported.PKG_WHATSAPP, supported.PKG_WHATSAPP_BUSINESS,
                 supported.PKG_TELEGRAM, supported.PKG_INSTAGRAM, supported.PKG_SNAPCHAT -> resolvedSourcePackage
