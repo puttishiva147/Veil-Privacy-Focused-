@@ -38,6 +38,7 @@ import com.veil.privacy.util.ContactSelectionHelper
 import com.veil.privacy.util.InsetsUtils
 import com.veil.privacy.util.NotificationUtils
 import com.veil.privacy.util.PermissionUtils
+import com.veil.privacy.update.VeilUpdateChecker
 import com.veil.privacy.util.VeilDialogs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
@@ -160,6 +161,7 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        VeilUpdateChecker.check(this)
         val selectedPackage = selectedSocialAppPackage()
         if (lastSelectedSocialAppPackage.isNotBlank() && selectedPackage != lastSelectedSocialAppPackage) {
             recreate()
