@@ -321,7 +321,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         // Stable event identification and deduplication: prevent duplicate notification events
         val isDuplicate = withContext(Dispatchers.IO) {
             val hasKey = !parsed.notificationKey.isNullOrBlank() &&
-                database.protectedEventDao().hasEventWithNotificationKeyForPlatform(parsed.notificationKey, sourcePackage) > 0
+                database.protectedEventDao().hasEventWithNotificationKeyAndContent(parsed.notificationKey, sourcePackage, parsed.message) > 0
             val hasRecentContent = database.protectedEventDao().isRecentDuplicateForPlatform(
                 conversationId = targetConversation,
                 sourcePackage = sourcePackage,
