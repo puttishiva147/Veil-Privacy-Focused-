@@ -40,6 +40,17 @@ jobs:
           echo "$SDK_ROOT/build-tools/36.0.0" >> "$GITHUB_PATH"
       - name: Run unit tests
         run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
+      - name: Create CI debug keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          keytool -genkeypair -v \\
+            -keystore debug.keystore \\
+            -storepass android \\
+            -alias androiddebugkey \\
+            -keypass android \\
+            -keyalg RSA -keysize 2048 -validity 10000 \\
+            -dname "CN=Android Debug,O=Android,C=US"
       - name: Build debug APK
         run: ./gradlew --no-daemon --stacktrace :app:assembleDebug
       - name: Upload debug APK
