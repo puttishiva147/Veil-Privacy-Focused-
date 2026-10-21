@@ -47,9 +47,9 @@ interface ProtectedEventDao {
     @Query("SELECT COUNT(*) FROM protected_events")
     fun getCountSync(): Int
 
-    @Query("SELECT COUNT(*) FROM protected_events WHERE conversationId = :conversationId AND realMessage = :realMessage AND timestamp >= :minTimestamp")
-    fun isRecentDuplicate(conversationId: String, realMessage: String, minTimestamp: Long): Int
+    @Query("SELECT COUNT(*) FROM protected_events WHERE conversationId = :conversationId AND sourcePackage = :sourcePackage AND realMessage = :realMessage AND timestamp >= :minTimestamp")
+    fun isRecentDuplicateForPlatform(conversationId: String, sourcePackage: String, realMessage: String, minTimestamp: Long): Int
 
-    @Query("SELECT COUNT(*) FROM protected_events WHERE originalNotificationKey = :notificationKey AND originalNotificationKey IS NOT NULL AND originalNotificationKey != ''")
-    fun hasEventWithNotificationKey(notificationKey: String): Int
+    @Query("SELECT COUNT(*) FROM protected_events WHERE originalNotificationKey = :notificationKey AND sourcePackage = :sourcePackage AND originalNotificationKey IS NOT NULL AND originalNotificationKey != ''")
+    fun hasEventWithNotificationKeyForPlatform(notificationKey: String, sourcePackage: String): Int
 }
