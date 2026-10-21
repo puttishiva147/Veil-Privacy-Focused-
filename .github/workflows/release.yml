@@ -99,9 +99,6 @@ jobs:
       - name: Run unit tests
         run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
 
-      - name: Run unit tests
-        run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
-
       - name: Build signed release APK
         env:
           STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
