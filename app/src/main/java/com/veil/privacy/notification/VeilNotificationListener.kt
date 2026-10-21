@@ -7,6 +7,7 @@ import com.veil.privacy.model.ProtectionRule
 import com.veil.privacy.model.SelectedContact
 import com.veil.privacy.privacy.RuleMatchingEngine
 import com.veil.privacy.storage.VeilInbox
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -30,6 +31,17 @@ class VeilNotificationListener : BaseNotificationListenerService() {
     private val ruleMatchingEngine = RuleMatchingEngine()
     private lateinit var inbox: VeilInbox
     private lateinit var notificationManager: VeilNotificationManager
+
+    private data class QueuedNotification(
+        val notification: StatusBarNotification,
+        val parsed: ParsedNotificationInfo,
+        val replyAction: Pair<android.app.Notification.Action, android.app.RemoteInput>?
+    )
+
+    // A single ordered consumer avoids spawning one coroutine per notification during bursts.
+    // UNLIMITED is intentional here: callbacks cannot suspend, and dropping a queued event
+    // would silently lose a message. Work runs off the main thread through serviceScope.
+    private val notificationQueue = Channel<QueuedNotification>(Channel.UNLIMITED)
 
     companion object {
         const val WHATSAPP_PACKAGE = "com.whatsapp"
@@ -63,6 +75,19 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         super.onCreate()
         inbox = VeilInbox.getInstance(this)
         notificationManager = VeilNotificationManager.getInstance(this)
+        serviceScope.launch {
+            for (queued in notificationQueue) {
+                try {
+                    processIncomingProtectedNotification(
+                        queued.notification,
+                        queued.parsed,
+                        queued.replyAction
+                    )
+                } catch (e: Exception) {
+                    emitDiagnostic("PROCESS", "Queued notification processing failed (${e.javaClass.simpleName})", false)
+                }
+            }
+        }
     }
 
     override fun onListenerConnected() {
@@ -164,13 +189,11 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             emitDiagnostic("SENSOR", "Sender passed to Sensor Learning")
         }
 
-        // 7. Evaluate and process against configured VEIL rules
-        serviceScope.launch {
-            try {
-                processIncomingProtectedNotification(sbn, parsed, replyActionPair)
-            } catch (e: Exception) {
-                emitDiagnostic("PROCESS", "Notification processing failed (${e.javaClass.simpleName})", false)
-            }
+        // 7. Enqueue in callback order; one background consumer bounds concurrent DB and
+        // notification work and prevents a burst from creating hundreds of competing jobs.
+        val queued = notificationQueue.trySend(QueuedNotification(sbn, parsed, replyActionPair))
+        if (queued.isFailure) {
+            emitDiagnostic("QUEUE", "Could not enqueue notification event", false)
         }
     }
 
@@ -298,9 +321,10 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         // Stable event identification and deduplication: prevent duplicate notification events
         val isDuplicate = withContext(Dispatchers.IO) {
             val hasKey = !parsed.notificationKey.isNullOrBlank() &&
-                database.protectedEventDao().hasEventWithNotificationKey(parsed.notificationKey) > 0
-            val hasRecentContent = database.protectedEventDao().isRecentDuplicate(
+                database.protectedEventDao().hasEventWithNotificationKeyForPlatform(parsed.notificationKey, sourcePackage) > 0
+            val hasRecentContent = database.protectedEventDao().isRecentDuplicateForPlatform(
                 conversationId = targetConversation,
+                sourcePackage = sourcePackage,
                 realMessage = parsed.message,
                 minTimestamp = parsed.timestamp - 10000L
             ) > 0
