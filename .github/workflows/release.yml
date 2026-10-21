@@ -58,11 +58,12 @@ jobs:
             exit 1
           fi
           KEYSTORE_PATH="$RUNNER_TEMP/veil-release.jks"
-          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          # Remove whitespace introduced by mobile clipboard/text editors before decoding.
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode > "$KEYSTORE_PATH"
           chmod 600 "$KEYSTORE_PATH"
           if ! keytool -list -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null 2>&1; then
             rm -f "$KEYSTORE_PATH"
-            echo "::error::The configured keystore/password/alias could not be validated."
+            echo "::error::The configured keystore/password/alias could not be validated. Check the saved secret and signing credentials."
             exit 1
           fi
           echo "KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
