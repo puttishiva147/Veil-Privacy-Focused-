@@ -50,11 +50,11 @@ jobs:
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_ALIAS: veil-release
         run: |
           set -euo pipefail
-          if [[ -z "${RELEASE_KEYSTORE_BASE64:-}" || -z "${STORE_PASSWORD:-}" || -z "${KEY_PASSWORD:-}" || -z "${KEY_ALIAS:-}" ]]; then
-            echo "::error::Release signing secrets are missing. To enable automatic releases, configure the existing VEIL signing key as RELEASE_KEYSTORE_BASE64, RELEASE_STORE_PASSWORD, RELEASE_KEY_PASSWORD, and RELEASE_KEY_ALIAS in repository Actions secrets."
+          if [[ -z "${RELEASE_KEYSTORE_BASE64:-}" || -z "${STORE_PASSWORD:-}" || -z "${KEY_PASSWORD:-}" ]]; then
+            echo "::error::Release signing secrets are missing. Configure RELEASE_KEYSTORE_BASE64, RELEASE_STORE_PASSWORD, and RELEASE_KEY_PASSWORD in repository Actions secrets."
             exit 1
           fi
           KEYSTORE_PATH="$RUNNER_TEMP/veil-release.jks"
@@ -99,11 +99,14 @@ jobs:
       - name: Run unit tests
         run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
 
+      - name: Run unit tests
+        run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
+
       - name: Build signed release APK
         env:
           STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_ALIAS: veil-release
         run: ./gradlew --no-daemon --stacktrace :app:assembleRelease
 
       - name: Verify release APK
