@@ -15,13 +15,12 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Checks the official VEIL GitHub Releases endpoint for newer versions.
- * The popup sends users to the official VEIL website for download instructions.
- * Android still requires its normal installer confirmation; VEIL never silently installs APKs.
+ * Checks the official website's update manifest. Users are sent to the website,
+ * where the current APK download is hosted; this does not publish GitHub Releases.
  */
 object VeilUpdateChecker {
-    private const val RELEASE_API =
-        "https://api.github.com/repos/puttishiva147/Veil-Privacy-Focused-/releases/latest"
+    private const val UPDATE_MANIFEST =
+        "https://puttishiva147.github.io/Veil-Privacy-Focused-/version.json"
     private const val OFFICIAL_WEBSITE =
         "https://puttishiva147.github.io/Veil-Privacy-Focused-/"
     private const val PREFS = "veil_update_preferences"
@@ -33,21 +32,17 @@ object VeilUpdateChecker {
         val prefs = activity.getSharedPreferences(PREFS, AppCompatActivity.MODE_PRIVATE)
         val now = System.currentTimeMillis()
         if (now - prefs.getLong(KEY_LAST_ATTEMPT, 0L) < CHECK_INTERVAL_MS) return
-
-        // Save before launching the request so repeated onResume calls don't spam GitHub,
-        // including when no public release exists yet or the device is offline.
         prefs.edit().putLong(KEY_LAST_ATTEMPT, now).apply()
 
         activity.lifecycleScope.launch {
-            val release = withContext(Dispatchers.IO) { fetchLatestRelease() } ?: return@launch
-
+            val update = withContext(Dispatchers.IO) { fetchWebsiteUpdate() } ?: return@launch
             val currentVersion = BuildConfig.VERSION_NAME
-            if (!isNewerVersion(release.version, currentVersion)) return@launch
+            if (!isNewerVersion(update.version, currentVersion)) return@launch
             if (activity.isFinishing || activity.isDestroyed) return@launch
 
-            val notes = release.notes
+            val notes = update.notes
                 .replace(Regex("(?m)^#+\\s*"), "")
-                .replace(Regex("[*_\u0060>]"), "")
+                .replace(Regex("[*_\\u0060>]"), "")
                 .trim()
                 .take(700)
                 .ifBlank { "Bug fixes and improvements are available." }
@@ -55,8 +50,8 @@ object VeilUpdateChecker {
             AlertDialog.Builder(activity)
                 .setTitle("VEIL Update Available")
                 .setMessage(
-                    "Version ${release.version} is available. You have version ${currentVersion}.\n\n" +
-                        notes + "\n\nVisit the official VEIL website to get the update."
+                    "Version ${update.version} is available. You have version ${currentVersion}.\n\n" +
+                        notes + "\n\nOpen the official VEIL website to download the update."
                 )
                 .setPositiveButton("Open Website") { _, _ ->
                     try {
@@ -70,24 +65,25 @@ object VeilUpdateChecker {
         }
     }
 
-    private data class Release(val version: String, val notes: String)
+    private data class WebsiteUpdate(val version: String, val notes: String)
 
-    private fun fetchLatestRelease(): Release? {
+    private fun fetchWebsiteUpdate(): WebsiteUpdate? {
         var connection: HttpURLConnection? = null
         return try {
-            connection = (URL(RELEASE_API).openConnection() as HttpURLConnection).apply {
+            connection = (URL(UPDATE_MANIFEST).openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
                 connectTimeout = 7_000
                 readTimeout = 7_000
-                setRequestProperty("Accept", "application/vnd.github+json")
+                setRequestProperty("Accept", "application/json")
+                setRequestProperty("Cache-Control", "no-cache")
                 setRequestProperty("User-Agent", "VEIL-Android-UpdateChecker")
             }
             if (connection.responseCode !in 200..299) return null
             val json = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
-            val releaseJson = JSONObject(json)
-            val tag = releaseJson.optString("tag_name").removePrefix("v").trim()
-            if (tag.isBlank()) return null
-            Release(tag, releaseJson.optString("body"))
+            val updateJson = JSONObject(json)
+            val version = updateJson.optString("version").trim()
+            if (version.isBlank()) return null
+            WebsiteUpdate(version, updateJson.optString("notes"))
         } catch (_: Exception) {
             null
         } finally {
