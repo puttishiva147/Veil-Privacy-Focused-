@@ -324,6 +324,8 @@ class DashboardActivity : AppCompatActivity() {
                             onUnlocked = {
                                 val intent = Intent(this@DashboardActivity, ProtectedChatConversationActivity::class.java).apply {
                                     putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, thread.contactName)
+                            putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
+                                    putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
                                 }
                                 startActivity(intent)
                             }
@@ -738,16 +740,18 @@ class DashboardActivity : AppCompatActivity() {
                 val threads = mutableListOf<ProtectedChatThread>()
                 for (rule in appRules) {
                     val conversationEvents = appEvents.filter {
-                        it.conversationId == rule.contactName.lowercase().trim()
+                        (it.conversationId == "${it.sourcePackage.lowercase()}::${rule.contactName.lowercase().trim()}" || it.conversationId == rule.contactName.lowercase().trim())
                     }
                     val latestEvent = conversationEvents.maxByOrNull { it.timestamp }
                     val lastMessage = latestEvent?.realMessage ?: "No messages captured yet"
                     val lastTime = latestEvent?.timestamp ?: rule.createdAt
-                    val isLive = NotificationReplyRegistry.isReplyActionLive(rule.contactName)
+                    val threadPackage = latestEvent?.sourcePackage ?: selectedPackage
+                    val isLive = NotificationReplyRegistry.isReplyActionLive(rule.contactName, threadPackage)
 
                     threads.add(
                         ProtectedChatThread(
                             contactName = rule.contactName,
+                            sourcePackage = threadPackage,
                             contactPhoneNumber = rule.contactPhoneNumber,
                             lastMessage = lastMessage,
                             lastTimestamp = lastTime,
@@ -790,10 +794,12 @@ class DashboardActivity : AppCompatActivity() {
                 val latestEvent = conversationEvents.maxByOrNull { it.timestamp }
                 val lastMessage = latestEvent?.realMessage ?: "No messages captured yet"
                 val lastTime = latestEvent?.timestamp ?: rule.createdAt
-                val isLive = NotificationReplyRegistry.isReplyActionLive(rule.contactName)
+                val threadPackage = latestEvent?.sourcePackage ?: selectedPackage
+                val isLive = NotificationReplyRegistry.isReplyActionLive(rule.contactName, threadPackage)
 
                 ProtectedChatThread(
                     contactName = rule.contactName,
+                    sourcePackage = threadPackage,
                     contactPhoneNumber = rule.contactPhoneNumber,
                     lastMessage = lastMessage,
                     lastTimestamp = lastTime,
