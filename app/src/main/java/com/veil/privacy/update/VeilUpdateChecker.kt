@@ -15,12 +15,15 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Checks the official VEIL GitHub Releases endpoint and offers a direct APK download.
- * Android still shows its normal installer confirmation; VEIL never silently installs APKs.
+ * Checks the official VEIL GitHub Releases endpoint for newer versions.
+ * The popup sends users to the official VEIL website for download instructions.
+ * Android still requires its normal installer confirmation; VEIL never silently installs APKs.
  */
 object VeilUpdateChecker {
     private const val RELEASE_API =
         "https://api.github.com/repos/puttishiva147/Veil-Privacy-Focused-/releases/latest"
+    private const val OFFICIAL_WEBSITE =
+        "https://puttishiva147.github.io/Veil-Privacy-Focused-/"
     private const val PREFS = "veil_update_preferences"
     private const val KEY_LAST_ATTEMPT = "last_check_attempt"
     private const val CHECK_INTERVAL_MS = 24L * 60L * 60L * 1000L
@@ -53,13 +56,13 @@ object VeilUpdateChecker {
                 .setTitle("VEIL Update Available")
                 .setMessage(
                     "Version ${release.version} is available. You have version ${currentVersion}.\n\n" +
-                        notes + "\n\nDownload the official APK and follow Android's installer prompts."
+                        notes + "\n\nVisit the official VEIL website to get the update."
                 )
-                .setPositiveButton("Download Update") { _, _ ->
+                .setPositiveButton("Open Website") { _, _ ->
                     try {
-                        activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(release.apkUrl)))
+                        activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(OFFICIAL_WEBSITE)))
                     } catch (_: ActivityNotFoundException) {
-                        // No browser/handler is available; the user can still visit the Releases page manually.
+                        // Keep the app stable if no browser is available.
                     }
                 }
                 .setNegativeButton("Later", null)
@@ -67,7 +70,7 @@ object VeilUpdateChecker {
         }
     }
 
-    private data class Release(val version: String, val apkUrl: String, val notes: String)
+    private data class Release(val version: String, val notes: String)
 
     private fun fetchLatestRelease(): Release? {
         var connection: HttpURLConnection? = null
@@ -84,25 +87,7 @@ object VeilUpdateChecker {
             val releaseJson = JSONObject(json)
             val tag = releaseJson.optString("tag_name").removePrefix("v").trim()
             if (tag.isBlank()) return null
-
-            val assets = releaseJson.optJSONArray("assets") ?: return null
-            var apkUrl = ""
-            var fallbackUrl = ""
-            for (index in 0 until assets.length()) {
-                val asset = assets.optJSONObject(index) ?: continue
-                val name = asset.optString("name")
-                val url = asset.optString("browser_download_url")
-                if (!name.endsWith(".apk", ignoreCase = true) || !url.startsWith("https://")) continue
-                if (name.equals("VEIL-$tag.apk", ignoreCase = true)) {
-                    apkUrl = url
-                    break
-                }
-                if (name.equals("VEIL.apk", ignoreCase = true)) fallbackUrl = url
-            }
-            if (apkUrl.isBlank()) apkUrl = fallbackUrl
-            if (apkUrl.isBlank()) return null
-
-            Release(tag, apkUrl, releaseJson.optString("body"))
+            Release(tag, releaseJson.optString("body"))
         } catch (_: Exception) {
             null
         } finally {
