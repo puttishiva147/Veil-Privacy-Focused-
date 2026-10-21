@@ -495,46 +495,68 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleSendReply(replyText: String) {
-        val action = NotificationReplyRegistry.getLiveReplyAction(contactName)
-        val isLive = action != null
-        val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(action.sourcePackage) else "Messaging app"
-
-        if (!isLive) {
-            VeilDialogs.showConfirmationDialog(
-                context = this,
-                title = "Active Notification Required",
-                message = "Android's RemoteInput notification reply mechanism requires an active notification from $targetApp in your notification tray.\n\nBecause no live notification token is currently pending, would you like to open the app directly to send your message?",
-                confirmText = "Open App",
-                onConfirm = { openWhatsAppChatDirectly(replyText) }
-            )
+        if (replyText.isBlank()) {
+            Toast.makeText(this, "Type a message before sending", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Dispatch via Notification RemoteInput
-        val dispatched = NotificationReplyRegistry.sendReply(this, contactName, replyText)
+        // Resolve this thread's platform before selecting a live RemoteInput token. Contact
+        // names can repeat across apps, so never dispatch using contact name alone.
+        lifecycleScope.launch {
+            val sourcePackage = withContext(Dispatchers.IO) {
+                database.protectedEventDao()
+                    .getMessagesForConversationSync(conversationId)
+                    .lastOrNull { it.sourcePackage.isNotBlank() }
+                    ?.sourcePackage
+            }
+            val action = NotificationReplyRegistry.getLiveReplyAction(contactName, sourcePackage)
+            val targetApp = sourcePackage?.let {
+                com.veil.privacy.model.SupportedApp.getAppDisplayName(it)
+            } ?: "Messaging app"
 
-        if (dispatched) {
-            binding.etReplyInput.text?.clear()
-
-            // Record outgoing message in conversation thread
-            lifecycleScope.launch(Dispatchers.IO) {
-                val outgoingEvent = ProtectedEvent(
-                    sourcePackage = action?.sourcePackage
-                        ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
-                    realSender = "You",
-                    realMessage = replyText,
-                    isOutgoing = true,
-                    replyStatus = "DISPATCHED_NOT_CONFIRMED",
-                    conversationId = conversationId,
-                    timestamp = System.currentTimeMillis()
+            if (action == null) {
+                VeilDialogs.showInfoDialog(
+                    context = this@ProtectedChatConversationActivity,
+                    title = "Direct Reply Unavailable",
+                    message = "VEIL cannot find an active, platform-matching Android notification reply action for $targetApp. No message was sent. Open the source app to continue, or wait for a new notification that supports inline replies."
                 )
-                database.protectedEventDao().insert(outgoingEvent)
+                return@launch
             }
 
-            Toast.makeText(this, "Reply action handed to $targetApp. Delivery/read status is not available to VEIL.", Toast.LENGTH_LONG).show()
-        } else {
-            Toast.makeText(this, "Failed to send: notification action token expired", Toast.LENGTH_LONG).show()
-            updateReplyTokenStatus()
+            val dispatched = NotificationReplyRegistry.sendReply(
+                this@ProtectedChatConversationActivity,
+                contactName,
+                replyText,
+                action.sourcePackage
+            )
+
+            if (dispatched) {
+                binding.etReplyInput.text?.clear()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val outgoingEvent = ProtectedEvent(
+                        sourcePackage = action.sourcePackage,
+                        realSender = "You",
+                        realMessage = replyText,
+                        isOutgoing = true,
+                        replyStatus = "DISPATCHED_NOT_CONFIRMED",
+                        conversationId = conversationId,
+                        timestamp = System.currentTimeMillis()
+                    )
+                    database.protectedEventDao().insert(outgoingEvent)
+                }
+                Toast.makeText(
+                    this@ProtectedChatConversationActivity,
+                    "Reply handed to $targetApp. Delivery/read status is not confirmed by VEIL.",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                Toast.makeText(
+                    this@ProtectedChatConversationActivity,
+                    "Reply was not sent: the platform's notification action is unavailable or expired.",
+                    Toast.LENGTH_LONG
+                ).show()
+                updateReplyTokenStatus()
+            }
         }
     }
 
