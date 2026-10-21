@@ -24,6 +24,7 @@ import com.veil.privacy.util.InsetsUtils
 import com.veil.privacy.util.VeilDialogs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -484,6 +485,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     private fun observeConversation() {
         lifecycleScope.launch {
             database.protectedEventDao().getAllFlow()
+                .debounce(100)
                 .collectLatest { allEvents ->
                     // Include legacy unscoped rows only for this platform; never merge another
                     // platform's same-named contact into the current conversation.
