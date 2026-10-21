@@ -5,6 +5,7 @@ package com.veil.privacy.model
  */
 data class ProtectedChatThread(
     val contactName: String,
+    val sourcePackage: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
     val contactPhoneNumber: String = "",
     val lastMessage: String,
     val lastTimestamp: Long,
