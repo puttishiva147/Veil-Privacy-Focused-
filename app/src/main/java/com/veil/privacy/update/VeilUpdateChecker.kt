@@ -52,8 +52,8 @@ object VeilUpdateChecker {
             AlertDialog.Builder(activity)
                 .setTitle("VEIL Update Available")
                 .setMessage(
-                    "Version ${release.version} is available. You have version ${currentVersion}.\\n\\n" +
-                        notes + "\\n\\nDownload the official APK and follow Android's installer prompts."
+                    "Version ${release.version} is available. You have version ${currentVersion}.\n\n" +
+                        notes + "\n\nDownload the official APK and follow Android's installer prompts."
                 )
                 .setPositiveButton("Download Update") { _, _ ->
                     try {
