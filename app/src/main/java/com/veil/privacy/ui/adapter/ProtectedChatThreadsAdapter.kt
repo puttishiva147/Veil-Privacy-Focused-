@@ -21,7 +21,7 @@ class ProtectedChatThreadsAdapter(
     companion object {
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<ProtectedChatThread>() {
             override fun areItemsTheSame(oldItem: ProtectedChatThread, newItem: ProtectedChatThread): Boolean {
-                return oldItem.contactName == newItem.contactName
+                return oldItem.contactName == newItem.contactName && oldItem.sourcePackage == newItem.sourcePackage
             }
 
             override fun areContentsTheSame(oldItem: ProtectedChatThread, newItem: ProtectedChatThread): Boolean {
