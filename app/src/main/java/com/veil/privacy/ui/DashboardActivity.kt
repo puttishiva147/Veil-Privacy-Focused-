@@ -324,7 +324,6 @@ class DashboardActivity : AppCompatActivity() {
                             onUnlocked = {
                                 val intent = Intent(this@DashboardActivity, ProtectedChatConversationActivity::class.java).apply {
                                     putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, thread.contactName)
-                            putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
                                     putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
                                 }
                                 startActivity(intent)
@@ -333,6 +332,7 @@ class DashboardActivity : AppCompatActivity() {
                     } else {
                         val intent = Intent(this@DashboardActivity, ProtectedChatConversationActivity::class.java).apply {
                             putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, thread.contactName)
+                            putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
                         }
                         startActivity(intent)
                     }
@@ -789,7 +789,8 @@ class DashboardActivity : AppCompatActivity() {
             }
             val threads = appRules.map { rule ->
                 val conversationEvents = appEvents.filter {
-                    it.conversationId == rule.contactName.lowercase().trim()
+                    it.conversationId == "${it.sourcePackage.lowercase()}::${rule.contactName.lowercase().trim()}" ||
+                        it.conversationId == rule.contactName.lowercase().trim()
                 }
                 val latestEvent = conversationEvents.maxByOrNull { it.timestamp }
                 val lastMessage = latestEvent?.realMessage ?: "No messages captured yet"
