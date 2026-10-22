@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.chip.Chip
+import com.veil.privacy.BuildConfig
 import com.veil.privacy.R
 import com.veil.privacy.databinding.ActivityRealtimeTestStudioBinding
 import com.veil.privacy.model.ProtectionRule
@@ -48,6 +49,10 @@ class RealtimeTestStudioActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!BuildConfig.DEBUG) {
+            finish()
+            return
+        }
         binding = ActivityRealtimeTestStudioBinding.inflate(layoutInflater)
         setContentView(binding.root)
 

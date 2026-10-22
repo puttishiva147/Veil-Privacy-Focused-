@@ -61,7 +61,24 @@ class AppSwitcherActivity : AppCompatActivity() {
             }
         })
 
-        val scroll = ScrollView(this).apply { isFillViewport = true }
+        val scroll = object : ScrollView(this) {
+            override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+                val availableHeight = MeasureSpec.getSize(heightMeasureSpec)
+                // Reserve room for the Done button and page padding so short screens
+                // scroll the app list instead of pushing the button off-screen.
+                val footerReserve = dp(76)
+                val maxHeight = (availableHeight - footerReserve).coerceAtLeast(dp(120))
+                val cappedHeightSpec = if (
+                    MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.UNSPECIFIED &&
+                    availableHeight > maxHeight
+                ) {
+                    MeasureSpec.makeMeasureSpec(maxHeight, MeasureSpec.AT_MOST)
+                } else {
+                    heightMeasureSpec
+                }
+                super.onMeasure(widthMeasureSpec, cappedHeightSpec)
+            }
+        }.apply { isFillViewport = false }
         val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val radios = mutableMapOf<String, RadioButton>()
         val rows = mutableMapOf<String, View>()
@@ -166,7 +183,7 @@ class AppSwitcherActivity : AppCompatActivity() {
         }
         updateSelectionVisuals(selectedNow())
         scroll.addView(list, android.view.ViewGroup.LayoutParams(-1, -2))
-        page.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        page.addView(scroll, LinearLayout.LayoutParams(-1, -2))
 
         val buttons = LinearLayout(this).apply {
             gravity = Gravity.END or Gravity.CENTER_VERTICAL

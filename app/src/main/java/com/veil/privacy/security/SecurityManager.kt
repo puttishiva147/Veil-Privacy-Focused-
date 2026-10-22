@@ -4,15 +4,21 @@ import android.content.Context
 import com.veil.privacy.storage.VeilPrefs
 import java.security.MessageDigest
 import java.security.SecureRandom
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
 
 /**
  * Cryptographic security manager for VEIL.
- * Implements salted SHA-256 multi-round key stretching (5,000 iterations)
- * with constant-time verification. Never stores or logs plaintext passwords.
+ * Uses salted PBKDF2-HMAC-SHA256 for new credentials, constant-time comparison,
+ * and transparent upgrade of legacy SHA-256 hashes after successful master unlock.
+ * Never stores or logs plaintext passwords.
  */
 object SecurityManager {
 
-    private const val HASH_ITERATIONS = 5000
+    private const val LEGACY_HASH_ITERATIONS = 5000
+    private const val PBKDF2_ITERATIONS = 120_000
+    private const val PBKDF2_KEY_LENGTH_BITS = 256
+    private const val HASH_ALGORITHM = "pbkdf2-sha256"
     private const val SALT_BYTE_LENGTH = 16
     const val MIN_PASSWORD_LENGTH = 4
     const val MIN_PIN_LENGTH = 4
@@ -52,15 +58,19 @@ object SecurityManager {
     }
 
     /**
-     * Hashes any PIN or password with a fresh cryptographic salt and 5,000 SHA-256 iterations.
-     * Returns Pair(hashHex, saltHex).
+     * Hashes a PIN or password with a fresh salt and PBKDF2-HMAC-SHA256.
+     * The hash includes its algorithm and iteration count for future migrations.
      */
     fun hashPassword(password: String): Pair<String, String> {
         val saltBytes = ByteArray(SALT_BYTE_LENGTH)
         SecureRandom().nextBytes(saltBytes)
         val saltHex = saltBytes.joinToString("") { "%02x".format(it) }
-        val hashHex = computeHash(password, saltBytes)
-        return Pair(hashHex, saltHex)
+        val encodedHash = listOf(
+            HASH_ALGORITHM,
+            PBKDF2_ITERATIONS.toString(),
+            computePbkdf2Hash(password, saltBytes, PBKDF2_ITERATIONS)
+        ).joinToString(36.toChar().toString())
+        return Pair(encodedHash, saltHex)
     }
 
     /**
@@ -69,8 +79,16 @@ object SecurityManager {
     fun verifyHash(password: String, storedHash: String, storedSaltHex: String): Boolean {
         if (storedHash.isBlank() || storedSaltHex.isBlank()) return false
         val saltBytes = hexToBytes(storedSaltHex) ?: return false
-        val computedHash = computeHash(password, saltBytes)
-        return constantTimeEquals(storedHash, computedHash)
+        if (storedHash.startsWith(HASH_ALGORITHM + 36.toChar())) {
+            val parts = storedHash.split(36.toChar())
+            if (parts.size != 3 || parts[0] != HASH_ALGORITHM) return false
+            val iterations = parts[1].toIntOrNull() ?: return false
+            if (iterations !in 10_000..1_000_000) return false
+            val computedHash = computePbkdf2Hash(password, saltBytes, iterations)
+            return constantTimeEquals(parts[2], computedHash)
+        }
+        // Compatibility path for existing installs; master credentials are upgraded on unlock.
+        return constantTimeEquals(storedHash, computeLegacyHash(password, saltBytes))
     }
 
     /**
@@ -98,7 +116,12 @@ object SecurityManager {
         val prefs = VeilPrefs.getInstance(context)
         val storedHash = prefs.passwordHash ?: return false
         val storedSaltHex = prefs.passwordSalt ?: return false
-        return verifyHash(password, storedHash, storedSaltHex)
+        val valid = verifyHash(password, storedHash, storedSaltHex)
+        if (valid && !storedHash.startsWith(HASH_ALGORITHM + 36.toChar())) {
+            // Upgrade existing credentials only after the old hash successfully verifies.
+            savePassword(context, password)
+        }
+        return valid
     }
 
     /**
@@ -112,16 +135,28 @@ object SecurityManager {
         VeilPrefs.lockAllContacts()
     }
 
-    private fun computeHash(password: String, salt: ByteArray): String {
+    private fun computeLegacyHash(password: String, salt: ByteArray): String {
         val md = MessageDigest.getInstance("SHA-256")
         md.update(salt)
         var digest = md.digest(password.toByteArray(Charsets.UTF_8))
-        for (i in 1 until HASH_ITERATIONS) {
+        for (i in 1 until LEGACY_HASH_ITERATIONS) {
             md.reset()
             digest = md.digest(digest)
         }
-        return digest.joinToString("") { "%02x".format(it) }
+        return digest.toHex()
     }
+
+    private fun computePbkdf2Hash(password: String, salt: ByteArray, iterations: Int): String {
+        val spec = PBEKeySpec(password.toCharArray(), salt, iterations, PBKDF2_KEY_LENGTH_BITS)
+        return try {
+            SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+                .generateSecret(spec).encoded.toHex()
+        } finally {
+            spec.clearPassword()
+        }
+    }
+
+    private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
 
     private fun constantTimeEquals(a: String, b: String): Boolean {
         return MessageDigest.isEqual(a.toByteArray(Charsets.UTF_8), b.toByteArray(Charsets.UTF_8))

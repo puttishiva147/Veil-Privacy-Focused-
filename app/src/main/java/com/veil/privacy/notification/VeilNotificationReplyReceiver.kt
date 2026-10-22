@@ -48,7 +48,7 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
         val dispatched = NotificationReplyRegistry.sendReply(context, contactName, replyText)
         Log.d(TAG, "Inline reply dispatch attempted; acceptedByPendingIntent=$dispatched (delivery is not confirmed)")
 
-        // 2. Persist outgoing message in local encrypted Room database
+        // 2. Persist outgoing message in VEIL's app-private Room database (not application-layer encrypted)
         val db = VeilDatabase.getInstance(context)
         CoroutineScope(Dispatchers.IO).launch {
             val outgoingEvent = ProtectedEvent(

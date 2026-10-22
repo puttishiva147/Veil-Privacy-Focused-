@@ -575,8 +575,9 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Section 3: Verification & Diagnostics -->
+        <!-- Debug-only developer diagnostics; hidden in production builds. -->
         <TextView
+            android:id="@+id/tvDiagnosticsSectionTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="22dp"
@@ -588,6 +589,7 @@
             android:textStyle="bold" />
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardDiagnostics"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardBackgroundColor="@color/veil_surface_card"

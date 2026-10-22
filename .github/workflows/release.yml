@@ -1,0 +1,136 @@
+name: VEIL Direct Website APK Publish
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "app/build.gradle.kts"
+      - ".github/workflows/release.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Test, sign, and publish APK directly to website
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4.7.1
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Configure Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$SDKMANAGER"
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses >/dev/null
+          set -o pipefail
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+          echo "$SDK_ROOT/build-tools/36.0.0" >> "$GITHUB_PATH"
+
+      - name: Read app version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION_NAME="$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)"
+          test -n "$VERSION_NAME"
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+
+      - name: Validate signing secrets and prepare keystore
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          for name in RELEASE_KEYSTORE_BASE64 RELEASE_STORE_PASSWORD RELEASE_KEY_PASSWORD RELEASE_KEY_ALIAS; do
+            if [ -z "${!name:-}" ]; then
+              echo "Required Actions secret is missing: $name" >&2
+              exit 1
+            fi
+          done
+          KEYSTORE_PATH="$RUNNER_TEMP/veil-release.jks"
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+          echo "KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
+
+      - name: Run unit tests
+        run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
+
+      - name: Build signed release APK
+        env:
+          STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon --stacktrace :app:assembleRelease
+
+      - name: Publish direct APK on the GitHub Pages website
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: main
+          path: site
+          persist-credentials: true
+
+      - name: Update website download and public version manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d site/docs
+          APK_PATH="app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK_PATH"
+          cp "$APK_PATH" site/docs/VEIL.apk
+          python3 - "$VERSION_NAME" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          version = sys.argv[1]
+          manifest = pathlib.Path("site/docs/version.json")
+          manifest.write_text(json.dumps({
+              "version": version,
+              "notes": "VEIL " + version + ": responsive app selection, production UI hardening, and improved local credential hashing."
+          }, indent=2), encoding="utf-8")
+
+          index = pathlib.Path("site/docs/index.html")
+          html = index.read_text(encoding="utf-8")
+          html = html.replace(
+              "https://drive.google.com/uc?export=download&id=131A2wRYQ1HX-7l_on498r1z735y6KmVD",
+              "./VEIL.apk"
+          )
+          html = html.replace(
+              'href="./VEIL.apk" target="_blank" rel="noopener noreferrer">Download for Android ↗',
+              'href="./VEIL.apk" download>Download for Android ↓'
+          )
+          html = html.replace(
+              'href="./VEIL.apk" target="_blank" rel="noopener noreferrer">Download APK ↧',
+              'href="./VEIL.apk" download>Download APK ↓'
+          )
+          html = html.replace(">Releases</a>", ">Download APK</a>")
+          index.write_text(html, encoding="utf-8")
+          PY
+          git -C site config user.name "github-actions[bot]"
+          git -C site config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C site add docs/VEIL.apk docs/version.json docs/index.html
+          if ! git -C site diff --cached --quiet; then
+            git -C site commit -m "Publish VEIL $VERSION_NAME direct APK download"
+            git -C site push origin HEAD:main
+          fi

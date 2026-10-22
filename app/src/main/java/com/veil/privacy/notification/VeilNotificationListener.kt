@@ -367,7 +367,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             conversationId = targetConversation
         )
 
-        // 3. Save to local encrypted inbox/vault for private inspection
+        // 3. Save to the app-private Room inbox for local inspection (not application-layer encrypted)
         val insertedId = withContext(Dispatchers.IO) {
             database.protectedEventDao().insert(protectedEvent)
         }

@@ -7,8 +7,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 
 /**
- * High-level manager for the local encrypted private event inbox.
- * All operations operate strictly on device storage.
+ * High-level manager for the local private event inbox.
+ * Events are stored in VEIL's app-private Room database. The database is not
+ * encrypted at the application layer; Android sandbox and device security apply.
  */
 class VeilInbox(context: Context) {
 

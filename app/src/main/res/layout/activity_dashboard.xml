@@ -844,8 +844,9 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Real-Time Test Studio Quick Launcher Card -->
+                <!-- Debug-only Real-Time Test Studio launcher; hidden in production builds. -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardTestStudio"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="VEIL Android app privacy and data-handling notice.">
+  <meta name="theme-color" content="#090b10">
+  <title>Privacy &amp; Data Handling — VEIL</title>
+  <style>
+    :root{color-scheme:dark;--bg:#090b10;--panel:#10141c;--text:#f4f6fb;--muted:#b0b8c8;--line:#2a3140;--accent:#c6d2ff}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.7 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    main{width:min(100% - 32px,800px);margin:0 auto;padding:36px 0 64px}a{color:var(--accent)}h1{font-size:clamp(2rem,7vw,3rem);line-height:1.15}h2{font-size:1.25rem;margin-top:30px}.updated,.note{color:var(--muted)}.panel{padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}li{margin:.45rem 0}footer{margin-top:38px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem}
+  </style>
+</head>
+<body>
+<main>
+  <p><a href="./">← VEIL home</a></p>
+  <h1>Privacy &amp; Data Handling</h1>
+  <p class="updated">Draft notice · Last updated: 22 October 2026</p>
+  <div class="panel">
+    <strong>Important storage detail</strong>
+    <p>VEIL stores protection rules, preferences, and notification-event records in its app-private local Room database. The database is <strong>not encrypted by VEIL at the application layer</strong>. Android's app sandbox and device security provide the remaining protection; keep your device locked and encrypted. Do not treat VEIL's in-app lock as a substitute for device security.</p>
+  </div>
+
+  <h2>What VEIL processes</h2>
+  <ul>
+    <li><strong>Notifications:</strong> if you enable Android Notification Access, VEIL can inspect notifications from supported apps to apply the protection rules you configure. Depending on the originating app and notification format, this can include sender labels and message text.</li>
+    <li><strong>Contacts:</strong> if you grant Contacts permission and choose a contact, VEIL uses the selected contact information to configure protection rules.</li>
+    <li><strong>Local settings and events:</strong> protection rules, decoy dictionaries, app preferences, and event records are stored in VEIL's app-private storage.</li>
+    <li><strong>App lock:</strong> the app stores a salted credential hash rather than the plaintext master PIN/password. Short numeric PINs remain susceptible to guessing if an attacker can obtain the app's private data.</li>
+  </ul>
+
+  <h2>Network requests and third parties</h2>
+  <p>The inspected update checker periodically makes an HTTPS GET request to the official VEIL website to read public version metadata. That request does not include notification content. The website host can receive normal connection metadata such as an IP address and user-agent as part of serving the request.</p>
+  <p>The website's APK download is hosted by Google Drive. If you choose to download it, Google receives the request and may process data under its own privacy terms. VEIL may also open another app or an external URL when you explicitly choose a related action. Those third-party apps and services have their own privacy practices.</p>
+  <p>This notice describes the inspected VEIL source and current update-check behavior; it is not a guarantee about third-party apps, future versions, or services configured outside this repository.</p>
+
+  <h2>Storage, retention, and deletion</h2>
+  <p>VEIL does not require an account to use its local protection features. Event records remain in the app's private storage until you clear them in the app or remove the app and Android removes its private data. Clearing the event log does not necessarily remove protection rules, decoy settings, or every other preference. Back up any information you need before uninstalling or resetting the app.</p>
+
+  <h2>Your choices</h2>
+  <ul>
+    <li>Do not grant Notification Access or Contacts permission unless you want the corresponding feature.</li>
+    <li>Use Android's screen lock and device encryption; keep the OS updated.</li>
+    <li>Clear event history from VEIL settings when you no longer need it.</li>
+    <li>Review the source code and release provenance before installing an APK.</li>
+  </ul>
+
+  <h2>Contact and policy status</h2>
+  <p>For project questions or privacy concerns, use the <a href="https://github.com/puttishiva147/Veil-Privacy-Focused-/issues">VEIL repository issue tracker</a>. Do not post private notification content, credentials, or other sensitive personal information in public issues.</p>
+  <p class="note">This is a technical data-handling notice drafted from the repository, not legal advice. The maintainer should review it against the final release, actual hosting configuration, applicable laws, and support/contact arrangements before public launch.</p>
+  <footer><a href="./">VEIL website</a> · <a href="./terms.html">Terms of Use</a> · <a href="https://github.com/puttishiva147/Veil-Privacy-Focused-">Source repository</a></footer>
+</main>
+</body>
+</html>
