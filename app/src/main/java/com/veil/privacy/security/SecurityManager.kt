@@ -69,7 +69,7 @@ object SecurityManager {
             HASH_ALGORITHM,
             PBKDF2_ITERATIONS.toString(),
             computePbkdf2Hash(password, saltBytes, PBKDF2_ITERATIONS)
-        ).joinToString("$")
+        ).joinToString(36.toChar().toString())
         return Pair(encodedHash, saltHex)
     }
 
@@ -79,124 +79,8 @@ object SecurityManager {
     fun verifyHash(password: String, storedHash: String, storedSaltHex: String): Boolean {
         if (storedHash.isBlank() || storedSaltHex.isBlank()) return false
         val saltBytes = hexToBytes(storedSaltHex) ?: return false
-        if (storedHash.startsWith("${HASH_ALGORITHM}\\$")) {
-            val parts = storedHash.split('
-    }
-
-    /**
-     * Verifies an independent contact-specific PIN.
-     */
-    fun verifyContactPin(enteredPin: String, storedHash: String, storedSaltHex: String): Boolean {
-        return verifyHash(enteredPin, storedHash, storedSaltHex)
-    }
-
-    /**
-     * Saves a new master password securely using a fresh cryptographic salt and hash.
-     */
-    fun savePassword(context: Context, password: String): Boolean {
-        if (password.length < MIN_PASSWORD_LENGTH) return false
-        val prefs = VeilPrefs.getInstance(context)
-        val (hashHex, saltHex) = hashPassword(password)
-        prefs.savePasswordCredentials(hashHex, saltHex)
-        return true
-    }
-
-    /**
-     * Verifies entered password against stored salted master hash in constant time.
-     */
-    fun verifyPassword(context: Context, password: String): Boolean {
-        val prefs = VeilPrefs.getInstance(context)
-        val storedHash = prefs.passwordHash ?: return false
-        val storedSaltHex = prefs.passwordSalt ?: return false
-        val valid = verifyHash(password, storedHash, storedSaltHex)
-        if (valid && !storedHash.startsWith("${HASH_ALGORITHM}\\$")) {
-            // Upgrade existing credentials only after the old hash successfully verifies.
-            savePassword(context, password)
-        }
-        return valid
-    }
-
-    /**
-     * Resets security configuration so user can re-establish new credentials.
-     */
-    fun resetSecuritySetup(context: Context) {
-        val prefs = VeilPrefs.getInstance(context)
-        prefs.clearPasswordCredentials()
-        prefs.isSecuritySetupCompleted = false
-        VeilPrefs.isSessionUnlocked = false
-        VeilPrefs.lockAllContacts()
-    }
-
-    private fun computeLegacyHash(password: String, salt: ByteArray): String {
-        val md = MessageDigest.getInstance("SHA-256")
-        md.update(salt)
-        var digest = md.digest(password.toByteArray(Charsets.UTF_8))
-        for (i in 1 until LEGACY_HASH_ITERATIONS) {
-            md.reset()
-            digest = md.digest(digest)
-        }
-        return digest.toHex()
-    }
-
-    private fun computePbkdf2Hash(password: String, salt: ByteArray, iterations: Int): String {
-        val spec = PBEKeySpec(password.toCharArray(), salt, iterations, PBKDF2_KEY_LENGTH_BITS)
-        return try {
-            SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-                .generateSecret(spec).encoded.toHex()
-        } finally {
-            spec.clearPassword()
-        }
-    }
-
-    private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
-
-    private fun constantTimeEquals(a: String, b: String): Boolean {
-        return MessageDigest.isEqual(a.toByteArray(Charsets.UTF_8), b.toByteArray(Charsets.UTF_8))
-    }
-
-    private fun hexToBytes(hex: String): ByteArray? {
-        if (hex.length % 2 != 0) return null
-        return try {
-            ByteArray(hex.length / 2) { i ->
-                hex.substring(i * 2, i * 2 + 2).toInt(16).toByte()
-            }
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    /**
-     * Saves a new master PIN securely using salted SHA-256 hash.
-     */
-    fun savePin(context: Context, pin: String): Boolean {
-        if (pin.length < MIN_PIN_LENGTH || !pin.all { it.isDigit() }) return false
-        val saved = savePassword(context, pin)
-        if (saved) VeilPrefs.getInstance(context).masterPinLength = pin.length
-        return saved
-    }
-
-    /**
-     * Verifies entered PIN against stored salted master hash in constant time.
-     */
-    fun verifyPin(context: Context, pin: String): Boolean {
-        return verifyPassword(context, pin)
-    }
-
-    sealed class PinValidationResult {
-        object Valid : PinValidationResult()
-        object Empty : PinValidationResult()
-        object NonNumeric : PinValidationResult()
-        data class TooShort(val minLength: Int) : PinValidationResult()
-        data class TooLong(val maxLength: Int) : PinValidationResult()
-    }
-
-    sealed class PasswordValidationResult {
-        object Valid : PasswordValidationResult()
-        object Empty : PasswordValidationResult()
-        data class TooShort(val minLength: Int) : PasswordValidationResult()
-    }
-}
-)
+        if (storedHash.startsWith(HASH_ALGORITHM + 36.toChar())) {
+            val parts = storedHash.split(36.toChar())
             if (parts.size != 3 || parts[0] != HASH_ALGORITHM) return false
             val iterations = parts[1].toIntOrNull() ?: return false
             if (iterations !in 10_000..1_000_000) return false
