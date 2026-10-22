@@ -271,11 +271,11 @@ class SettingsActivity : AppCompatActivity() {
             message = "VEIL (Variable Event Identity Layer)\n\n" +
                 "Version: " + com.veil.privacy.BuildConfig.VERSION_NAME + "\n" +
                 "Package: com.veil.privacy\n\n" +
-                "Target Subsystem: Multi-App Messaging Layer (WhatsApp, Telegram, Signal, SMS, Instagram)\n" +
+                "Supported notification sources: WhatsApp, Instagram, Telegram, and Snapchat (notification-format dependent)\n" +
                 "Interception Engine: Android NotificationListenerService & Foreground Shield\n" +
                 "Decoy Algorithm: Arrival-Time Dynamic Multi-Profile Rotation (Work, Calendar, Delivery, System)\n" +
-                "Persistence: Sandboxed Encrypted SQLite Room\n" +
-                "Telemetry: 0 bytes (Zero-Network Boundary)"
+                "Persistence: Room database in app-private storage (not application-layer encrypted)\n" +
+                "Network: Periodic HTTPS check for public update metadata; the update request does not include notification content"
         )
     }
 }
