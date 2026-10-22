@@ -464,28 +464,28 @@ class RuleEditActivity : AppCompatActivity() {
                     }
 
                     // Keep only WhatsApp phone contacts in the legacy global contact tables.
-                if (appPackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
-                val selectedModel = SelectedContact(
-                    contactId = selectedContactId,
-                    displayName = selectedContactName,
-                    selectedPhoneNumber = selectedContactPhone,
-                    source = selectedSource,
-                    isEnabled = rule.isEnabled
-                )
-                db.selectedContactDao().insert(selectedModel)
+                    if (appPackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP) {
+                        val selectedModel = SelectedContact(
+                            contactId = selectedContactId,
+                            displayName = selectedContactName,
+                            selectedPhoneNumber = selectedContactPhone,
+                            source = selectedSource,
+                            isEnabled = rule.isEnabled
+                        )
+                        db.selectedContactDao().insert(selectedModel)
 
-                val protectedModel = com.veil.privacy.model.ProtectedContact(
-                    contactId = selectedContactId,
-                    displayName = selectedContactName,
-                    selectedPhoneNumber = selectedContactPhone,
-                    source = selectedSource,
-                    isEnabled = rule.isEnabled,
-                    lockPinHash = finalPinHash,
-                    lockPinSalt = finalPinSalt,
-                    isCustomLockEnabled = finalIsLock
-                )
-                    db.protectedContactDao().insert(protectedModel)
-                }
+                        val protectedModel = com.veil.privacy.model.ProtectedContact(
+                            contactId = selectedContactId,
+                            displayName = selectedContactName,
+                            selectedPhoneNumber = selectedContactPhone,
+                            source = selectedSource,
+                            isEnabled = rule.isEnabled,
+                            lockPinHash = finalPinHash,
+                            lockPinSalt = finalPinSalt,
+                            isCustomLockEnabled = finalIsLock
+                        )
+                        db.protectedContactDao().insert(protectedModel)
+                    }
                 }
 
                 Toast.makeText(
