@@ -135,16 +135,28 @@ object SecurityManager {
         VeilPrefs.lockAllContacts()
     }
 
-    private fun computeHash(password: String, salt: ByteArray): String {
+    private fun computeLegacyHash(password: String, salt: ByteArray): String {
         val md = MessageDigest.getInstance("SHA-256")
         md.update(salt)
         var digest = md.digest(password.toByteArray(Charsets.UTF_8))
-        for (i in 1 until HASH_ITERATIONS) {
+        for (i in 1 until LEGACY_HASH_ITERATIONS) {
             md.reset()
             digest = md.digest(digest)
         }
-        return digest.joinToString("") { "%02x".format(it) }
+        return digest.toHex()
     }
+
+    private fun computePbkdf2Hash(password: String, salt: ByteArray, iterations: Int): String {
+        val spec = PBEKeySpec(password.toCharArray(), salt, iterations, PBKDF2_KEY_LENGTH_BITS)
+        return try {
+            SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+                .generateSecret(spec).encoded.toHex()
+        } finally {
+            spec.clearPassword()
+        }
+    }
+
+    private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
 
     private fun constantTimeEquals(a: String, b: String): Boolean {
         return MessageDigest.isEqual(a.toByteArray(Charsets.UTF_8), b.toByteArray(Charsets.UTF_8))
