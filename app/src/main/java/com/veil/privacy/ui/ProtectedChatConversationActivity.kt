@@ -590,7 +590,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         VeilDialogs.showConfirmationDialog(
             context = this,
             title = "Wipe Conversation",
-            message = "Are you sure you want to delete all local message logs for « $contactName »?\n\nThis will permanently remove intercepted messages from VEIL's local encrypted storage.",
+            message = "Are you sure you want to delete all local message logs for « $contactName »?\n\nThis will permanently remove intercepted messages from VEIL's local app storage.",
             confirmText = "Wipe Messages",
             onConfirm = {
                 lifecycleScope.launch(Dispatchers.IO) {
