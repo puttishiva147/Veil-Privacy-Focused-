@@ -6,7 +6,7 @@
 
 <p align="center">
 
-  **[🌐 Visit the official VEIL website](https://puttishiva147.github.io/Veil-Privacy-Focused-/)** · **[Download the Android APK](https://github.com/puttishiva147/Veil-Privacy-Focused-/releases)**
+  **[🌐 Official VEIL website](https://puttishiva147.github.io/Veil-Privacy-Focused-/)** · **[Privacy & Data Handling](https://puttishiva147.github.io/Veil-Privacy-Focused-/privacy.html)** · **[Download the Android APK](https://github.com/puttishiva147/Veil-Privacy-Focused-/releases)**
 
 </p>
 
