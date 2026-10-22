@@ -68,9 +68,11 @@ jobs:
             fi
           done
           KEYSTORE_PATH="$RUNNER_TEMP/veil-release.jks"
-          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          # Normalize clipboard-added whitespace/line breaks before strict decoding.
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode > "$KEYSTORE_PATH"
           chmod 600 "$KEYSTORE_PATH"
           test -s "$KEYSTORE_PATH"
+          keytool -list -keystore "$KEYSTORE_PATH" -storepass "$RELEASE_STORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" >/dev/null
           echo "KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
           echo "KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
 
