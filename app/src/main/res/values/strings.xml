@@ -138,7 +138,7 @@
     <string name="settings_diagnostics_desc">Trigger a local simulated event to verify notification interception, decoy selection, and vault storage</string>
     <string name="settings_section_privacy">DATA SECURITY</string>
     <string name="settings_clear_history_title">Purge Event Vault</string>
-    <string name="settings_clear_history_desc">Erase local event logs stored in VEIL's private app storage</string>
+    <string name="settings_clear_history_desc">Erase local event logs stored in VEIL\'s private app storage</string>
     <string name="settings_privacy_policy_title">Privacy Architecture</string>
     <string name="settings_privacy_policy_desc">Local data handling, permissions, and update-check network behavior</string>
     <string name="settings_about_title">System Architecture</string>
@@ -157,7 +157,7 @@
     <string name="privacy_point_1_title">1. Android NotificationListener API Only</string>
     <string name="privacy_point_1_desc">VEIL inspects notifications strictly via the official Android NotificationListenerService framework. It does not tamper with app binaries, query WhatsApp internal databases, or require root permissions.</string>
     <string name="privacy_point_2_title">2. Local Storage and Update Checks</string>
-    <string name="privacy_point_2_desc">Protection rules, decoy settings, and event logs are stored in VEIL's app-private Room database on this device. The database is not encrypted by VEIL at the application layer; protect your device with Android's screen lock and device encryption. VEIL periodically requests public version metadata from its official HTTPS website to check for updates. The update request does not include notification content.</string>
+    <string name="privacy_point_2_desc">Protection rules, decoy settings, and event logs are stored in VEIL\'s app-private Room database on this device. The database is not encrypted by VEIL at the application layer; protect your device with Android\'s screen lock and device encryption. VEIL periodically requests public version metadata from its official HTTPS website to check for updates. The update request does not include notification content.</string>
     <string name="privacy_point_3_title">3. Nonce Decoy Generation</string>
     <string name="privacy_point_3_desc">Decoy senders and messages are independently chosen per event from the user\'s local dictionary. There is never a persistent 1:1 mapping between real identities and decoys.</string>
     <string name="privacy_point_4_title">4. Local Dual-State Interaction</string>
