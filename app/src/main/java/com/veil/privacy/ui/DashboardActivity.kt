@@ -556,6 +556,8 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun updateNotificationListenerStatus() {
+        // Recompute visibility on every refresh so a permission change can restore the action.
+        binding.btnBannerAction.visibility = View.VISIBLE
         val isGranted = NotificationUtils.isNotificationAccessGranted(this)
         val isConnected = NotificationUtils.isListenerConnected()
         val hasPostNotif = PermissionUtils.hasPostNotificationsPermission(this)
