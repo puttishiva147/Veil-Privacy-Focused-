@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://puttishiva147.github.io/Veil-Privacy-Focused-/sitemap.xml
