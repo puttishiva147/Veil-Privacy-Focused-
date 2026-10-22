@@ -100,11 +100,20 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release create "$GITHUB_REF_NAME" \
-            "$RUNNER_TEMP/VEIL-$VERSION_NAME.apk" \
-            "$RUNNER_TEMP/SHA256SUMS.txt" \
-            --title "VEIL $VERSION_NAME" \
-            --notes-file "$RUNNER_TEMP/release-notes.md"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" \
+              "$RUNNER_TEMP/VEIL-$VERSION_NAME.apk" \
+              "$RUNNER_TEMP/SHA256SUMS.txt" --clobber
+            gh release edit "$GITHUB_REF_NAME" \
+              --title "VEIL $VERSION_NAME" \
+              --notes-file "$RUNNER_TEMP/release-notes.md"
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              "$RUNNER_TEMP/VEIL-$VERSION_NAME.apk" \
+              "$RUNNER_TEMP/SHA256SUMS.txt" \
+              --title "VEIL $VERSION_NAME" \
+              --notes-file "$RUNNER_TEMP/release-notes.md"
+          fi
 
       - name: Publish direct APK on the GitHub Pages website
         uses: actions/checkout@v4.2.2
@@ -129,7 +138,7 @@ jobs:
           manifest.write_text(json.dumps({
               "version": version,
               "notes": "VEIL " + version + ": responsive app selection, production UI hardening, and improved local credential hashing."
-          }, indent=2) + "\\n", encoding="utf-8")
+          }, indent=2), encoding="utf-8")
 
           index = pathlib.Path("site/docs/index.html")
           html = index.read_text(encoding="utf-8")
