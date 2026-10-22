@@ -25,17 +25,21 @@ object VeilUpdateChecker {
         "https://puttishiva147.github.io/Veil-Privacy-Focused-/"
     private const val PREFS = "veil_update_preferences"
     private const val KEY_LAST_ATTEMPT = "last_check_attempt"
+    private const val KEY_LAST_SUCCESS = "last_check_success"
     private const val CHECK_INTERVAL_MS = 24L * 60L * 60L * 1000L
+    private const val RETRY_INTERVAL_MS = 15L * 60L * 1000L
 
     fun check(activity: AppCompatActivity) {
         if (activity.isFinishing || activity.isDestroyed) return
         val prefs = activity.getSharedPreferences(PREFS, AppCompatActivity.MODE_PRIVATE)
         val now = System.currentTimeMillis()
-        if (now - prefs.getLong(KEY_LAST_ATTEMPT, 0L) < CHECK_INTERVAL_MS) return
+        if (now - prefs.getLong(KEY_LAST_SUCCESS, 0L) < CHECK_INTERVAL_MS) return
+        if (now - prefs.getLong(KEY_LAST_ATTEMPT, 0L) < RETRY_INTERVAL_MS) return
         prefs.edit().putLong(KEY_LAST_ATTEMPT, now).apply()
 
         activity.lifecycleScope.launch {
             val update = withContext(Dispatchers.IO) { fetchWebsiteUpdate() } ?: return@launch
+            prefs.edit().putLong(KEY_LAST_SUCCESS, System.currentTimeMillis()).apply()
             val currentVersion = BuildConfig.VERSION_NAME
             if (!isNewerVersion(update.version, currentVersion)) return@launch
             if (activity.isFinishing || activity.isDestroyed) return@launch
