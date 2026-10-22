@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import com.veil.privacy.BuildConfig
 import com.veil.privacy.R
 import com.veil.privacy.notification.VeilNotificationListener
 import com.veil.privacy.notification.VeilNotificationManager
@@ -250,14 +251,6 @@ class VeilProtectionService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Action 2: Launch Real-Time Test Studio
-        val testIntent = PendingIntent.getActivity(
-            this,
-            2,
-            Intent(this, RealtimeTestStudioActivity::class.java),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
         // Action 3: Toggle Master
         val toggleIntent = PendingIntent.getService(
             this,
@@ -275,13 +268,22 @@ class VeilProtectionService : Service() {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setContentIntent(contentIntent)
             .addAction(R.drawable.ic_lock_closed, "Lock Vault", lockIntent)
-            .addAction(R.drawable.ic_shield_status, "Test Alert", testIntent)
             .addAction(
                 if (isMasterOn) R.drawable.ic_shield_status else R.drawable.ic_veil_visor_glyph,
                 if (isMasterOn) "Pause" else "Resume",
                 toggleIntent
             )
             .setColor(getColor(R.color.veil_accent_secure))
+
+        if (BuildConfig.DEBUG) {
+            val testIntent = PendingIntent.getActivity(
+                this,
+                2,
+                Intent(this, RealtimeTestStudioActivity::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            builder.addAction(R.drawable.ic_shield_status, "Test Alert", testIntent)
+        }
 
         return builder.build()
     }
