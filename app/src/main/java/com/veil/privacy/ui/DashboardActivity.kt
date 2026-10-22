@@ -124,6 +124,7 @@ class DashboardActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         binding = ActivityDashboardBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.tvAppVersion.text = getString(R.string.app_version_name, BuildConfig.VERSION_NAME)
 
         if (!BuildConfig.DEBUG) binding.cardTestStudio.visibility = View.GONE
 
