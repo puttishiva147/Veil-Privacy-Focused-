@@ -38,6 +38,7 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.tvSettingsAppVersion.text = getString(R.string.app_version_name, BuildConfig.VERSION_NAME)
 
         if (!BuildConfig.DEBUG) {
             binding.tvDiagnosticsSectionTitle.visibility = android.view.View.GONE
