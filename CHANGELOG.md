@@ -1,5 +1,12 @@
 # VEIL Changelog
 
+## 4.5.6
+- Fix the responsive Choose an app layout so the Done action remains reachable on constrained screens.
+- Hide developer-only Real-Time Test Studio and test-alert actions from production builds.
+- Correct privacy disclosures to describe local Room storage and the HTTPS update-manifest check accurately.
+- Prepare a signed release workflow for version-tagged production builds.
+- Version code: 40 (previous source: 4.5.5 / 39).
+
 ## 4.5.2
 - Fix dashboard top spacing by explicitly enabling edge-to-edge layout so the existing system-bar inset handler is the single source of inset padding.
 - Version code: 36 (previous: 4.5.1 / 35).
