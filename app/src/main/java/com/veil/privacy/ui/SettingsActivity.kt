@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.veil.privacy.BuildConfig
 import com.veil.privacy.R
 import com.veil.privacy.databinding.ActivitySettingsBinding
 import com.veil.privacy.databinding.DialogPrivacyInfoBinding
@@ -37,6 +38,11 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        if (!BuildConfig.DEBUG) {
+            binding.tvDiagnosticsSectionTitle.visibility = android.view.View.GONE
+            binding.cardDiagnostics.visibility = android.view.View.GONE
+        }
 
         com.veil.privacy.util.InsetsUtils.applySystemBarInsets(binding.root)
 
@@ -168,11 +174,13 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         // Pipeline Diagnostic Execution -> Opens Real-Time Test Studio
-        binding.btnRunDiagnostic.setOnClickListener {
-            startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
-        }
-        binding.btnExecuteDiagnostic.setOnClickListener {
-            startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
+        if (BuildConfig.DEBUG) {
+            binding.btnRunDiagnostic.setOnClickListener {
+                startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
+            }
+            binding.btnExecuteDiagnostic.setOnClickListener {
+                startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
+            }
         }
 
         // Reconfigure Security Credentials
