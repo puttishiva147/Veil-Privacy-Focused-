@@ -57,6 +57,7 @@ class SecurityManagerTest {
         assertNotEquals(testPassword, prefs.passwordHash)
         assertTrue("Hash must be non-null and non-empty", !prefs.passwordHash.isNullOrBlank())
         assertTrue("Salt must be non-null and non-empty", !prefs.passwordSalt.isNullOrBlank())
+        assertTrue("New hashes must use PBKDF2-HMAC-SHA256", prefs.passwordHash!!.startsWith("pbkdf2-sha256"))
 
         // Correct password verifies successfully
         assertTrue("Verification with correct password must succeed", SecurityManager.verifyPassword(context, testPassword))
@@ -64,6 +65,20 @@ class SecurityManagerTest {
         // Incorrect password fails
         assertFalse("Verification with incorrect password must fail", SecurityManager.verifyPassword(context, "WrongPassword"))
         assertFalse("Verification with empty password must fail", SecurityManager.verifyPassword(context, ""))
+    }
+
+    @Test
+    fun testLegacyMasterHashIsVerifiedAndUpgradedOnUnlock() {
+        // Legacy 5,000-round salted SHA-256 hash for this fixed test password and salt.
+        prefs.savePasswordCredentials(
+            "990116f7a079961668fb8aa7ea356b7bc3e836b8113a0209ca6692a679bdc9bf",
+            "000102030405060708090a0b0c0d0e0f"
+        )
+
+        assertTrue(SecurityManager.verifyPassword(context, "LegacyPassword2026!"))
+        assertTrue("Successful unlock should upgrade legacy credentials", prefs.passwordHash!!.startsWith("pbkdf2-sha256"))
+        assertTrue("Upgraded credential should continue to verify", SecurityManager.verifyPassword(context, "LegacyPassword2026!"))
+        assertFalse(SecurityManager.verifyPassword(context, "WrongPassword"))
     }
 
     @Test
