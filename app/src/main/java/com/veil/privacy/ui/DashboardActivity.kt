@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.veil.privacy.BuildConfig
 import com.veil.privacy.R
 import com.veil.privacy.databinding.ActivityDashboardBinding
 import android.content.pm.PackageManager
@@ -123,6 +124,8 @@ class DashboardActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         binding = ActivityDashboardBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        if (!BuildConfig.DEBUG) binding.cardTestStudio.visibility = View.GONE
 
         InsetsUtils.applySystemBarInsets(binding.root)
 
@@ -461,8 +464,10 @@ class DashboardActivity : AppCompatActivity() {
             showDecoyThemeChooserDialog()
         }
 
-        binding.btnOpenTestStudio.setOnClickListener {
-            startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
+        if (BuildConfig.DEBUG) {
+            binding.btnOpenTestStudio.setOnClickListener {
+                startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
+            }
         }
 
         binding.switchAutoDismiss.isChecked = prefs.isHideOriginalEnabled
@@ -642,10 +647,12 @@ class DashboardActivity : AppCompatActivity() {
 
             binding.tvListenerAccessStatus.text = "ACTIVE & PROTECTING"
             binding.tvListenerAccessStatus.setTextColor(ContextCompat.getColor(this, R.color.veil_accent_secure))
-            binding.btnGrantListenerAccess.visibility = View.VISIBLE
-            binding.btnGrantListenerAccess.text = "Open Real-Time Test Studio"
-            binding.btnGrantListenerAccess.setOnClickListener {
-                startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
+            binding.btnGrantListenerAccess.visibility = if (BuildConfig.DEBUG) View.VISIBLE else View.GONE
+            if (BuildConfig.DEBUG) {
+                binding.btnGrantListenerAccess.text = "Open Real-Time Test Studio"
+                binding.btnGrantListenerAccess.setOnClickListener {
+                    startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
+                }
             }
 
             binding.cardRealtimeBanner.strokeColor = ContextCompat.getColor(this, R.color.veil_hairline)
@@ -655,9 +662,12 @@ class DashboardActivity : AppCompatActivity() {
             val count = prefs.totalInterceptionsCount
             val scopeText = if (prefs.isProtectAllMessagingApps) "All Messaging Apps" else "Standard Apps"
             binding.tvBannerSubtitle.text = "Armed: $scopeText • $count disguised • Watchdog active"
-            binding.btnBannerAction.text = "Test Lab"
-            binding.btnBannerAction.setOnClickListener {
-                startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
+            binding.btnBannerAction.visibility = if (BuildConfig.DEBUG) View.VISIBLE else View.GONE
+            if (BuildConfig.DEBUG) {
+                binding.btnBannerAction.text = "Test Lab"
+                binding.btnBannerAction.setOnClickListener {
+                    startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
+                }
             }
         }
     }
