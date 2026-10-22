@@ -116,7 +116,12 @@ object SecurityManager {
         val prefs = VeilPrefs.getInstance(context)
         val storedHash = prefs.passwordHash ?: return false
         val storedSaltHex = prefs.passwordSalt ?: return false
-        return verifyHash(password, storedHash, storedSaltHex)
+        val valid = verifyHash(password, storedHash, storedSaltHex)
+        if (valid && !storedHash.startsWith(HASH_ALGORITHM + 36.toChar())) {
+            // Upgrade existing credentials only after the old hash successfully verifies.
+            savePassword(context, password)
+        }
+        return valid
     }
 
     /**
