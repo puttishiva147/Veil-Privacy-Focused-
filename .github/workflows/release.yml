@@ -95,7 +95,9 @@ jobs:
         run: |
           set -euo pipefail
           test -d site/docs
-          cp "$RUNNER_TEMP/VEIL-$VERSION_NAME.apk" site/docs/VEIL.apk
+          APK_PATH="app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK_PATH"
+          cp "$APK_PATH" site/docs/VEIL.apk
           python3 - "$VERSION_NAME" <<'PY'
           import json
           import pathlib
