@@ -40,6 +40,8 @@ jobs:
           echo "$SDK_ROOT/build-tools/36.0.0" >> "$GITHUB_PATH"
       - name: Run unit tests
         run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
+      - name: Run Android lint
+        run: ./gradlew --no-daemon --stacktrace :app:lintDebug
       - name: Create CI debug keystore
         shell: bash
         run: |
