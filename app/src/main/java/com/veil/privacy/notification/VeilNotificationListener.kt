@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.os.SystemClock
+import android.util.Log
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Production Android NotificationListenerService for VEIL.
@@ -54,6 +57,9 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         private val _pipelineFlow = MutableSharedFlow<PipelineEvent>(extraBufferCapacity = 32)
         val pipelineFlow: SharedFlow<PipelineEvent> = _pipelineFlow.asSharedFlow()
 
+        // Monotonic timestamps used to measure callback-to-replacement latency.
+        private val pendingOriginalRemoval = ConcurrentHashMap<String, Long>()
+
         fun emitDiagnostic(stage: String, message: String, isSuccess: Boolean = true) {
             _pipelineFlow.tryEmit(PipelineEvent(stage = stage, message = message, isSuccess = isSuccess))
         }
@@ -86,7 +92,15 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         super.onNotificationRemoved(sbn)
         // Notification RemoteInput and call PendingIntents are valid only while their
         // originating notification is active. Do not show stale reply/call controls.
-        sbn?.key?.let(NotificationReplyRegistry::removeCallByKey)
+        sbn?.key?.let { key ->
+            NotificationReplyRegistry.removeCallByKey(key)
+            val started = pendingOriginalRemoval.remove(key)
+            if (started != null) {
+                val elapsedMs = SystemClock.elapsedRealtime() - started
+                Log.i("VEIL_LATENCY", "original_removed_after_request_ms=$elapsedMs key=$key")
+                emitDiagnostic("LATENCY", "Android reported original removed after ${elapsedMs}ms")
+            }
+        }
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -121,6 +135,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             return
         }
 
+        val notificationReceivedElapsed = SystemClock.elapsedRealtime()
         emitDiagnostic("DETECT", "Captured supported-app notification")
 
         // 4. Parse incoming notification exposed by Android
@@ -167,7 +182,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         // 7. Evaluate and process against configured VEIL rules
         serviceScope.launch {
             try {
-                processIncomingProtectedNotification(sbn, parsed, replyActionPair)
+                processIncomingProtectedNotification(sbn, parsed, replyActionPair, notificationReceivedElapsed)
             } catch (e: Exception) {
                 emitDiagnostic("PROCESS", "Notification processing failed (${e.javaClass.simpleName})", false)
             }
@@ -180,7 +195,8 @@ class VeilNotificationListener : BaseNotificationListenerService() {
     private suspend fun processIncomingProtectedNotification(
         sbn: StatusBarNotification,
         parsed: ParsedNotificationInfo,
-        replyActionPair: Pair<android.app.Notification.Action, android.app.RemoteInput>? = null
+        replyActionPair: Pair<android.app.Notification.Action, android.app.RemoteInput>? = null,
+        notificationReceivedElapsed: Long = SystemClock.elapsedRealtime()
     ) {
         // Fetch all active, enabled protection rules and contacts from Room database
         val allRules = withContext(Dispatchers.IO) {
@@ -376,7 +392,13 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         // Persist first; suppress only this matched notification, never unchecked grouped siblings.
         if (preferences.isHideOriginalEnabled) {
             try {
-                sbn.key?.let { cancelNotification(it) }
+                sbn.key?.let { key ->
+                    pendingOriginalRemoval[key] = SystemClock.elapsedRealtime()
+                    cancelNotification(key)
+                    val requestElapsedMs = SystemClock.elapsedRealtime() - notificationReceivedElapsed
+                    Log.i("VEIL_LATENCY", "original_cancel_requested_ms=$requestElapsedMs key=$key")
+                    emitDiagnostic("LATENCY", "Original cancellation requested at ${requestElapsedMs}ms after callback")
+                }
                 emitDiagnostic("SUPPRESS", "Requested suppression of the matched notification")
             } catch (_: SecurityException) {
                 emitDiagnostic("SUPPRESS", "Android restricted notification suppression", false)
@@ -390,6 +412,9 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
         // 5. Immediately post the replacement VEIL notification containing configured privacy disguise
         notificationManager.postRuleDecoyNotification(eventWithId, matchedRule)
+        val replacementElapsedMs = SystemClock.elapsedRealtime() - notificationReceivedElapsed
+        Log.i("VEIL_LATENCY", "replacement_post_called_ms=$replacementElapsedMs key=${sbn.key}")
+        emitDiagnostic("LATENCY", "Replacement post called at ${replacementElapsedMs}ms after callback")
         emitDiagnostic("POST", "Replacement alert posted: '$finalDecoySender: $finalDecoyMessage'")
     }
 
