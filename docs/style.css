@@ -1,3 +1,4 @@
+html{scroll-behavior:smooth;background:#000}body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}button{font:inherit}img{max-width:100%}
 .veil-site{--veil-bg:#000000;--veil-panel:#121212;--veil-text:#FFFFFF;--veil-muted:#A1A1AA;--veil-line:#292929;--veil-silver:#D4D4D8;background:var(--veil-bg);color:var(--veil-text);font-family:Arial,Helvetica,sans-serif;overflow:hidden}
 .veil-site *{box-sizing:border-box}
 .veil-site a{color:inherit;text-decoration:none}
