@@ -4,94 +4,96 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#000000">
-  <meta name="description" content="VEIL — Variable Event Identity Layer. Explore VEIL and download the Android APK.">
-  <title>VEIL — Your identity. Your control.</title>
-  <style>
-    :root{color-scheme:dark;--bg:#000;--panel:#121212;--text:#fff;--muted:#a1a1aa;--line:#292929;--accent:#fff;--ink:#000}
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    a{color:inherit}
-    .wrap{width:min(100% - 40px,960px);margin-inline:auto}
-    header{display:flex;align-items:center;justify-content:space-between;padding:22px 0;border-bottom:1px solid var(--line)}
-    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;letter-spacing:.14em}
-    .brand img{width:34px;height:34px;object-fit:contain;border-radius:8px;background:transparent}
-    nav a{color:var(--muted);text-decoration:none;font-size:.92rem;margin-left:22px}
-    nav a:hover,.text-link:hover{color:var(--text)}
-    main{text-align:center}
-    .hero{padding:86px 0 68px}
-    .logo{width:96px;height:96px;object-fit:contain;background:transparent;margin-bottom:20px}
-    .eyebrow{color:#d4d4d8;text-transform:uppercase;letter-spacing:.19em;font-size:.76rem;font-weight:750}
-    h1{font-size:clamp(2.8rem,9vw,5.4rem);line-height:1.04;letter-spacing:-.065em;margin:12px 0}
-    .tagline{font-size:clamp(1.1rem,3vw,1.45rem);color:#e4e4e7;margin:0 0 14px}
-    .intro{max-width:620px;margin:0 auto;color:var(--muted)}
-    .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:30px}
-    .button{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 22px;border-radius:12px;text-decoration:none;font-weight:750;transition:transform .18s ease,background .18s ease}
-    .button:hover{transform:translateY(-2px)}
-    .primary{background:var(--accent);color:var(--ink)}
-    .secondary{border:1px solid #3a3a3a;background:#121212}
-    .hint{font-size:.83rem;color:var(--muted);margin-top:14px}
-    section{padding:34px 0 62px;scroll-margin-top:24px}
-    .section-card{max-width:720px;margin:0 auto;padding:28px;border:1px solid var(--line);border-radius:20px;background:var(--panel);text-align:left}
-    h2{font-size:1.55rem;letter-spacing:-.025em;margin:0 0 10px}
-    .section-card p{color:var(--muted);margin:0}
-    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
-    .feature{padding:16px;border:1px solid var(--line);border-radius:14px;background:#090909}
-    .feature strong{display:block;font-size:.95rem;margin-bottom:4px}
-    .feature span{display:block;color:var(--muted);font-size:.85rem;line-height:1.5}
-    footer{border-top:1px solid var(--line);padding:24px 0 32px;color:var(--muted);font-size:.86rem}
-    .foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .text-link{color:#d4d4d8;text-decoration:none}
-    @media(max-width:600px){.wrap{width:min(100% - 28px,960px)}header{padding:16px 0}.brand{letter-spacing:.1em}nav a{margin-left:12px;font-size:.84rem}.hero{padding:64px 0 48px}.features{grid-template-columns:1fr}.section-card{padding:22px}.foot{flex-direction:column}.logo{width:84px;height:84px}}
-    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button{transition:none}.button:hover{transform:none}}
-  </style>
+  <meta name="description" content="VEIL is a privacy-focused Android app by Shiva Putti, under EZflexz. Explore selected-contact protection, Android notification controls, source code, and APK download.">
+  <meta name="author" content="Shiva Putti | EZflexz">
+  <meta name="keywords" content="VEIL, Shiva Putti, Putti Shiva Mallaya, EZflexz, Android privacy app, notification controls">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="VEIL by Shiva Putti | EZflexz">
+  <meta property="og:description" content="A quieter way to manage selected-contact protection on Android.">
+  <meta property="og:url" content="https://puttishiva147.github.io/Veil-Privacy-Focused-/">
+  <meta property="og:image" content="https://raw.githubusercontent.com/puttishiva147/Veil-Privacy-Focused-/main/app/src/main/res/drawable/veil_official_logo.jpg">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://puttishiva147.github.io/Veil-Privacy-Focused-/">
+  <link rel="icon" href="https://raw.githubusercontent.com/puttishiva147/Veil-Privacy-Focused-/main/app/src/main/res/drawable/veil_official_logo.jpg">
+  <link rel="stylesheet" href="./style.css">
+  <title>VEIL by Shiva Putti | EZflexz</title>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <a class="brand" href="#" aria-label="VEIL home">
-        <img src="https://raw.githubusercontent.com/puttishiva147/Veil-Privacy-Focused-/main/app/src/main/res/drawable/veil_official_logo.jpg" alt="">
+  <main class="veil-site">
+    <header class="veil-nav">
+      <a class="veil-brand" href="#top" aria-label="VEIL home">
+        <img src="https://raw.githubusercontent.com/puttishiva147/Veil-Privacy-Focused-/main/app/src/main/res/drawable/veil_official_logo.jpg" alt="VEIL official logo">
         <span>VEIL</span>
       </a>
-      <nav aria-label="Main navigation"><a href="#about">About</a><a href="#download">Download</a></nav>
+      <button class="veil-menu-toggle" type="button" aria-expanded="false" aria-label="Toggle navigation">Menu</button>
+      <nav class="veil-links" aria-label="Main navigation">
+        <a href="#about">About</a><a href="#privacy">Privacy</a><a href="#install">Install</a>
+        <a class="veil-nav-cta" href="https://drive.google.com/file/d/1tMkVvXTu-bcIylz6fBhFoK18Apf0SULy/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">Download APK <span aria-hidden="true">↗</span></a>
+      </nav>
     </header>
-    <main>
-      <div class="hero">
-        <img class="logo" src="https://raw.githubusercontent.com/puttishiva147/Veil-Privacy-Focused-/main/app/src/main/res/drawable/veil_official_logo.jpg" alt="VEIL app logo">
-        <div class="eyebrow">Variable Event Identity Layer</div>
-        <h1>VEIL</h1>
-        <p class="tagline">Your identity. Your control.</p>
-        <p class="intro">A privacy-focused Android utility that helps you manage selected-contact protection rules and app notification events from one place.</p>
-        <div class="actions">
-          <a class="button primary" href="https://drive.google.com/file/d/1tMkVvXTu-bcIylz6fBhFoK18Apf0SULy/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">Download for Android ↗</a>
-          <a class="button secondary" href="#about">Discover VEIL</a>
+    <section class="veil-hero" id="top">
+      <div class="veil-hero-copy">
+        <p class="veil-overline"><span class="veil-overline-mark"></span> VARIABLE EVENT IDENTITY LAYER</p>
+        <h1>Your identity.<br><span>Your control.</span></h1>
+        <p class="veil-hero-description">A quieter way to manage selected-contact protection on Android.</p>
+        <div class="veil-hero-actions">
+          <a class="veil-button veil-button-light" href="https://drive.google.com/file/d/1tMkVvXTu-bcIylz6fBhFoK18Apf0SULy/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">Download APK <span aria-hidden="true">↗</span></a>
+          <a class="veil-button veil-button-outline" href="https://github.com/puttishiva147/Veil-Privacy-Focused-/" target="_blank" rel="noopener noreferrer">View source <span aria-hidden="true">↗</span></a>
         </div>
-        <p class="hint">Download link opens the Google Drive file supplied by the VEIL maintainer.</p>
+        <p class="veil-hero-note">Android app · You choose what to enable</p>
       </div>
-      <section id="about">
-        <div class="section-card">
-          <h2>About VEIL</h2>
-          <p>VEIL gives you a focused place to manage selected-contact protection and notification-related events on your Android device. Features depend on Android permissions and device settings you choose to enable.</p>
-          <div class="features">
-            <div class="feature"><strong>Selected contacts</strong><span>Configure protection rules for contacts you choose.</span></div>
-            <div class="feature"><strong>Private event view</strong><span>Review app-managed notification events in a dedicated interface.</span></div>
-            <div class="feature"><strong>Device controls</strong><span>Access security settings and supported biometric authentication.</span></div>
-          </div>
-        </div>
-      </section>
-      <section id="download">
-        <div class="section-card">
-          <h2>Get VEIL for Android</h2>
-          <p>Tap below to open the VEIL APK file on Google Drive. If Drive shows a preview first, use its download control to save the APK, then follow Android's installation prompts.</p>
-          <div class="actions" style="justify-content:flex-start">
-            <a class="button primary" href="https://drive.google.com/file/d/1tMkVvXTu-bcIylz6fBhFoK18Apf0SULy/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">Download APK ↧</a>
-            <a class="button secondary" href="https://github.com/puttishiva147/Veil-Privacy-Focused-" target="_blank" rel="noopener noreferrer">Source code ↗</a>
-          </div>
-          <p class="hint">Android 8.0 or newer. Only install APKs from a source you trust.</p>
-        </div>
-      </section>
-    </main>
-    <footer><div class="foot"><span>© 2026 VEIL</span><span><a class="text-link" href="./privacy.html">Privacy &amp; Data Handling</a> · <a class="text-link" href="./terms.html">Terms of Use</a> · <a class="text-link" href="https://github.com/puttishiva147/Veil-Privacy-Focused-">GitHub repository</a> · <a class="text-link" href="https://drive.google.com/file/d/1tMkVvXTu-bcIylz6fBhFoK18Apf0SULy/view?usp=drivesdk">Download APK</a></span></div></footer>
-  </div>
+      <div class="veil-object-stage" aria-label="Abstract monochrome privacy object illustration">
+        <div class="veil-orbit veil-orbit-one"></div><div class="veil-orbit veil-orbit-two"></div><div class="veil-object-shadow"></div>
+        <div class="veil-object"><div class="veil-object-face"><div class="veil-object-aperture"><span></span></div></div><div class="veil-object-side"></div></div>
+        <div class="veil-stage-caption"><span>VEIL / PRIVATE BY DESIGN</span><span>01 - 04</span></div>
+      </div>
+      <div class="veil-hero-bottom"><span>Built for considered control</span><a href="#about" aria-label="Explore VEIL">Explore VEIL <span aria-hidden="true">↓</span></a></div>
+    </section>
+    <section class="veil-intro section-shell" id="about">
+      <div class="veil-section-index">01 / INTRODUCTION</div>
+      <div class="veil-intro-grid"><h2>Privacy should feel<br><span>like a choice.</span></h2><div class="veil-intro-body"><p>VEIL is an Android utility built around selected-contact protection and notification-related controls. You decide which supported features to configure and which device permissions to allow.</p><a class="veil-text-link" href="https://github.com/puttishiva147/Veil-Privacy-Focused-/" target="_blank" rel="noopener noreferrer">Explore the source code <span aria-hidden="true">↗</span></a></div></div>
+    </section>
+    <section class="veil-feature-section section-shell" id="features">
+      <div class="veil-feature-heading"><div class="veil-section-index">02 / THE APPROACH</div><h2>Designed around<br>your decisions.</h2><p>Clear controls. Deliberate permissions. No promises beyond what the app and Android support.</p></div>
+      <div class="veil-feature-list">
+        <article class="veil-feature-row"><span class="veil-feature-number">01</span><div><h3>Selected contacts</h3><p>Configure protection rules for the contacts you choose, where supported by your installed version.</p></div><span class="veil-feature-symbol" aria-hidden="true">⌁</span></article>
+        <article class="veil-feature-row"><span class="veil-feature-number">02</span><div><h3>Notification controls</h3><p>Use VEIL's notification-related views and controls according to the permissions you enable.</p></div><span class="veil-feature-symbol" aria-hidden="true">◌</span></article>
+        <article class="veil-feature-row"><span class="veil-feature-number">03</span><div><h3>Device-level security</h3><p>Access supported device controls, with availability depending on Android version and device settings.</p></div><span class="veil-feature-symbol" aria-hidden="true">⌑</span></article>
+      </div>
+    </section>
+    <section class="veil-install section-shell" id="install">
+      <div class="veil-install-panel">
+        <div class="veil-install-copy"><div class="veil-section-index">03 / GET STARTED</div><h2>VEIL, on your<br>Android device.</h2><p>Open the Google Drive file, download the APK, then follow the installation prompts on your phone.</p><a class="veil-button veil-button-light" href="https://drive.google.com/file/d/1tMkVvXTu-bcIylz6fBhFoK18Apf0SULy/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">Download APK <span aria-hidden="true">↗</span></a><p class="veil-install-caution">Only install APKs from a source you trust. Android may ask you to review installation permissions.</p></div>
+        <div class="veil-install-visual" aria-hidden="true"><div class="veil-install-ring ring-a"></div><div class="veil-install-ring ring-b"></div><div class="veil-install-mark"><img src="https://raw.githubusercontent.com/puttishiva147/Veil-Privacy-Focused-/main/app/src/main/res/drawable/veil_official_logo.jpg" alt=""></div><span class="veil-install-coordinate">VEIL / ANDROID</span></div>
+      </div>
+    </section>
+    <section class="veil-privacy section-shell" id="privacy">
+      <div class="veil-section-index">04 / RESPONSIBLE USE</div>
+      <div class="veil-privacy-grid"><h2>Know what<br>you enable.</h2><div><p>VEIL's behavior depends on its installed version, Android permissions, and device configuration. Review the permissions requested by the app and keep only the controls you understand enabled.</p><p>This page does not claim independent security certification, production-signing verification, or guaranteed compatibility with every device.</p><a class="veil-text-link" href="https://github.com/puttishiva147/Veil-Privacy-Focused-/" target="_blank" rel="noopener noreferrer">Review project source <span aria-hidden="true">↗</span></a></div></div>
+    </section>
+    <section class="veil-final-cta">
+      <div class="veil-final-mark"><img src="https://raw.githubusercontent.com/puttishiva147/Veil-Privacy-Focused-/main/app/src/main/res/drawable/veil_official_logo.jpg" alt="VEIL official logo"></div>
+      <p class="veil-overline">THE NEXT STEP IS YOURS</p><h2>Meet VEIL.</h2><p>Explore the project or get the Android APK from the download link.</p>
+      <div class="veil-hero-actions"><a class="veil-button veil-button-light" href="https://drive.google.com/file/d/1tMkVvXTu-bcIylz6fBhFoK18Apf0SULy/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">Download APK <span aria-hidden="true">↗</span></a><a class="veil-button veil-button-outline" href="https://github.com/puttishiva147/Veil-Privacy-Focused-/" target="_blank" rel="noopener noreferrer">View source <span aria-hidden="true">↗</span></a></div>
+    </section>
+    <footer class="veil-footer"><a class="veil-brand" href="#top"><img src="https://raw.githubusercontent.com/puttishiva147/Veil-Privacy-Focused-/main/app/src/main/res/drawable/veil_official_logo.jpg" alt=""><span>VEIL</span></a><span>© 2026 VEIL. Use with care.</span><div><a href="./privacy.html">Privacy &amp; responsible use</a><a href="https://github.com/puttishiva147/Veil-Privacy-Focused-/" target="_blank" rel="noopener noreferrer">GitHub</a><a href="https://drive.google.com/file/d/1tMkVvXTu-bcIylz6fBhFoK18Apf0SULy/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">Download APK</a></div></footer>
+  </main>
+  <script>
+    (() => {
+      const toggle = document.querySelector('.veil-menu-toggle');
+      const nav = document.querySelector('.veil-links');
+      if (!toggle || !nav) return;
+      toggle.addEventListener('click', () => {
+        const open = nav.classList.toggle('is-open');
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.textContent = open ? 'Close' : 'Menu';
+      });
+      nav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
+        nav.classList.remove('is-open');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.textContent = 'Menu';
+      }));
+    })();
+  </script>
 </body>
 </html>
