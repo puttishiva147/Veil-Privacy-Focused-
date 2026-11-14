@@ -54,7 +54,8 @@ sealed interface TrcPairingValidation {
         UNSUPPORTED_VERSION,
         EXPIRED,
         INVALID_FIELDS,
-        INVALID_SIGNATURE
+        INVALID_SIGNATURE,
+        REPLAYED
     }
 }
 
@@ -108,6 +109,7 @@ object TrcPairingProtocol {
     fun validateScannedQr(
         raw: String,
         crypto: TrcPairingCrypto,
+        replayGuard: TrcPairingReplayGuard,
         nowEpochMillis: Long = System.currentTimeMillis()
     ): TrcPairingValidation {
         if (raw.length > MAX_QR_LENGTH || !raw.startsWith(PREFIX)) {
@@ -141,6 +143,9 @@ object TrcPairingProtocol {
             ) {
                 return TrcPairingValidation.Invalid(TrcPairingValidation.Reason.INVALID_SIGNATURE)
             }
+            if (!replayGuard.acceptOnce(sessionId, nonce, expires, nowEpochMillis)) {
+                return TrcPairingValidation.Invalid(TrcPairingValidation.Reason.REPLAYED)
+            }
             TrcPairingValidation.Valid(
                 TrcPairingOffer(peer, sessionId, nonce, identityKey, ephemeralKey, expires, signature)
             )
@@ -156,4 +161,43 @@ object TrcPairingProtocol {
 
     private fun String.decodeBase64(): ByteArray =
         Base64.decode(this, Base64.URL_SAFE or Base64.NO_WRAP)
+}
+
+
+/**
+ * Process-local replay guard. It intentionally has no disk persistence.
+ * A process restart invalidates outstanding offers; QR offers also expire quickly.
+ */
+class TrcPairingReplayGuard(private val maxEntries: Int = 256) {
+    private val seen = LinkedHashMap<String, Long>()
+
+    init {
+        require(maxEntries > 0)
+    }
+
+    @Synchronized
+    fun acceptOnce(
+        sessionId: String,
+        nonce: ByteArray,
+        expiresAtEpochMillis: Long,
+        nowEpochMillis: Long = System.currentTimeMillis()
+    ): Boolean {
+        val iterator = seen.entries.iterator()
+        while (iterator.hasNext()) {
+            if (iterator.next().value <= nowEpochMillis) iterator.remove()
+        }
+        val key = sessionId + ":" + Base64.encodeToString(
+            nonce, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
+        )
+        if (seen.containsKey(key) || expiresAtEpochMillis <= nowEpochMillis) return false
+        seen[key] = expiresAtEpochMillis
+        while (seen.size > maxEntries) {
+            val oldest = seen.entries.iterator()
+            if (oldest.hasNext()) {
+                oldest.next()
+                oldest.remove()
+            }
+        }
+        return true
+    }
 }
