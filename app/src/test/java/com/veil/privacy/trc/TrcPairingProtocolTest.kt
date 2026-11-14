@@ -3,6 +3,7 @@ package com.veil.privacy.trc
 import com.veil.privacy.trc.pairing.TrcPairingCrypto
 import com.veil.privacy.trc.pairing.TrcPairingIdentity
 import com.veil.privacy.trc.pairing.TrcPairingProtocol
+import com.veil.privacy.trc.pairing.TrcPairingReplayGuard
 import com.veil.privacy.trc.pairing.TrcPairingValidation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -44,7 +45,7 @@ class TrcPairingProtocolTest {
         val offer = TrcPairingProtocol.createOffer(crypto, nowEpochMillis = 10_000L)
         val qr = TrcPairingProtocol.encodeForQr(offer)
 
-        val result = TrcPairingProtocol.validateScannedQr(qr, crypto, nowEpochMillis = 10_001L)
+        val result = TrcPairingProtocol.validateScannedQr(qr, crypto, TrcPairingReplayGuard(), nowEpochMillis = 10_001L)
 
         assertTrue(result is TrcPairingValidation.Valid)
         assertEquals("test-peer", (result as TrcPairingValidation.Valid).offer.peerId)
@@ -57,7 +58,7 @@ class TrcPairingProtocolTest {
         val qr = TrcPairingProtocol.encodeForQr(offer)
 
         val result = TrcPairingProtocol.validateScannedQr(
-            qr, crypto, nowEpochMillis = offer.expiresAtEpochMillis
+            qr, crypto, TrcPairingReplayGuard(), nowEpochMillis = offer.expiresAtEpochMillis
         )
 
         assertEquals(
@@ -67,8 +68,25 @@ class TrcPairingProtocolTest {
     }
 
     @Test
+    fun sameQrOfferCannotBeAcceptedTwiceInOneProcess() {
+        val crypto = TestCrypto()
+        val guard = TrcPairingReplayGuard()
+        val offer = TrcPairingProtocol.createOffer(crypto, nowEpochMillis = 10_000L)
+        val qr = TrcPairingProtocol.encodeForQr(offer)
+
+        val first = TrcPairingProtocol.validateScannedQr(qr, crypto, guard, nowEpochMillis = 10_001L)
+        val second = TrcPairingProtocol.validateScannedQr(qr, crypto, guard, nowEpochMillis = 10_002L)
+
+        assertTrue(first is TrcPairingValidation.Valid)
+        assertEquals(
+            TrcPairingValidation.Reason.REPLAYED,
+            (second as TrcPairingValidation.Invalid).reason
+        )
+    }
+
+    @Test
     fun malformedQrIsRejected() {
-        val result = TrcPairingProtocol.validateScannedQr("not-a-veil-pairing-code", TestCrypto())
+        val result = TrcPairingProtocol.validateScannedQr("not-a-veil-pairing-code", TestCrypto(), TrcPairingReplayGuard())
         assertEquals(
             TrcPairingValidation.Reason.MALFORMED,
             (result as TrcPairingValidation.Invalid).reason
