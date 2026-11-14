@@ -3,17 +3,11 @@ package com.veil.privacy.trc.delivery
 /**
  * Volatile delivery lifecycle. Persisting this state is a separate product decision.
  *
- * DELIVERED must only be reached after an authenticated recipient acknowledgement.
+ * DELIVERED is allowed only with an authenticated recipient acknowledgement.
  * A transport write/connection success is not proof that the recipient received it.
  */
 enum class TrcDeliveryState {
-    CREATED,
-    QUEUED,
-    SENDING,
-    SENT_TO_TRANSPORT,
-    DELIVERED,
-    FAILED,
-    EXPIRED
+    CREATED, QUEUED, SENDING, SENT_TO_TRANSPORT, DELIVERED, FAILED, EXPIRED
 }
 
 object TrcDeliveryTransitions {
@@ -27,6 +21,12 @@ object TrcDeliveryTransitions {
         TrcDeliveryState.EXPIRED to emptySet()
     )
 
-    fun canTransition(from: TrcDeliveryState, to: TrcDeliveryState): Boolean =
-        to in (allowed[from] ?: emptySet())
+    fun canTransition(
+        from: TrcDeliveryState,
+        to: TrcDeliveryState,
+        authenticatedRecipientAck: Boolean = false
+    ): Boolean {
+        if (to == TrcDeliveryState.DELIVERED && !authenticatedRecipientAck) return false
+        return to in (allowed[from] ?: emptySet())
+    }
 }
