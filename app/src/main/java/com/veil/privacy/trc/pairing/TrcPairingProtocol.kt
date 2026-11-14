@@ -132,7 +132,7 @@ object TrcPairingProtocol {
             ) {
                 return TrcPairingValidation.Invalid(TrcPairingValidation.Reason.INVALID_FIELDS)
             }
-            if (expires <= nowEpochMillis) {
+            if (expires <= nowEpochMillis || expires > nowEpochMillis + OFFER_TTL_MILLIS) {
                 return TrcPairingValidation.Invalid(TrcPairingValidation.Reason.EXPIRED)
             }
             if (!crypto.verifySignedEphemeralIdentity(
