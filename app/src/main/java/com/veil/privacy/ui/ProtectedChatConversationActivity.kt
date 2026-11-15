@@ -17,6 +17,7 @@ import com.veil.privacy.databinding.ActivityProtectedChatConversationBinding
 import com.veil.privacy.model.ProtectedContact
 import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.notification.NotificationReplyRegistry
+import com.veil.privacy.communication.VeilTransportManager
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
 import com.veil.privacy.ui.adapter.ProtectedChatAdapter
@@ -307,7 +308,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         if (phoneDigits.isNotBlank()) {
             try {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://api.whatsapp.com/send?phone=$phoneDigits"))
-                intent.setPackage(targetPackage)
+                intent.setPackage(sourcePackage)
                 startActivity(intent)
             } catch (_: Exception) {
                 openWhatsAppChatDirectly()
