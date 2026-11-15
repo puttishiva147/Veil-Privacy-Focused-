@@ -8,15 +8,17 @@ import com.veil.privacy.model.ProtectedContact
 import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.model.ProtectionRule
 import com.veil.privacy.model.SelectedContact
+import com.veil.privacy.model.TransportMessage
 
 @Database(
     entities = [
         ProtectionRule::class,
         SelectedContact::class,
         ProtectedContact::class,
-        ProtectedEvent::class
+        ProtectedEvent::class,
+        TransportMessage::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class VeilDatabase : RoomDatabase() {
@@ -25,6 +27,7 @@ abstract class VeilDatabase : RoomDatabase() {
     abstract fun selectedContactDao(): SelectedContactDao
     abstract fun protectedContactDao(): ProtectedContactDao
     abstract fun protectedEventDao(): ProtectedEventDao
+    abstract fun transportMessageDao(): TransportMessageDao
 
     companion object {
         @Volatile
@@ -50,6 +53,12 @@ abstract class VeilDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_7_8 = object : androidx.room.migration.Migration(7, 8) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS transport_messages (id TEXT NOT NULL PRIMARY KEY, conversationId TEXT NOT NULL, contactName TEXT NOT NULL, sourcePackage TEXT NOT NULL, direction TEXT NOT NULL, originalText TEXT NOT NULL, encodedPayload TEXT NOT NULL, packet TEXT NOT NULL, dictionaryVersion INTEGER NOT NULL, status TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, lastError TEXT NOT NULL)")
+            }
+        }
+
         fun getInstance(context: Context): VeilDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -57,7 +66,7 @@ abstract class VeilDatabase : RoomDatabase() {
                     VeilDatabase::class.java,
                     "veil_privacy_database.db"
                 )
-                    .addMigrations(MIGRATION_5_6, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
