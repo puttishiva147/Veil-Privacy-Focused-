@@ -42,7 +42,7 @@ The receiver validates the frame, digest, message ID and dictionary version befo
 - If there is no live reply action, the message remains queued locally; VEIL does not pretend it was sent.
 - `DISPATCHED_NOT_CONFIRMED` means Android accepted the reply PendingIntent, not that the recipient received or read it.
 - If the notification disappears, the action expires, the app truncates the packet, or Android/OEM policy blocks the action, transport can fail. The user must see the real queue/error status.
-- Supported app transports are explicitly listed in `VeilTransportManager.supportedTransports()`.
+- Current reply-action adapters are listed in `VeilTransportManager.supportedTransports()`: WhatsApp, WhatsApp Business, Instagram, Snapchat and Telegram. A listed app is usable only when Android exposes a live compatible RemoteInput action for that notification; this is not a guarantee that every version/device supports it.
 
 ## Security limitations — important
 
