@@ -607,7 +607,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
                     "• Replies typed here are dispatched through Android's official RemoteInput action exposed by the source app.\n\n" +
                     "• Stickers and media attachments are shared via Android's official Photo Picker.\n\n" +
                     "• Calls can be answered or declined directly when call notifications are active.\n\n" +
-                    "• All captured messages remain 100% locally on your device in encrypted sandboxed storage."
+                    "• Captured messages and queued transport packets are stored locally in VEIL's app-private database. Database-level encryption is not yet implemented."
         )
     }
 }
