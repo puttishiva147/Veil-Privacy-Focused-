@@ -249,7 +249,7 @@ object VUPL {
                 val phrase = phrases.firstOrNull { p ->
                     text.startsWith(p, i) && run {
                         val end = i + p.length
-                        end >= text.length || !isLetterOrNumber(text.codePointAt(end))
+                        end >= text.length || !isLetterOrNumber(text[end].code)
                     }
                 }
                 if (phrase != null) {
