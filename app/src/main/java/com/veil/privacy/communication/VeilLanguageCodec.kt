@@ -22,3 +22,25 @@ class DictionaryPendingCodec : VeilLanguageCodec {
     override fun decode(encodedText: String): String =
         throw IllegalStateException("VEIL language dictionary has not been installed")
 }
+
+
+/**
+ * Process-wide codec registry shared by chat UI and NotificationListenerService.
+ * Install the dictionary-backed codec once its file format and validation are finalized.
+ */
+object VeilLanguageCodecProvider {
+    @Volatile
+    private var activeCodec: VeilLanguageCodec = DictionaryPendingCodec()
+
+    fun get(): VeilLanguageCodec = activeCodec
+
+    fun install(codec: VeilLanguageCodec) {
+        require(codec.isReady) { "Cannot install a codec that is not ready" }
+        require(codec.dictionaryVersion >= 1) { "Dictionary version must be positive" }
+        activeCodec = codec
+    }
+
+    fun resetToPending() {
+        activeCodec = DictionaryPendingCodec()
+    }
+}
