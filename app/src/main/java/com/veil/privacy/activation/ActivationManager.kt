@@ -23,6 +23,10 @@ import javax.crypto.KeyGenerator
 import javax.crypto.spec.GCMParameterSpec
 
 class ActivationManager(private val context: Context) {
+    companion object {
+        @Volatile var isLicenseActive: Boolean = false
+            private set
+    }
     private val app = context.applicationContext
     private val prefs = app.getSharedPreferences("veil_license_vault", Context.MODE_PRIVATE)
     private val base = app.getString(R.string.veil_api_base_url).trim().trimEnd('/')
@@ -33,6 +37,7 @@ class ActivationManager(private val context: Context) {
     fun hasToken() = readToken() != null
 
     fun refresh(): Boolean {
+        isLicenseActive = false
         val token = readToken() ?: return false
         requireBackend()
         val request = Request.Builder().url(base + "/api/v1/licenses/status")
@@ -44,6 +49,7 @@ class ActivationManager(private val context: Context) {
             val data = JSONObject(body)
             if (!data.optBoolean("active")) { clearToken(); return false }
             data.optString("accessToken").takeIf { it.isNotBlank() }?.let { saveToken(it) }
+            isLicenseActive = true
             return true
         }
     }
@@ -65,6 +71,7 @@ class ActivationManager(private val context: Context) {
         val token = result.optString("accessToken")
         if (token.isBlank()) throw IOException("Activation server did not issue a session.")
         saveToken(token)
+        isLicenseActive = true
     }
 
     private fun post(path: String, payload: JSONObject): JSONObject {
@@ -112,7 +119,7 @@ class ActivationManager(private val context: Context) {
         }
     }
 
-    private fun clearToken() { prefs.edit().clear().apply() }
+    private fun clearToken() { isLicenseActive = false; prefs.edit().clear().apply() }
 
     private fun aesKey(): javax.crypto.SecretKey {
         val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
