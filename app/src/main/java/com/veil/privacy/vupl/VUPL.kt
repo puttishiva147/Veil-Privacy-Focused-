@@ -196,26 +196,30 @@ object VUPL {
         return result
     }
     private fun scripts(text: String): String {
-        val found = LinkedHashSet<String>()
+        val found = HashSet<Character.UnicodeScript>()
         var i = 0
         while (i < text.length) {
             val cp = text.codePointAt(i)
-            val us = Character.UnicodeScript.of(cp)
-            when (us) {
-                Character.UnicodeScript.LATIN -> found.add("Latn")
-                Character.UnicodeScript.DEVANAGARI -> found.add("Deva")
-                Character.UnicodeScript.TELUGU -> found.add("Telu")
-                Character.UnicodeScript.TAMIL -> found.add("Taml")
-                Character.UnicodeScript.ARABIC -> found.add("Arab")
-                Character.UnicodeScript.HIRAGANA, Character.UnicodeScript.KATAKANA -> found.add("Jpan")
-                Character.UnicodeScript.HAN -> found.add("Hans")
-                Character.UnicodeScript.HANGUL -> found.add("Kore")
-                Character.UnicodeScript.CYRILLIC -> found.add("Cyrl")
-                else -> Unit
-            }
+            found.add(Character.UnicodeScript.of(cp))
             i += Character.charCount(cp)
         }
-        return if (found.isEmpty()) "Zyyy" else found.joinToString("+")
+        // Match Object.keys(SCRIPTS).filter(...) ordering in the TypeScript implementation.
+        val ordered = listOf(
+            "Latn" to Character.UnicodeScript.LATIN,
+            "Deva" to Character.UnicodeScript.DEVANAGARI,
+            "Telu" to Character.UnicodeScript.TELUGU,
+            "Taml" to Character.UnicodeScript.TAMIL,
+            "Arab" to Character.UnicodeScript.ARABIC,
+            "Jpan" to Character.UnicodeScript.HIRAGANA,
+            "Hans" to Character.UnicodeScript.HAN,
+            "Kore" to Character.UnicodeScript.HANGUL,
+            "Cyrl" to Character.UnicodeScript.CYRILLIC
+        )
+        val result = ordered.filter { (name, script) ->
+            if (name == "Jpan") script in found || Character.UnicodeScript.KATAKANA in found
+            else script in found
+        }.map { it.first }
+        return if (result.isEmpty()) "Zyyy" else result.joinToString("+")
     }
 
     fun tokenize(text: String, dict: Dictionary): List<String> {
