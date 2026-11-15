@@ -2,9 +2,12 @@ package com.veil.privacy.communication
 
 import android.content.Context
 import com.veil.privacy.model.SupportedApp
+import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.model.TransportMessage
 import com.veil.privacy.notification.NotificationReplyRegistry
 import com.veil.privacy.storage.VeilDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 /**
@@ -18,7 +21,8 @@ class VeilTransportManager(
     private val context: Context,
     private val codec: VeilLanguageCodec = DictionaryPendingCodec()
 ) {
-    private val dao = VeilDatabase.getInstance(context).transportMessageDao()
+    private val database = VeilDatabase.getInstance(context)
+    private val dao = database.transportMessageDao()
 
     data class AppCapability(
         val packageName: String,
@@ -79,6 +83,7 @@ class VeilTransportManager(
                 )
             )
             return SendResult(id, TransportMessage.WAITING_FOR_DICTIONARY, "Saved locally; dictionary required")
+            saveChatEvent("VEIL_TRANSPORT:$id", conversationId, contactName, sourcePackage, plainText, true, TransportMessage.WAITING_FOR_DICTIONARY)
         }
 
         return encodeAndDispatch(id, conversationId, contactName, sourcePackage, plainText)
@@ -141,6 +146,7 @@ class VeilTransportManager(
                     lastError = if (accepted) "" else "Android rejected the active reply PendingIntent"
                 )
             )
+            saveChatEvent("VEIL_TRANSPORT:$id", conversationId, contactName, sourcePackage, plainText, true, status)
             SendResult(id, status, if (accepted) "Handed to Android; delivery is not confirmed" else "Reply dispatch failed")
         } catch (error: Exception) {
             dao.upsert(
@@ -240,6 +246,45 @@ class VeilTransportManager(
                 lastError = if (decoded == null) "Dictionary missing or version mismatch" else ""
             )
         )
+        saveChatEvent(
+            "VEIL_TRANSPORT:${packet.messageId}",
+            sender.lowercase().trim(),
+            sender,
+            sourcePackage,
+            decoded ?: "VEIL message received - waiting for dictionary",
+            false,
+            if (decoded != null) TransportMessage.RECEIVED else TransportMessage.WAITING_FOR_DICTIONARY
+        )
         return true
+    }
+
+    private suspend fun saveChatEvent(
+        packetKey: String,
+        conversationId: String,
+        contactName: String,
+        sourcePackage: String,
+        text: String,
+        outgoing: Boolean,
+        status: String
+    ) {
+        withContext(Dispatchers.IO) {
+            val events = database.protectedEventDao()
+            val existing = events.getTransportEventByKey(packetKey)
+            if (existing == null) {
+                events.insert(
+                    ProtectedEvent(
+                        sourcePackage = sourcePackage,
+                        realSender = if (outgoing) "You" else contactName,
+                        realMessage = text,
+                        originalNotificationKey = packetKey,
+                        isOutgoing = outgoing,
+                        replyStatus = status,
+                        conversationId = conversationId
+                    )
+                )
+            } else {
+                events.updateTransportEvent(packetKey, text, status)
+            }
+        }
     }
 }
