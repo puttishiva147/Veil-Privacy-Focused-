@@ -34,7 +34,8 @@ object VUPLRuntime {
 
     suspend fun encodeOutgoing(context: Context, plaintext: String): String = withContext(Dispatchers.IO) {
         if (plaintext.isEmpty()) return@withContext plaintext
-        val pair = pairState(context) ?: return@withContext plaintext
+        val pair = pairState(context)
+            ?: throw IllegalStateException("VUPL pairing is required before sending a protected reply. Pair this device first.")
         VUPL.sendMessage(plaintext, pair)
     }
 
