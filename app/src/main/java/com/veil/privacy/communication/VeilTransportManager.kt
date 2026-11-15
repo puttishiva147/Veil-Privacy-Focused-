@@ -159,6 +159,61 @@ class VeilTransportManager(
         }
     }
 
+    /** Retry encoded outgoing messages when a fresh notification reply action appears. */
+    suspend fun retryWaitingForReplyActions(): List<SendResult> {
+        return dao.getByStatus(TransportMessage.WAITING_FOR_REPLY_ACTION)
+            .filter { it.direction == TransportMessage.DIRECTION_OUTGOING }
+            .map { queued ->
+                val accepted = NotificationReplyRegistry.sendReply(
+                    context, queued.contactName, queued.sourcePackage, queued.packet
+                )
+                val nextStatus = if (accepted) {
+                    TransportMessage.DISPATCHED_NOT_CONFIRMED
+                } else {
+                    TransportMessage.WAITING_FOR_REPLY_ACTION
+                }
+                dao.upsert(queued.copy(
+                    status = nextStatus,
+                    updatedAt = System.currentTimeMillis(),
+                    lastError = if (accepted) "" else "No active reply action from selected app"
+                ))
+                SendResult(
+                    queued.id,
+                    nextStatus,
+                    if (accepted) "Handed to Android; delivery is not confirmed" else "Still waiting for a reply-enabled notification"
+                )
+            }
+    }
+
+    /** Decode stored incoming packets after the matching dictionary version is installed. */
+    suspend fun decodePendingIncoming(): Int {
+        if (!codec.isReady) return 0
+        var decodedCount = 0
+        dao.getByStatus(TransportMessage.WAITING_FOR_DICTIONARY)
+            .filter { it.direction == TransportMessage.DIRECTION_INCOMING }
+            .forEach { queued ->
+                if (queued.dictionaryVersion == codec.dictionaryVersion) {
+                    val plainText = runCatching { codec.decode(queued.encodedPayload) }.getOrNull()
+                    if (plainText != null) {
+                        dao.upsert(queued.copy(
+                            originalText = plainText,
+                            status = TransportMessage.RECEIVED,
+                            updatedAt = System.currentTimeMillis(),
+                            lastError = ""
+                        ))
+                        decodedCount++
+                    } else {
+                        dao.upsert(queued.copy(
+                            status = TransportMessage.DECODE_FAILED,
+                            updatedAt = System.currentTimeMillis(),
+                            lastError = "Dictionary rejected the encoded payload"
+                        ))
+                    }
+                }
+            }
+        return decodedCount
+    }
+
     /** Called by the notification listener for every supported app notification. */
     suspend fun captureIncoming(sourcePackage: String, sender: String, notificationText: String): Boolean {
         val packet = VeilTransportPacket.extract(notificationText) ?: return false
