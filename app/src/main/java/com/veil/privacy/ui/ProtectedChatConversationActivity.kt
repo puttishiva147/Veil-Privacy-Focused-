@@ -498,17 +498,20 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     private fun handleSendReply(replyText: String) {
         lifecycleScope.launch {
             val transportManager = VeilTransportManager(this@ProtectedChatConversationActivity)
-            val sourcePackage = transportManager.selectAvailableTransport(contactName)
-                ?: withContext(Dispatchers.IO) {
-                    database.protectedEventDao()
-                        .getMessagesForConversationSync(conversationId)
-                        .lastOrNull { it.sourcePackage in listOf(
-                            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
-                            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS,
-                            com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM,
-                            com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT
-                        ) }?.sourcePackage
-                }
+            val conversationSourcePackage = withContext(Dispatchers.IO) {
+                database.protectedEventDao()
+                    .getMessagesForConversationSync(conversationId)
+                    .lastOrNull { it.sourcePackage in listOf(
+                        com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
+                        com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS,
+                        com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM,
+                        com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT
+                    ) }?.sourcePackage
+            }
+            val sourcePackage = conversationSourcePackage?.takeIf {
+                NotificationReplyRegistry.getLiveReplyAction(contactName, it) != null
+            } ?: transportManager.selectAvailableTransport(contactName)
+                ?: conversationSourcePackage
                 ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
 
             val result = transportManager.queueOutgoing(
