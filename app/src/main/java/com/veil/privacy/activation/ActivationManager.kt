@@ -30,7 +30,7 @@ class ActivationManager(private val context: Context) {
     private val media = "application/json; charset=utf-8".toMediaType()
 
     fun websiteUrl() = app.getString(R.string.veil_activation_website)
-    fun hasToken() = prefs.contains("iv") && prefs.contains("ciphertext")
+    fun hasToken() = readToken() != null
 
     fun refresh(): Boolean {
         val token = readToken() ?: return false
@@ -53,7 +53,7 @@ class ActivationManager(private val context: Context) {
         val code = rawCode.filter { it.isDigit() }
         require(code.matches(Regex("\\d{12}"))) { "Enter the complete 12-digit activation code." }
         val pair = deviceKeyPair()
-        val pem = "-----BEGIN PUBLIC KEY-----\\n" + Base64.encodeToString(pair.public.encoded, Base64.NO_WRAP) + "\\n-----END PUBLIC KEY-----"
+        val pem = "-----BEGIN PUBLIC KEY-----\n" + Base64.encodeToString(pair.public.encoded, Base64.NO_WRAP) + "\n-----END PUBLIC KEY-----"
         val fingerprint = sha256(app.packageName + ":" + Settings.Secure.getString(app.contentResolver, Settings.Secure.ANDROID_ID).orEmpty())
         val challenge = post("/api/v1/activation/challenge", JSONObject().put("publicKey", pem).put("deviceFingerprintHash", fingerprint))
         val nonce = challenge.getString("nonce")
@@ -99,13 +99,18 @@ class ActivationManager(private val context: Context) {
         prefs.edit().putString("iv", Base64.encodeToString(cipher.iv, Base64.NO_WRAP)).putString("ciphertext", Base64.encodeToString(encrypted, Base64.NO_WRAP)).apply()
     }
 
-    private fun readToken(): String? = try {
-        val iv = prefs.getString("iv", null) ?: return null
-        val data = prefs.getString("ciphertext", null) ?: return null
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, aesKey(), GCMParameterSpec(128, Base64.decode(iv, Base64.NO_WRAP)))
-        String(cipher.doFinal(Base64.decode(data, Base64.NO_WRAP)))
-    } catch (_: Exception) { clearToken(); null }
+    private fun readToken(): String? {
+        return try {
+            val iv = prefs.getString("iv", null) ?: return null
+            val data = prefs.getString("ciphertext", null) ?: return null
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.DECRYPT_MODE, aesKey(), GCMParameterSpec(128, Base64.decode(iv, Base64.NO_WRAP)))
+            String(cipher.doFinal(Base64.decode(data, Base64.NO_WRAP)))
+        } catch (_: Exception) {
+            clearToken()
+            null
+        }
+    }
 
     private fun clearToken() { prefs.edit().clear().apply() }
 
