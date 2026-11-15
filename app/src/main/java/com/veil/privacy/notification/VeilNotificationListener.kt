@@ -121,27 +121,6 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             }
         }
 
-        // Per-platform switches control privacy disguise, not VEIL transport reception.
-        val socialPackage = pkg == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
-            pkg == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS ||
-            pkg == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM ||
-            pkg == com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT ||
-            pkg.startsWith("org.telegram.")
-        if (socialPackage && !preferences.isSocialAppEnabled(pkg)) {
-            emitDiagnostic("FILTER", "Protection disabled for ${com.veil.privacy.model.SupportedApp.getAppDisplayName(pkg)}")
-            return
-        }
-
-        // 3. Master toggle check
-        if (!preferences.isVeilEnabled) {
-            emitDiagnostic("FILTER", "VEIL is currently paused. Passing notification through.")
-            return
-        }
-
-        emitDiagnostic("DETECT", "Captured supported-app notification")
-
-        emitDiagnostic("PARSE", "Notification content parsed successfully")
-
         // 5. Capture live RemoteInput reply action if exposed by messaging app
         val replyActionPair = NotificationReplyRegistry.findReplyAction(sbn.notification)
         if (replyActionPair != null && sbn.key != null) {
@@ -163,6 +142,27 @@ class VeilNotificationListener : BaseNotificationListenerService() {
                 }
             }
         }
+
+        // Per-platform switches control privacy disguise, not VEIL transport reception.
+        val socialPackage = pkg == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
+            pkg == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS ||
+            pkg == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM ||
+            pkg == com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT ||
+            pkg.startsWith("org.telegram.")
+        if (socialPackage && !preferences.isSocialAppEnabled(pkg)) {
+            emitDiagnostic("FILTER", "Protection disabled for ${com.veil.privacy.model.SupportedApp.getAppDisplayName(pkg)}")
+            return
+        }
+
+        // 3. Master toggle check
+        if (!preferences.isVeilEnabled) {
+            emitDiagnostic("FILTER", "VEIL is currently paused. Passing notification through.")
+            return
+        }
+
+        emitDiagnostic("DETECT", "Captured supported-app notification")
+
+        emitDiagnostic("PARSE", "Notification content parsed successfully")
 
         val callActionsPair = NotificationReplyRegistry.findCallActions(sbn.notification)
         if (callActionsPair != null && sbn.key != null) {
