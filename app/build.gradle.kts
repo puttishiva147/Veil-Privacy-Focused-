@@ -19,6 +19,10 @@ android {
     versionCode = 41
     versionName = "4.5.7"
 
+    // Public API origin only; never place admin/payment secrets in the APK.
+    val licenseApiBaseUrl = System.getenv("VEIL_LICENSE_API_BASE_URL") ?: ""
+    buildConfigField("String", "VEIL_LICENSE_API_BASE_URL", "\"$licenseApiBaseUrl\"")
+
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
