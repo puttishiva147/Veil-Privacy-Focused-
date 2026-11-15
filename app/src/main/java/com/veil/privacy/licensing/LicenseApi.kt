@@ -1,4 +1,5 @@
 package com.veil.privacy.licensing
+import android.content.Context
 import com.veil.privacy.BuildConfig
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -21,7 +22,15 @@ object LicenseApi {
   }
  }
  fun referralInfo(token:String):JSONObject = get("/referrals/me",token)
- fun activate(code:String):ActivationResult{val publicKey=LicenseDeviceKey.publicKeyPem();val challenge=post("/activation/challenge",JSONObject().put("publicKey",publicKey));val nonce=challenge.getString("nonce");val signature=LicenseDeviceKey.signNonce(nonce);val response=post("/activation/activate",JSONObject().put("code",code).put("publicKey",publicKey).put("nonce",nonce).put("signature",signature));return ActivationResult(response.getString("accessToken"),response.optLong("expiresInSeconds",900L),code)}
+ fun activate(context:Context,code:String):ActivationResult{
+  val publicKey=LicenseDeviceKey.publicKeyPem()
+  val fingerprint=LicenseDeviceKey.fingerprintHash(context)
+  val challenge=post("/activation/challenge",JSONObject().put("publicKey",publicKey).put("deviceFingerprintHash",fingerprint))
+  val nonce=challenge.getString("nonce")
+  val signature=LicenseDeviceKey.signNonce(nonce)
+  val response=post("/activation/activate",JSONObject().put("code",code).put("publicKey",publicKey).put("deviceFingerprintHash",fingerprint).put("nonce",nonce).put("signature",signature))
+  return ActivationResult(response.getString("accessToken"),response.optLong("expiresInSeconds",900L),code)
+ }
  fun refresh(token:String):ActivationResult{val response=post("/licenses/status",JSONObject(),token);return ActivationResult(response.getString("accessToken"),response.optLong("expiresInSeconds",900L),"")}
  data class ActivationResult(val accessToken:String,val expiresInSeconds:Long,val activationCode:String)
 }
