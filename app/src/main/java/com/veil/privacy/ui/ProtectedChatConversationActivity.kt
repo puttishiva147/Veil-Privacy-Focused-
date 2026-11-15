@@ -17,6 +17,7 @@ import com.veil.privacy.databinding.ActivityProtectedChatConversationBinding
 import com.veil.privacy.model.ProtectedContact
 import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.notification.NotificationReplyRegistry
+import com.veil.privacy.communication.VeilTransportManager
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
 import com.veil.privacy.ui.adapter.ProtectedChatAdapter
@@ -495,46 +496,38 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleSendReply(replyText: String) {
-        val action = NotificationReplyRegistry.getLiveReplyAction(contactName)
-        val isLive = action != null
-        val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(action.sourcePackage) else "Messaging app"
-
-        if (!isLive) {
-            VeilDialogs.showConfirmationDialog(
-                context = this,
-                title = "Active Notification Required",
-                message = "Android's RemoteInput notification reply mechanism requires an active notification from $targetApp in your notification tray.\n\nBecause no live notification token is currently pending, would you like to open the app directly to send your message?",
-                confirmText = "Open App",
-                onConfirm = { openWhatsAppChatDirectly(replyText) }
-            )
-            return
-        }
-
-        // Dispatch via Notification RemoteInput
-        val dispatched = NotificationReplyRegistry.sendReply(this, contactName, replyText)
-
-        if (dispatched) {
-            binding.etReplyInput.text?.clear()
-
-            // Record outgoing message in conversation thread
-            lifecycleScope.launch(Dispatchers.IO) {
-                val outgoingEvent = ProtectedEvent(
-                    sourcePackage = action?.sourcePackage
-                        ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
-                    realSender = "You",
-                    realMessage = replyText,
-                    isOutgoing = true,
-                    replyStatus = "DISPATCHED_NOT_CONFIRMED",
-                    conversationId = conversationId,
-                    timestamp = System.currentTimeMillis()
-                )
-                database.protectedEventDao().insert(outgoingEvent)
+        lifecycleScope.launch {
+            val sourcePackage = withContext(Dispatchers.IO) {
+                NotificationReplyRegistry.getLiveReplyAction(contactName)?.sourcePackage
+                    ?: database.protectedEventDao()
+                        .getMessagesForConversationSync(conversationId)
+                        .lastOrNull { it.sourcePackage in listOf(
+                            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
+                            com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM,
+                            com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT
+                        ) }?.sourcePackage
+                    ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
             }
 
-            Toast.makeText(this, "Reply action handed to $targetApp. Delivery/read status is not available to VEIL.", Toast.LENGTH_LONG).show()
-        } else {
-            Toast.makeText(this, "Failed to send: notification action token expired", Toast.LENGTH_LONG).show()
+            val result = VeilTransportManager(this@ProtectedChatConversationActivity).queueOutgoing(
+                conversationId = conversationId,
+                contactName = contactName,
+                sourcePackage = sourcePackage,
+                plainText = replyText
+            )
+
+            binding.etReplyInput.text?.clear()
             updateReplyTokenStatus()
+            val statusMessage = when (result.status) {
+                com.veil.privacy.model.TransportMessage.WAITING_FOR_DICTIONARY ->
+                    "Saved in VEIL. Waiting for the universal language dictionary; not sent yet."
+                com.veil.privacy.model.TransportMessage.DISPATCHED_NOT_CONFIRMED ->
+                    "Encoded message handed to Android. Delivery is not confirmed."
+                com.veil.privacy.model.TransportMessage.WAITING_FOR_REPLY_ACTION ->
+                    "Encoded message queued. Waiting for a reply-enabled notification from the selected app."
+                else -> result.detail
+            }
+            Toast.makeText(this@ProtectedChatConversationActivity, statusMessage, Toast.LENGTH_LONG).show()
         }
     }
 
