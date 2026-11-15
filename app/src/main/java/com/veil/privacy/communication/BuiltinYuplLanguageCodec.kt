@@ -5,7 +5,7 @@ import java.util.Base64
 import java.util.Locale
 
 /**
- * Built-in YUPL v1 reversible language codec.
+ * Development/test fixture only — not the official VEIL dictionary and not installed in production.
  *
  * Known words map to compact Unicode symbol tokens. Unknown words, whitespace,
  * punctuation, numbers and all other Unicode text use a lossless UTF-8 fallback.
