@@ -253,10 +253,8 @@ class VeilTransportManager(
     suspend fun captureIncoming(sourcePackage: String, sender: String, notificationText: String): Boolean {
         if (sourcePackage !in supportedTransports().map { it.first }) return false
         val packet = VeilTransportPacket.extract(notificationText) ?: return false
-        val existingConversationId = withContext(Dispatchers.IO) {
-            database.protectedEventDao().getLatestConversationIdForSender(sourcePackage, sender)
-        }
-        val conversationId = existingConversationId ?: sender.lowercase().trim()
+        val scopedConversationId = "${sourcePackage.lowercase()}::${sender.lowercase().trim()}"
+        val conversationId = scopedConversationId
         val existing = dao.getById(packet.messageId)
         if (existing != null) return true
 
