@@ -40,7 +40,8 @@ class VeilTransportManager(
         SupportedApp.PKG_WHATSAPP to "WhatsApp",
         SupportedApp.PKG_WHATSAPP_BUSINESS to "WhatsApp Business",
         SupportedApp.PKG_INSTAGRAM to "Instagram",
-        SupportedApp.PKG_SNAPCHAT to "Snapchat"
+        SupportedApp.PKG_SNAPCHAT to "Snapchat",
+        SupportedApp.PKG_TELEGRAM to "Telegram"
     )
 
     fun availableTransports(contactName: String): List<AppCapability> =
