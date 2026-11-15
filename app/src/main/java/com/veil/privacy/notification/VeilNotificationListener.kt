@@ -104,8 +104,24 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         val isRecognized = NotificationParser.isSupportedPackage(pkg, preferences.isProtectAnyApp)
         if (!isRecognized && !isSimulation) return
 
-        // Per-platform switches are independent; disabling one social app must not
-        // disable the other three or unrelated recognized notification sources.
+        // Transport receive is independent of notification-disguise preferences.
+        // VEIL must still receive its own coded messages when privacy shielding is paused.
+        val parsed = notificationParser.parse(sbn, ownPackage, preferences.isProtectAnyApp)
+        if (parsed == null) {
+            emitDiagnostic("PARSE", "Notification payload had no extractable message content", false)
+            return
+        }
+        serviceScope.launch {
+            try {
+                if (VeilTransportManager(this@VeilNotificationListener).captureIncoming(pkg, parsed.sender, parsed.message)) {
+                    emitDiagnostic("TRANSPORT_RX", "VEIL packet captured from ${com.veil.privacy.model.SupportedApp.getAppDisplayName(pkg)}")
+                }
+            } catch (error: Exception) {
+                emitDiagnostic("TRANSPORT_RX", "Packet capture failed (${error.javaClass.simpleName})", false)
+            }
+        }
+
+        // Per-platform switches control privacy disguise, not VEIL transport reception.
         val socialPackage = pkg == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
             pkg == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS ||
             pkg == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM ||
@@ -124,26 +140,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
         emitDiagnostic("DETECT", "Captured supported-app notification")
 
-        // 4. Parse incoming notification exposed by Android
-        val parsed = notificationParser.parse(sbn, ownPackage, preferences.isProtectAnyApp)
-        if (parsed == null) {
-            emitDiagnostic("PARSE", "Notification payload had no extractable message content", false)
-            return
-        }
-
         emitDiagnostic("PARSE", "Notification content parsed successfully")
-
-        // Capture VEIL packets independently of contact-protection rules.
-        // The language dictionary can be installed later; packets remain queued locally.
-        serviceScope.launch {
-            try {
-                if (VeilTransportManager(this@VeilNotificationListener).captureIncoming(pkg, parsed.sender, parsed.message)) {
-                    emitDiagnostic("TRANSPORT_RX", "VEIL packet captured from ${com.veil.privacy.model.SupportedApp.getAppDisplayName(pkg)}")
-                }
-            } catch (error: Exception) {
-                emitDiagnostic("TRANSPORT_RX", "Packet capture failed (${error.javaClass.simpleName})", false)
-            }
-        }
 
         // 5. Capture live RemoteInput reply action if exposed by messaging app
         val replyActionPair = NotificationReplyRegistry.findReplyAction(sbn.notification)
