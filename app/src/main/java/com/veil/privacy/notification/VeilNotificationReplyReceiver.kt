@@ -4,7 +4,6 @@ import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput
 import com.veil.privacy.R
@@ -19,8 +18,7 @@ import kotlinx.coroutines.withContext
 /**
  * Handles inline replies dispatched directly from VEIL replacement notifications.
  *
- * Forwards the reply via Android's RemoteInput PendingIntent directly to WhatsApp,
- * updates the local encrypted vault, and refreshes the notification in place.
+ * Queues the reply through VEIL's coded transport pipeline and refreshes the notification in place.
  */
 class VeilNotificationReplyReceiver : BroadcastReceiver() {
 
@@ -30,7 +28,6 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
         const val EXTRA_CONVERSATION_ID = "extra_conversation_id"
         const val EXTRA_NOTIFICATION_ID = "extra_notification_id"
         const val KEY_TEXT_REPLY = "key_text_reply"
-        private const val TAG = "VeilReplyReceiver"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -45,10 +42,12 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
 
         // Queue through VEIL's language/transport pipeline. Never send this reply as plaintext.
-        val liveAction = NotificationReplyRegistry.getLiveReplyAction(contactName)
-        val sourcePackage = liveAction?.sourcePackage ?: SupportedApp.PKG_WHATSAPP
+        val transportManager = VeilTransportManager(context)
+        val sourcePackage = transportManager.selectAvailableTransport(contactName)
+            ?: NotificationReplyRegistry.getLiveReplyAction(contactName)?.sourcePackage
+            ?: SupportedApp.PKG_WHATSAPP
         CoroutineScope(Dispatchers.IO).launch {
-            val result = VeilTransportManager(context).queueOutgoing(
+            val result = transportManager.queueOutgoing(
                 conversationId = conversationId,
                 contactName = contactName,
                 sourcePackage = sourcePackage,
