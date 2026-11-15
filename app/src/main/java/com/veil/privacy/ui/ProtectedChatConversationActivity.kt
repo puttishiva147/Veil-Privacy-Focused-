@@ -34,7 +34,7 @@ import kotlinx.coroutines.withContext
  * Implements genuine Android & WhatsApp privacy layer capabilities:
  * - Independent contact authentication check (PIN protection).
  * - Displays incoming messages captured securely via NotificationListenerService.
- * - Outgoing messages dispatched via Android's RemoteInput PendingIntent or direct WhatsApp intent.
+ * - Outgoing messages are encoded by VEIL and dispatched only through a live source-app RemoteInput action.
  * - Receive and respond to WhatsApp calls (Answer/Decline via intercepted notification actions).
  * - Send stickers, emojis, and media attachments via Android Photo Picker and WhatsApp share.
  * - Displays contact profile photos from Android address book.
@@ -626,7 +626,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             message = "• VEIL is an autonomous notification disguise layer.\n\n" +
                     "• When a protected message arrives, Android's NotificationListenerService detects it and VEIL immediately disguises the system notification.\n\n" +
                     "• Messages displayed here are received exclusively through authorized Android notification events.\n\n" +
-                    "• Replies typed here are dispatched through Android's official RemoteInput action exposed by the source app.\n\n" +
+                    "• Replies typed here are first encoded by VEIL's language codec, framed as a transport packet, and then submitted through the source app's live Android RemoteInput action. The dictionary and a current reply-enabled notification are required. Android accepting the action is not delivery confirmation.\n\n" +
                     "• Stickers and media attachments are shared via Android's official Photo Picker.\n\n" +
                     "• Calls can be answered or declined directly when call notifications are active.\n\n" +
                     "• Captured messages and queued transport packets are stored locally in VEIL's app-private database. Database-level encryption is not yet implemented."
