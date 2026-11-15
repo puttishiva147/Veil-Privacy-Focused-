@@ -51,6 +51,12 @@ class VeilTransportManager(
             )
         }
 
+    /** Select the first transport app that currently exposes a live reply action. */
+    fun selectAvailableTransport(contactName: String): String? =
+        supportedTransports().firstOrNull { (pkg, _) ->
+            NotificationReplyRegistry.getLiveReplyAction(contactName, pkg) != null
+        }?.first
+
     /**
      * Queues a message. Until the official dictionary is loaded, it remains local and is
      * not sent as plaintext or as a fabricated code.
