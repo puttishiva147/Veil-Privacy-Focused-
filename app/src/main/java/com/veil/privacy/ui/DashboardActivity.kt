@@ -18,7 +18,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.veil.privacy.BuildConfig
 import com.veil.privacy.R
 import com.veil.privacy.databinding.ActivityDashboardBinding
 import android.content.pm.PackageManager
@@ -39,7 +38,6 @@ import com.veil.privacy.util.ContactSelectionHelper
 import com.veil.privacy.util.InsetsUtils
 import com.veil.privacy.util.NotificationUtils
 import com.veil.privacy.util.PermissionUtils
-import com.veil.privacy.update.VeilUpdateChecker
 import com.veil.privacy.util.VeilDialogs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
@@ -125,9 +123,6 @@ class DashboardActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         binding = ActivityDashboardBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.tvAppVersion.text = getString(R.string.app_version_name, BuildConfig.VERSION_NAME)
-
-        if (!BuildConfig.DEBUG) binding.cardTestStudio.visibility = View.GONE
 
         InsetsUtils.applySystemBarInsets(binding.root)
 
@@ -166,7 +161,6 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        VeilUpdateChecker.check(this)
         val selectedPackage = selectedSocialAppPackage()
         if (lastSelectedSocialAppPackage.isNotBlank() && selectedPackage != lastSelectedSocialAppPackage) {
             recreate()
@@ -331,6 +325,7 @@ class DashboardActivity : AppCompatActivity() {
                             onUnlocked = {
                                 val intent = Intent(this@DashboardActivity, ProtectedChatConversationActivity::class.java).apply {
                                     putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, thread.contactName)
+                                    putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
                                 }
                                 startActivity(intent)
                             }
@@ -338,6 +333,7 @@ class DashboardActivity : AppCompatActivity() {
                     } else {
                         val intent = Intent(this@DashboardActivity, ProtectedChatConversationActivity::class.java).apply {
                             putExtra(ProtectedChatConversationActivity.EXTRA_CONTACT_NAME, thread.contactName)
+                            putExtra(ProtectedChatConversationActivity.EXTRA_SOURCE_PACKAGE, thread.sourcePackage)
                         }
                         startActivity(intent)
                     }
@@ -466,10 +462,8 @@ class DashboardActivity : AppCompatActivity() {
             showDecoyThemeChooserDialog()
         }
 
-        if (BuildConfig.DEBUG) {
-            binding.btnOpenTestStudio.setOnClickListener {
-                startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
-            }
+        binding.btnOpenTestStudio.setOnClickListener {
+            startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
         }
 
         binding.switchAutoDismiss.isChecked = prefs.isHideOriginalEnabled
@@ -558,8 +552,6 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun updateNotificationListenerStatus() {
-        // Recompute visibility on every refresh so a permission change can restore the action.
-        binding.btnBannerAction.visibility = View.VISIBLE
         val isGranted = NotificationUtils.isNotificationAccessGranted(this)
         val isConnected = NotificationUtils.isListenerConnected()
         val hasPostNotif = PermissionUtils.hasPostNotificationsPermission(this)
@@ -651,12 +643,10 @@ class DashboardActivity : AppCompatActivity() {
 
             binding.tvListenerAccessStatus.text = "ACTIVE & PROTECTING"
             binding.tvListenerAccessStatus.setTextColor(ContextCompat.getColor(this, R.color.veil_accent_secure))
-            binding.btnGrantListenerAccess.visibility = if (BuildConfig.DEBUG) View.VISIBLE else View.GONE
-            if (BuildConfig.DEBUG) {
-                binding.btnGrantListenerAccess.text = "Open Real-Time Test Studio"
-                binding.btnGrantListenerAccess.setOnClickListener {
-                    startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
-                }
+            binding.btnGrantListenerAccess.visibility = View.VISIBLE
+            binding.btnGrantListenerAccess.text = "Open Real-Time Test Studio"
+            binding.btnGrantListenerAccess.setOnClickListener {
+                startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
             }
 
             binding.cardRealtimeBanner.strokeColor = ContextCompat.getColor(this, R.color.veil_hairline)
@@ -666,12 +656,9 @@ class DashboardActivity : AppCompatActivity() {
             val count = prefs.totalInterceptionsCount
             val scopeText = if (prefs.isProtectAllMessagingApps) "All Messaging Apps" else "Standard Apps"
             binding.tvBannerSubtitle.text = "Armed: $scopeText • $count disguised • Watchdog active"
-            binding.btnBannerAction.visibility = if (BuildConfig.DEBUG) View.VISIBLE else View.GONE
-            if (BuildConfig.DEBUG) {
-                binding.btnBannerAction.text = "Test Lab"
-                binding.btnBannerAction.setOnClickListener {
-                    startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
-                }
+            binding.btnBannerAction.text = "Test Lab"
+            binding.btnBannerAction.setOnClickListener {
+                startActivity(Intent(this, RealtimeTestStudioActivity::class.java))
             }
         }
     }
@@ -754,16 +741,18 @@ class DashboardActivity : AppCompatActivity() {
                 val threads = mutableListOf<ProtectedChatThread>()
                 for (rule in appRules) {
                     val conversationEvents = appEvents.filter {
-                        it.conversationId == "${it.sourcePackage.lowercase()}::${rule.contactName.lowercase().trim()}" || it.conversationId == rule.contactName.lowercase().trim()
+                        (it.conversationId == "${it.sourcePackage.lowercase()}::${rule.contactName.lowercase().trim()}" || it.conversationId == rule.contactName.lowercase().trim())
                     }
                     val latestEvent = conversationEvents.maxByOrNull { it.timestamp }
                     val lastMessage = latestEvent?.realMessage ?: "No messages captured yet"
                     val lastTime = latestEvent?.timestamp ?: rule.createdAt
-                    val isLive = NotificationReplyRegistry.isReplyActionLive(rule.contactName)
+                    val threadPackage = latestEvent?.sourcePackage ?: selectedPackage
+                    val isLive = NotificationReplyRegistry.isReplyActionLive(rule.contactName, threadPackage)
 
                     threads.add(
                         ProtectedChatThread(
                             contactName = rule.contactName,
+                            sourcePackage = threadPackage,
                             contactPhoneNumber = rule.contactPhoneNumber,
                             lastMessage = lastMessage,
                             lastTimestamp = lastTime,
@@ -801,15 +790,18 @@ class DashboardActivity : AppCompatActivity() {
             }
             val threads = appRules.map { rule ->
                 val conversationEvents = appEvents.filter {
-                    it.conversationId == rule.contactName.lowercase().trim()
+                    it.conversationId == "${it.sourcePackage.lowercase()}::${rule.contactName.lowercase().trim()}" ||
+                        it.conversationId == rule.contactName.lowercase().trim()
                 }
                 val latestEvent = conversationEvents.maxByOrNull { it.timestamp }
                 val lastMessage = latestEvent?.realMessage ?: "No messages captured yet"
                 val lastTime = latestEvent?.timestamp ?: rule.createdAt
-                val isLive = NotificationReplyRegistry.isReplyActionLive(rule.contactName)
+                val threadPackage = latestEvent?.sourcePackage ?: selectedPackage
+                val isLive = NotificationReplyRegistry.isReplyActionLive(rule.contactName, threadPackage)
 
                 ProtectedChatThread(
                     contactName = rule.contactName,
+                    sourcePackage = threadPackage,
                     contactPhoneNumber = rule.contactPhoneNumber,
                     lastMessage = lastMessage,
                     lastTimestamp = lastTime,
