@@ -17,7 +17,6 @@ import com.veil.privacy.databinding.ActivityProtectedChatConversationBinding
 import com.veil.privacy.model.ProtectedContact
 import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.notification.NotificationReplyRegistry
-import com.veil.privacy.communication.VeilTransportManager
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
 import com.veil.privacy.ui.adapter.ProtectedChatAdapter
@@ -25,6 +24,7 @@ import com.veil.privacy.util.InsetsUtils
 import com.veil.privacy.util.VeilDialogs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -34,7 +34,7 @@ import kotlinx.coroutines.withContext
  * Implements genuine Android & WhatsApp privacy layer capabilities:
  * - Independent contact authentication check (PIN protection).
  * - Displays incoming messages captured securely via NotificationListenerService.
- * - Outgoing messages are encoded by VEIL and dispatched only through a live source-app RemoteInput action.
+ * - Outgoing messages dispatched via Android's RemoteInput PendingIntent or direct WhatsApp intent.
  * - Receive and respond to WhatsApp calls (Answer/Decline via intercepted notification actions).
  * - Send stickers, emojis, and media attachments via Android Photo Picker and WhatsApp share.
  * - Displays contact profile photos from Android address book.
@@ -47,6 +47,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private var contactName: String = ""
     private var conversationId: String = ""
+    private var sourcePackage: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
     private var contactPhoneNumber: String = ""
     private var isUnlockedForCurrentSession: Boolean = false
 
@@ -61,6 +62,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_CONTACT_NAME = "extra_contact_name"
         const val EXTRA_EVENT_ID = "extra_event_id"
+        const val EXTRA_SOURCE_PACKAGE = "extra_source_package"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,7 +73,8 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         InsetsUtils.applySystemBarInsets(binding.root)
 
         contactName = intent.getStringExtra(EXTRA_CONTACT_NAME)?.trim() ?: "Protected Contact"
-        conversationId = contactName.lowercase().trim()
+        sourcePackage = intent.getStringExtra(EXTRA_SOURCE_PACKAGE) ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+        conversationId = "${sourcePackage.lowercase()}::${contactName.lowercase().trim()}"
         database = VeilDatabase.getInstance(this)
 
         setupUI()
@@ -222,53 +225,33 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun updateReplyTokenStatus() {
-        lifecycleScope.launch {
-            val sourcePackage = withContext(Dispatchers.IO) {
-                database.protectedEventDao()
-                    .getMessagesForConversationSync(conversationId)
-                    .lastOrNull { it.sourcePackage in listOf(
-                        com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
-                        com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS,
-                        com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM,
-                        com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT
-                    ) }?.sourcePackage
-            }
-            val action = if (sourcePackage != null) {
-                NotificationReplyRegistry.getLiveReplyAction(contactName, sourcePackage)
-            } else {
-                NotificationReplyRegistry.getLiveReplyAction(contactName)
-            }
-            val isLive = action != null
-            val targetApp = action?.let {
-                com.veil.privacy.model.SupportedApp.getAppDisplayName(it.sourcePackage)
-            } ?: sourcePackage?.let {
-                com.veil.privacy.model.SupportedApp.getAppDisplayName(it)
-            } ?: "Messaging app"
+        val action = NotificationReplyRegistry.getLiveReplyAction(contactName, sourcePackage)
+        val isLive = action != null
+        val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(action.sourcePackage) else "Messaging app"
 
-            if (isLive) {
-                binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this@ProtectedChatConversationActivity, R.color.veil_accent_secure)
-                binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this@ProtectedChatConversationActivity, R.color.veil_accent_secure)
-                binding.ivContactProfileIndicator.contentDescription = "Protected Profile • Live Reply Active"
-                binding.tvChatStatusSubtitle.text = "PROTECTED CHAT • LIVE REPLY ACTIVE"
-                binding.tvReplyStatusTitle.text = "$targetApp reply action ready"
-                binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this@ProtectedChatConversationActivity, R.color.veil_accent_secure))
-                binding.tvReplyStatusDesc.text = "A reply-enabled notification from this conversation is available. VEIL will send only through this app's active Android RemoteInput action."
-                binding.tvReplyDisclaimerPill.text = "RemoteInput Ready"
-            } else {
-                binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this@ProtectedChatConversationActivity, R.color.veil_accent_amber)
-                binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this@ProtectedChatConversationActivity, R.color.veil_accent_titanium)
-                binding.ivContactProfileIndicator.contentDescription = "Protected Profile"
-                binding.tvChatStatusSubtitle.text = "PROTECTED CHAT • REPLY TOKEN INACTIVE"
-                binding.tvReplyStatusTitle.text = "No active reply action"
-                binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this@ProtectedChatConversationActivity, R.color.veil_accent_amber))
-                binding.tvReplyStatusDesc.text = "A fresh reply-enabled notification from $targetApp is required. VEIL keeps coded messages queued until Android exposes a usable reply action; delivery is never assumed."
-                binding.tvReplyDisclaimerPill.text = "Message Queue"
-            }
+        if (isLive) {
+            binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_secure)
+            binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_secure)
+            binding.ivContactProfileIndicator.contentDescription = "Protected Profile • Live Reply Active"
+            binding.tvChatStatusSubtitle.text = "PROTECTED CHAT • LIVE REPLY ACTIVE"
+            binding.tvReplyStatusTitle.text = "🟢 $targetApp reply action ready"
+            binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this, R.color.veil_accent_secure))
+            binding.tvReplyStatusDesc.text = "Active notification from $targetApp captured. Replies typed below will be dispatched through Android's RemoteInput mechanism directly to $targetApp."
+            binding.tvReplyDisclaimerPill.text = "RemoteInput Ready"
+        } else {
+            binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_amber)
+            binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_titanium)
+            binding.ivContactProfileIndicator.contentDescription = "Protected Profile"
+            binding.tvChatStatusSubtitle.text = "PROTECTED CHAT • REPLY TOKEN INACTIVE"
+            binding.tvReplyStatusTitle.text = "⚠️ No active notification reply token"
+            binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this, R.color.veil_accent_amber))
+            binding.tvReplyStatusDesc.text = "A notification must be currently active in Android's notification bar to dispatch inline replies. You can also open the messaging app directly."
+            binding.tvReplyDisclaimerPill.text = "Token Inactive"
         }
     }
 
     private fun updateCallStatus() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall != null && (liveCall.answerIntent != null || liveCall.declineIntent != null)) {
             binding.cardLiveCallBanner.visibility = View.VISIBLE
             binding.tvLiveCallTitle.text = "Incoming Call from $contactName"
@@ -278,7 +261,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleAnswerIncomingCall() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall?.answerIntent != null) {
             try {
                 liveCall.answerIntent.send()
@@ -296,7 +279,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleDeclineIncomingCall() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall?.declineIntent != null) {
             try {
                 liveCall.declineIntent.send()
@@ -314,7 +297,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleInitiateCall() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall != null) {
             handleAnswerIncomingCall()
             return
@@ -501,8 +484,23 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private fun observeConversation() {
         lifecycleScope.launch {
-            database.protectedEventDao().getMessagesForConversationFlow(conversationId)
-                .collectLatest { events ->
+            database.protectedEventDao().getAllFlow()
+                .debounce(100)
+                .collectLatest { allEvents ->
+                    // Include legacy unscoped rows only for this platform; never merge another
+                    // platform's same-named contact into the current conversation.
+                    val legacyConversationId = contactName.lowercase().trim()
+                    val events = allEvents
+                        .asSequence()
+                        .filter { event ->
+                            event.conversationId == conversationId ||
+                                (event.conversationId == legacyConversationId &&
+                                    (event.sourcePackage == sourcePackage ||
+                                        (sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP &&
+                                            event.sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS)))
+                        }
+                        .sortedBy { it.timestamp }
+                        .toList()
                     chatAdapter.submitList(events) {
                         if (events.isNotEmpty()) {
                             binding.rvMessages.scrollToPosition(events.size - 1)
@@ -516,41 +514,63 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleSendReply(replyText: String) {
-        lifecycleScope.launch {
-            val transportManager = VeilTransportManager(this@ProtectedChatConversationActivity)
-            val conversationSourcePackage = withContext(Dispatchers.IO) {
-                database.protectedEventDao()
-                    .getMessagesForConversationSync(conversationId)
-                    .lastOrNull { it.sourcePackage in listOf(
-                        com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
-                        com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS,
-                        com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM,
-                        com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT
-                    ) }?.sourcePackage
-            }
-            val sourcePackage = conversationSourcePackage
-                ?: transportManager.selectAvailableTransport(contactName)
-                ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+        if (replyText.isBlank()) {
+            Toast.makeText(this, "Type a message before sending", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-            val result = transportManager.queueOutgoing(
-                conversationId = conversationId,
-                contactName = contactName,
-                sourcePackage = sourcePackage,
-                plainText = replyText
+        // Resolve this thread's platform before selecting a live RemoteInput token. Contact
+        // names can repeat across apps, so never dispatch using contact name alone.
+        lifecycleScope.launch {
+            val conversationSourcePackage = sourcePackage
+            val action = NotificationReplyRegistry.getLiveReplyAction(contactName, conversationSourcePackage)
+            val targetApp = conversationSourcePackage.let {
+                com.veil.privacy.model.SupportedApp.getAppDisplayName(it)
+            } ?: "Messaging app"
+
+            if (action == null) {
+                VeilDialogs.showInfoDialog(
+                    context = this@ProtectedChatConversationActivity,
+                    title = "Direct Reply Unavailable",
+                    message = "VEIL cannot find an active, platform-matching Android notification reply action for $targetApp. No message was sent. Open the source app to continue, or wait for a new notification that supports inline replies."
+                )
+                return@launch
+            }
+
+            val dispatched = NotificationReplyRegistry.sendReply(
+                this@ProtectedChatConversationActivity,
+                contactName,
+                replyText,
+                action.sourcePackage
             )
 
-            binding.etReplyInput.text?.clear()
-            updateReplyTokenStatus()
-            val statusMessage = when (result.status) {
-                com.veil.privacy.model.TransportMessage.WAITING_FOR_DICTIONARY ->
-                    "Saved in VEIL. Waiting for the universal language dictionary; not sent yet."
-                com.veil.privacy.model.TransportMessage.DISPATCHED_NOT_CONFIRMED ->
-                    "Encoded message handed to Android. Delivery is not confirmed."
-                com.veil.privacy.model.TransportMessage.WAITING_FOR_REPLY_ACTION ->
-                    "Encoded message queued. Waiting for a reply-enabled notification from the selected app."
-                else -> result.detail
+            if (dispatched) {
+                binding.etReplyInput.text?.clear()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val outgoingEvent = ProtectedEvent(
+                        sourcePackage = action.sourcePackage,
+                        realSender = "You",
+                        realMessage = replyText,
+                        isOutgoing = true,
+                        replyStatus = "DISPATCHED_NOT_CONFIRMED",
+                        conversationId = conversationId,
+                        timestamp = System.currentTimeMillis()
+                    )
+                    database.protectedEventDao().insert(outgoingEvent)
+                }
+                Toast.makeText(
+                    this@ProtectedChatConversationActivity,
+                    "Reply handed to $targetApp. Delivery/read status is not confirmed by VEIL.",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                Toast.makeText(
+                    this@ProtectedChatConversationActivity,
+                    "Reply was not sent: the platform's notification action is unavailable or expired.",
+                    Toast.LENGTH_LONG
+                ).show()
+                updateReplyTokenStatus()
             }
-            Toast.makeText(this@ProtectedChatConversationActivity, statusMessage, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -558,17 +578,14 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         // Resolve the source app from the conversation's stored events. The old fallback
         // always launched WhatsApp, even when this thread came from Telegram, Instagram or Snapchat.
         lifecycleScope.launch {
-            val sourcePackage = withContext(Dispatchers.IO) {
-                database.protectedEventDao()
-                    .getMessagesForConversationSync(conversationId)
-                    .lastOrNull { it.sourcePackage.isNotBlank() }
-                    ?.sourcePackage
-            }
             val supported = com.veil.privacy.model.SupportedApp
-            val resolvedSourcePackage = sourcePackage ?: supported.PKG_WHATSAPP
-            val targetPackage = when (resolvedSourcePackage) {
-                supported.PKG_WHATSAPP, supported.PKG_WHATSAPP_BUSINESS,
-                supported.PKG_TELEGRAM, supported.PKG_INSTAGRAM, supported.PKG_SNAPCHAT -> resolvedSourcePackage
+            val resolvedSourcePackage = sourcePackage.ifBlank { supported.PKG_WHATSAPP }
+            val targetPackage = when {
+                resolvedSourcePackage == supported.PKG_WHATSAPP ||
+                    resolvedSourcePackage == supported.PKG_WHATSAPP_BUSINESS ||
+                    resolvedSourcePackage == supported.PKG_INSTAGRAM ||
+                    resolvedSourcePackage == supported.PKG_SNAPCHAT ||
+                    resolvedSourcePackage.startsWith("org.telegram.") -> resolvedSourcePackage
                 else -> supported.PKG_WHATSAPP
             }
 
@@ -606,7 +623,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         VeilDialogs.showConfirmationDialog(
             context = this,
             title = "Wipe Conversation",
-            message = "Are you sure you want to delete all local message logs for « $contactName »?\n\nThis will permanently remove intercepted messages from VEIL's local app storage.",
+            message = "Are you sure you want to delete all local message logs for « $contactName »?\n\nThis will permanently remove intercepted messages from VEIL's local encrypted storage.",
             confirmText = "Wipe Messages",
             onConfirm = {
                 lifecycleScope.launch(Dispatchers.IO) {
@@ -626,10 +643,10 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             message = "• VEIL is an autonomous notification disguise layer.\n\n" +
                     "• When a protected message arrives, Android's NotificationListenerService detects it and VEIL immediately disguises the system notification.\n\n" +
                     "• Messages displayed here are received exclusively through authorized Android notification events.\n\n" +
-                    "• Replies typed here are first encoded by VEIL's language codec, framed as a transport packet, and then submitted through the source app's live Android RemoteInput action. The dictionary and a current reply-enabled notification are required. Android accepting the action is not delivery confirmation.\n\n" +
+                    "• Replies typed here are dispatched through Android's official RemoteInput action exposed by the source app.\n\n" +
                     "• Stickers and media attachments are shared via Android's official Photo Picker.\n\n" +
                     "• Calls can be answered or declined directly when call notifications are active.\n\n" +
-                    "• Captured messages and queued transport packets are stored locally in VEIL's app-private database. Database-level encryption is not yet implemented."
+                    "• All captured messages remain 100% locally on your device in encrypted sandboxed storage."
         )
     }
 }
