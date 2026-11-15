@@ -48,7 +48,7 @@ The current envelope uses a version marker and URL-safe Base64 framing around a 
 - encoded language payload
 - SHA-256 digest for corruption detection
 
-The digest is unkeyed and is not encryption or authentication against an active attacker. Confidentiality requires a separate authenticated-encryption layer and secure key exchange.
+The digest is unkeyed and is not encryption or authentication against an active attacker. Confidentiality requires a separate authenticated-encryption layer and secure key exchange. The language dictionary's token substitution must also not be treated as cryptographic encryption unless its design explicitly provides vetted cryptographic protection. Pending outgoing plaintext is currently stored in VEIL's app-private Room database without database-level encryption.
 
 ## Platform constraints
 
