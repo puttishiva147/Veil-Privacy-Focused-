@@ -43,6 +43,7 @@ object NotificationReplyRegistry {
 
     // Keyed by normalized contact name (lowercase trimmed)
     private val liveActionsByContact = ConcurrentHashMap<String, LiveReplyAction>()
+    private val liveActionsByContactAndPackage = ConcurrentHashMap<String, LiveReplyAction>()
     private val liveCallsByContact = ConcurrentHashMap<String, LiveCallAction>()
     // Keyed by notificationKey to allow swift removal when notification is cleared
     private val keyToContactMap = ConcurrentHashMap<String, String>()
@@ -144,8 +145,23 @@ object NotificationReplyRegistry {
             resultKey = remoteInput.resultKey
         )
         liveActionsByContact[normalizedName] = liveAction
+        liveActionsByContactAndPackage[compositeKey(normalizedName, sourcePackage)] = liveAction
         keyToContactMap[notificationKey] = normalizedName
 
+    }
+
+    /** Exact app-scoped lookup; prevents same-name contacts in different apps sharing a reply token. */
+    fun getLiveReplyAction(contactName: String, sourcePackage: String): LiveReplyAction? {
+        val normalized = normalize(contactName)
+        val key = compositeKey(normalized, sourcePackage)
+        val action = liveActionsByContactAndPackage[key] ?: return null
+        if (System.currentTimeMillis() - action.capturedAt > 2 * 3600 * 1000L) {
+            liveActionsByContactAndPackage.remove(key)
+            if (liveActionsByContact[normalized] == action) liveActionsByContact.remove(normalized)
+            keyToContactMap.remove(action.notificationKey)
+            return null
+        }
+        return action
     }
 
     /**
@@ -198,6 +214,22 @@ object NotificationReplyRegistry {
         }
     }
 
+    /** Sends through a reply token belonging to the explicitly selected app only. */
+    fun sendReply(context: Context, contactName: String, sourcePackage: String, replyText: String): Boolean {
+        val action = getLiveReplyAction(contactName, sourcePackage) ?: return false
+        if (replyText.isBlank()) return false
+        return try {
+            val intent = Intent()
+            val bundle = Bundle()
+            bundle.putCharSequence(action.resultKey, replyText.trim())
+            RemoteInput.addResultsToIntent(arrayOf(action.remoteInput), intent, bundle)
+            action.actionIntent.send(context, 0, intent)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     /**
      * Removes cached action when Android cancels or removes the underlying notification.
      */
@@ -206,6 +238,7 @@ object NotificationReplyRegistry {
         // A single notification can be registered under both its parsed sender and a configured
         // rule name. Remove every matching entry, but preserve newer tokens for the same contact.
         liveActionsByContact.entries.removeIf { it.value.notificationKey == notificationKey }
+        liveActionsByContactAndPackage.entries.removeIf { it.value.notificationKey == notificationKey }
         liveCallsByContact.entries.removeIf { it.value.notificationKey == notificationKey }
 
     }
@@ -222,9 +255,12 @@ object NotificationReplyRegistry {
 
     fun clearAll() {
         liveActionsByContact.clear()
+        liveActionsByContactAndPackage.clear()
         liveCallsByContact.clear()
         keyToContactMap.clear()
     }
+
+    private fun compositeKey(normalizedName: String, sourcePackage: String): String = "${sourcePackage}|${normalizedName}"
 
     private fun normalize(name: String): String = name.lowercase().trim()
 }
