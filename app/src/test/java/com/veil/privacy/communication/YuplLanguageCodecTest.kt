@@ -1,6 +1,7 @@
 package com.veil.privacy.communication
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -58,5 +59,14 @@ class YuplLanguageCodecTest {
         assertEquals("", codec.decode(codec.encode("")))
         assertThrows(IllegalArgumentException::class.java) { codec.decode("Y2;bad") }
         assertThrows(IllegalArgumentException::class.java) { codec.decode("Y1;unknown-token") }
+    }
+    @Test
+    fun productionProviderStaysPendingUntilTheOwnerDictionaryIsInstalled() {
+        VeilLanguageCodecProvider.resetToPending()
+        val pending = VeilLanguageCodecProvider.get()
+        assertFalse(pending.isReady)
+        assertEquals(0, pending.dictionaryVersion)
+        assertThrows(IllegalStateException::class.java) { pending.encode("hello") }
+        assertThrows(IllegalStateException::class.java) { pending.decode("Y1;") }
     }
 }
