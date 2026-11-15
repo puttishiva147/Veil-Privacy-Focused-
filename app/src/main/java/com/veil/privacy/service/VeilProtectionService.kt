@@ -13,6 +13,7 @@ import androidx.core.app.ServiceCompat
 import com.veil.privacy.BuildConfig
 import com.veil.privacy.R
 import com.veil.privacy.notification.VeilNotificationListener
+import com.veil.privacy.licensing.LicenseTokenStore
 import com.veil.privacy.notification.VeilNotificationManager
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
@@ -106,6 +107,10 @@ class VeilProtectionService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action ?: ACTION_START
+        if (action != ACTION_STOP && !LicenseTokenStore.hasLocallyValidSession(this)) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
 
         when (action) {
             ACTION_STOP -> {
