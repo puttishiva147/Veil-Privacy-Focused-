@@ -8,11 +8,13 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput
 import com.veil.privacy.R
-import com.veil.privacy.model.ProtectedEvent
-import com.veil.privacy.storage.VeilDatabase
+import com.veil.privacy.communication.VeilTransportManager
+import com.veil.privacy.model.SupportedApp
+import com.veil.privacy.model.TransportMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Handles inline replies dispatched directly from VEIL replacement notifications.
@@ -42,44 +44,42 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
         val conversationId = intent.getStringExtra(EXTRA_CONVERSATION_ID) ?: contactName.lowercase().trim()
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
 
-        // Capture the source package before dispatch so outgoing history preserves the
-        // actual app (not ProtectedEvent's WhatsApp default) for future source-app routing.
+        // Queue through VEIL's language/transport pipeline. Never send this reply as plaintext.
         val liveAction = NotificationReplyRegistry.getLiveReplyAction(contactName)
-        val dispatched = NotificationReplyRegistry.sendReply(context, contactName, replyText)
-        Log.d(TAG, "Inline reply dispatch attempted; acceptedByPendingIntent=$dispatched (delivery is not confirmed)")
-
-        // 2. Persist outgoing message in VEIL's app-private Room database (not application-layer encrypted)
-        val db = VeilDatabase.getInstance(context)
+        val sourcePackage = liveAction?.sourcePackage ?: SupportedApp.PKG_WHATSAPP
         CoroutineScope(Dispatchers.IO).launch {
-            val outgoingEvent = ProtectedEvent(
-                sourcePackage = liveAction?.sourcePackage
-                    ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
-                realSender = "You",
-                realMessage = replyText,
-                isOutgoing = true,
-                replyStatus = if (dispatched) "DISPATCHED_NOT_CONFIRMED" else "FAILED_DISPATCH",
+            val result = VeilTransportManager(context).queueOutgoing(
                 conversationId = conversationId,
-                timestamp = System.currentTimeMillis()
+                contactName = contactName,
+                sourcePackage = sourcePackage,
+                plainText = replyText
             )
-            db.protectedEventDao().insert(outgoingEvent)
-        }
 
-        // 3. Update the notification in-place to give immediate feedback to user
-        if (notificationId != 0) {
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-            val statusText = if (dispatched) "Reply handed to Android; delivery not confirmed" else "Reply could not be dispatched; reopen VEIL to retry"
+            val statusText = when (result.status) {
+                TransportMessage.WAITING_FOR_DICTIONARY ->
+                    "Saved in VEIL; waiting for language dictionary. Not sent yet."
+                TransportMessage.WAITING_FOR_REPLY_ACTION ->
+                    "Encoded message queued; waiting for a reply-enabled notification."
+                TransportMessage.DISPATCHED_NOT_CONFIRMED ->
+                    "Encoded message handed to Android; delivery is not confirmed."
+                else -> result.detail
+            }
 
-            val updatedNotification = NotificationCompat.Builder(context, VeilNotificationManager.CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_veil_notification)
-                .setContentTitle("🔒 VEIL")
-                .setContentText(statusText)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(statusText))
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setTimeoutAfter(8000)
-                .setAutoCancel(true)
-                .build()
-
-            notificationManager?.notify(notificationId, updatedNotification)
+            if (notificationId != 0) {
+                withContext(Dispatchers.Main) {
+                    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                    val updatedNotification = NotificationCompat.Builder(context, VeilNotificationManager.CHANNEL_ID)
+                        .setSmallIcon(R.drawable.ic_veil_notification)
+                        .setContentTitle("🔒 VEIL")
+                        .setContentText(statusText)
+                        .setStyle(NotificationCompat.BigTextStyle().bigText(statusText))
+                        .setPriority(NotificationCompat.PRIORITY_LOW)
+                        .setTimeoutAfter(8000)
+                        .setAutoCancel(true)
+                        .build()
+                    notificationManager?.notify(notificationId, updatedNotification)
+                }
+            }
         }
     }
 }
