@@ -29,5 +29,6 @@ object LicenseTokenStore {
  fun token(context:Context):String?{val prefs=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);if(prefs.getLong(EXPIRY,0L)<=System.currentTimeMillis())return null;return prefs.getString(TOKEN,null)?.let(::decrypt)}
  fun activationCode(context:Context):String?=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString(CODE,null)?.let(::decrypt)
  fun hasLocallyValidSession(context:Context):Boolean=token(context)!=null
+ fun clearToken(context:Context){context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().remove(TOKEN).remove(EXPIRY).apply()}
  fun clear(context:Context){context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().clear().apply()}
 }
