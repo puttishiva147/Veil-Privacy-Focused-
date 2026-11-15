@@ -43,6 +43,7 @@ import com.veil.privacy.update.VeilUpdateChecker
 import com.veil.privacy.util.VeilDialogs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -710,7 +711,7 @@ class DashboardActivity : AppCompatActivity() {
         lifecycleScope.launch {
             combine(
                 database.protectionRuleDao().getAllRulesFlow(),
-                database.protectedEventDao().getAllFlow()
+                database.protectedEventDao().getAllFlow().debounce(100)
             ) { rules, events ->
                 Pair(rules, events)
             }.collect { (rules, events) ->
@@ -753,7 +754,7 @@ class DashboardActivity : AppCompatActivity() {
                 val threads = mutableListOf<ProtectedChatThread>()
                 for (rule in appRules) {
                     val conversationEvents = appEvents.filter {
-                        it.conversationId == rule.contactName.lowercase().trim()
+                        it.conversationId == "${it.sourcePackage.lowercase()}::${rule.contactName.lowercase().trim()}" || it.conversationId == rule.contactName.lowercase().trim()
                     }
                     val latestEvent = conversationEvents.maxByOrNull { it.timestamp }
                     val lastMessage = latestEvent?.realMessage ?: "No messages captured yet"
