@@ -10,16 +10,16 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TransportMessageDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun upsert(message: TransportMessage)
+    suspend fun upsert(message: TransportMessage)
 
     @Query("SELECT * FROM transport_messages WHERE id = :id LIMIT 1")
-    fun getById(id: String): TransportMessage?
+    suspend fun getById(id: String): TransportMessage?
 
     @Query("SELECT * FROM transport_messages WHERE conversationId = :conversationId ORDER BY createdAt ASC")
     fun observeConversation(conversationId: String): Flow<List<TransportMessage>>
 
     @Query("SELECT * FROM transport_messages WHERE status = :status ORDER BY createdAt ASC")
-    fun getByStatus(status: String): List<TransportMessage>
+    suspend fun getByStatus(status: String): List<TransportMessage>
 
     @Query("SELECT * FROM transport_messages ORDER BY createdAt DESC")
     fun observeAll(): Flow<List<TransportMessage>>
