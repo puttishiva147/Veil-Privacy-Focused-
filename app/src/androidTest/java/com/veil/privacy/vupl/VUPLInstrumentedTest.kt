@@ -21,8 +21,11 @@ class VUPLInstrumentedTest {
         val a = VUPL.openPair(keys, secret)
         val b = VUPL.openPair(keys, secret)
         val wrong = VUPL.openPair(keys, VUPL.createPairSecret())
+        assertTrue(secret.matches(Regex("[0-9a-f]{64}")))
         assertEquals(a.dict.size, b.dict.size)
         assertEquals(a.dict.size, a.dict.keyToCode.values.toSet().size)
+        assertTrue(a.dict.keyToCode.values.none { Regex("[·|=\\s]").containsMatchIn(it) })
+        assertEquals(0, a.dict.keyToCode.values.toSet().intersect(wrong.dict.keyToCode.values.toSet()).size)
         for ((k, v) in a.dict.keyToCode) assertEquals(v, b.dict.keyToCode[k])
         val messages = listOf(
             "Hello, how are you?", "नमस्ते, आप कैसे हैं?", "तू कसा आहेस?",
