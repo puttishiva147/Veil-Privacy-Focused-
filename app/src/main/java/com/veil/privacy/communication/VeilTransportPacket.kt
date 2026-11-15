@@ -22,7 +22,7 @@ data class VeilTransportPacket(
         private const val MAGIC = "VEIL-TRANSPORT"
         private const val FORMAT_VERSION = 1
         private const val PREFIX = "VUPL1:"
-        private const val MAX_PACKET_BYTES = 48 * 1024
+        private const val MAX_PACKET_BYTES = 2 * 1024
 
         fun encode(messageId: String, dictionaryVersion: Int, encodedPayload: String): String {
             require(messageId.isNotBlank()) { "Message ID is required" }
