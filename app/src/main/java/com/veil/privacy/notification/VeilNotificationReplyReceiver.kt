@@ -43,11 +43,12 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
 
         // Queue through VEIL's language/transport pipeline. Never send this reply as plaintext.
+        val pendingResult = goAsync()
         val transportManager = VeilTransportManager(context)
         CoroutineScope(Dispatchers.IO).launch {
-            val sourcePackage = transportManager.selectAvailableTransport(contactName)
-                ?: withContext(Dispatchers.IO) {
-                    VeilDatabase.getInstance(context).protectedEventDao()
+            try {
+                val sourcePackage = transportManager.selectAvailableTransport(contactName)
+                    ?: VeilDatabase.getInstance(context).protectedEventDao()
                         .getMessagesForConversationSync(conversationId)
                         .lastOrNull { it.sourcePackage in listOf(
                             SupportedApp.PKG_WHATSAPP,
@@ -55,40 +56,44 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
                             SupportedApp.PKG_INSTAGRAM,
                             SupportedApp.PKG_SNAPCHAT
                         ) }?.sourcePackage
+                    ?: SupportedApp.PKG_WHATSAPP
+
+                val result = transportManager.queueOutgoing(
+                    conversationId = conversationId,
+                    contactName = contactName,
+                    sourcePackage = sourcePackage,
+                    plainText = replyText
+                )
+
+                val statusText = when (result.status) {
+                    TransportMessage.WAITING_FOR_DICTIONARY ->
+                        "Saved in VEIL; waiting for language dictionary. Not sent yet."
+                    TransportMessage.WAITING_FOR_REPLY_ACTION ->
+                        "Encoded message queued; waiting for a reply-enabled notification."
+                    TransportMessage.DISPATCHED_NOT_CONFIRMED ->
+                        "Encoded message handed to Android; delivery is not confirmed."
+                    else -> result.detail
                 }
-                ?: SupportedApp.PKG_WHATSAPP
 
-            val result = transportManager.queueOutgoing(
-                conversationId = conversationId,
-                contactName = contactName,
-                sourcePackage = sourcePackage,
-                plainText = replyText
-            )
-
-            val statusText = when (result.status) {
-                TransportMessage.WAITING_FOR_DICTIONARY ->
-                    "Saved in VEIL; waiting for language dictionary. Not sent yet."
-                TransportMessage.WAITING_FOR_REPLY_ACTION ->
-                    "Encoded message queued; waiting for a reply-enabled notification."
-                TransportMessage.DISPATCHED_NOT_CONFIRMED ->
-                    "Encoded message handed to Android; delivery is not confirmed."
-                else -> result.detail
-            }
-
-            if (notificationId != 0) {
-                withContext(Dispatchers.Main) {
-                    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-                    val updatedNotification = NotificationCompat.Builder(context, VeilNotificationManager.CHANNEL_ID)
-                        .setSmallIcon(R.drawable.ic_veil_notification)
-                        .setContentTitle("🔒 VEIL")
-                        .setContentText(statusText)
-                        .setStyle(NotificationCompat.BigTextStyle().bigText(statusText))
-                        .setPriority(NotificationCompat.PRIORITY_LOW)
-                        .setTimeoutAfter(8000)
-                        .setAutoCancel(true)
-                        .build()
-                    notificationManager?.notify(notificationId, updatedNotification)
+                if (notificationId != 0) {
+                    withContext(Dispatchers.Main) {
+                        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                        val updatedNotification = NotificationCompat.Builder(context, VeilNotificationManager.CHANNEL_ID)
+                            .setSmallIcon(R.drawable.ic_veil_notification)
+                            .setContentTitle("🔒 VEIL")
+                            .setContentText(statusText)
+                            .setStyle(NotificationCompat.BigTextStyle().bigText(statusText))
+                            .setPriority(NotificationCompat.PRIORITY_LOW)
+                            .setTimeoutAfter(8000)
+                            .setAutoCancel(true)
+                            .build()
+                        notificationManager?.notify(notificationId, updatedNotification)
+                    }
                 }
+            } catch (error: Exception) {
+                android.util.Log.e("VeilReplyReceiver", "Could not queue transport reply", error)
+            } finally {
+                pendingResult.finish()
             }
         }
     }
