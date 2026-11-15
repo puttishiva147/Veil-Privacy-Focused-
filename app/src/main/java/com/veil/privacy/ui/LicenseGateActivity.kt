@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 class LicenseGateActivity:AppCompatActivity(){
  private lateinit var codeInput:EditText;private lateinit var activateButton:Button;private lateinit var progress:ProgressBar;private lateinit var message:TextView
- override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);renderGate()}
+ override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);renderGate();attemptSavedActivation()}
  private fun renderGate(){val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER;setPadding(dp(28),dp(32),dp(28),dp(32));setBackgroundColor(Color.rgb(9,10,12))}
   val logo=TextView(this).apply{text="VEIL";textSize=34f;letterSpacing=.24f;setTextColor(Color.WHITE);typeface=Typeface.create("sans-serif",Typeface.BOLD);gravity=Gravity.CENTER}
   val title=TextView(this).apply{text="Secure activation";textSize=22f;setTextColor(Color.WHITE);typeface=Typeface.DEFAULT_BOLD;gravity=Gravity.CENTER;setPadding(0,dp(18),0,dp(8))}
@@ -34,6 +34,12 @@ class LicenseGateActivity:AppCompatActivity(){
   val website=Button(this).apply{text="Get free trial / subscription";isAllCaps=false;setTextColor(Color.WHITE);setBackgroundColor(Color.TRANSPARENT);setOnClickListener{openWebsite()}}
   listOf(logo,title,subtitle,codeInput,activateButton,progress,message,website).forEachIndexed{index,view->root.addView(view,LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{topMargin=when(index){3->dp(26);4->dp(14);5->dp(18);7->dp(8);else->0}})}
   setContentView(root)
+ }
+ private fun attemptSavedActivation(){
+  lifecycleScope.launch {
+   val restored=withContext(Dispatchers.IO){LicenseRepository.verifyAndRefresh(this@LicenseGateActivity)}
+   if(restored && !isFinishing){startActivity(Intent(this@LicenseGateActivity,MainActivity::class.java).apply{flags=Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK});finish()}
+  }
  }
  private fun activate(){val code=codeInput.text?.toString()?.trim().orEmpty();if(!code.matches(Regex("\\d{12}"))){message.text="Please enter exactly 12 digits.";return};activateButton.isEnabled=false;progress.visibility=View.VISIBLE;message.text="Verifying activation code securely…"
   lifecycleScope.launch{try{withContext(Dispatchers.IO){LicenseRepository.activateNewCode(this@LicenseGateActivity,code)};startActivity(Intent(this@LicenseGateActivity,MainActivity::class.java).apply{flags=Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK});finish()}catch(error:Exception){message.text=error.localizedMessage?:"Activation failed. Check your connection and try again."}finally{progress.visibility=View.GONE;activateButton.isEnabled=true}}
