@@ -8,10 +8,10 @@ object LicenseRepository {
  suspend fun verifyAndRefresh(context:Context):Boolean=withContext(Dispatchers.IO){
   val token=LicenseTokenStore.token(context);val code=LicenseTokenStore.activationCode(context)
   if(!token.isNullOrBlank()){
-   try{val refreshed=LicenseApi.refresh(token);LicenseTokenStore.save(context,refreshed.accessToken,code.orEmpty(),refreshed.expiresInSeconds);return@withContext true}catch(_:Exception){}
+   try{val refreshed=LicenseApi.refresh(token);LicenseTokenStore.save(context,refreshed.accessToken,code.orEmpty(),refreshed.expiresInSeconds);return@withContext true}catch(_:Exception){LicenseTokenStore.clearToken(context)}
   }
   if(!code.isNullOrBlank()){
-   try{val renewed=LicenseApi.activate(context,code);LicenseTokenStore.save(context,renewed.accessToken,code,renewed.expiresInSeconds);return@withContext true}catch(_:Exception){}
+   try{val renewed=LicenseApi.activate(context,code);LicenseTokenStore.save(context,renewed.accessToken,code,renewed.expiresInSeconds);return@withContext true}catch(_:Exception){LicenseTokenStore.clearToken(context)}
   }
   false
  }
