@@ -22,6 +22,6 @@ object LicenseDeviceKey {
  fun fingerprintHash(context:Context):String{
   val androidId=Settings.Secure.getString(context.contentResolver,Settings.Secure.ANDROID_ID)?.takeIf{it.isNotBlank()}?:throw IllegalStateException("Android device fingerprint is unavailable.")
   val digest=MessageDigest.getInstance("SHA-256").digest(androidId.toByteArray(Charsets.UTF_8))
-  return digest.joinToString(""){"%02x".format(it)}
+  return digest.joinToString(""){byte->"%02x".format(byte.toInt() and 0xff)}
  }
 }
