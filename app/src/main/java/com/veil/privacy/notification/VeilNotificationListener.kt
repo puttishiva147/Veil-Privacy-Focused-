@@ -10,6 +10,8 @@ import com.veil.privacy.communication.VeilTransportManager
 import com.veil.privacy.communication.VeilTransportPacket
 import com.veil.privacy.privacy.RuleMatchingEngine
 import com.veil.privacy.storage.VeilInbox
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -33,6 +35,16 @@ class VeilNotificationListener : BaseNotificationListenerService() {
     private val ruleMatchingEngine = RuleMatchingEngine()
     private lateinit var inbox: VeilInbox
     private lateinit var notificationManager: VeilNotificationManager
+
+    private data class QueuedNotification(
+        val notification: StatusBarNotification,
+        val parsed: ParsedNotificationInfo,
+        val replyAction: Pair<android.app.Notification.Action, android.app.RemoteInput>?,
+        val transportCaptureJob: Job
+    )
+
+    // Serialize notification transformations so bursts do not spawn competing DB/UI jobs.
+    private val notificationQueue = Channel<QueuedNotification>(Channel.BUFFERED)
 
     companion object {
         const val WHATSAPP_PACKAGE = "com.whatsapp"
@@ -66,6 +78,16 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         super.onCreate()
         inbox = VeilInbox.getInstance(this)
         notificationManager = VeilNotificationManager.getInstance(this)
+        serviceScope.launch {
+            for (queued in notificationQueue) {
+                try {
+                    queued.transportCaptureJob.join()
+                    processIncomingProtectedNotification(queued.notification, queued.parsed, queued.replyAction)
+                } catch (error: Exception) {
+                    emitDiagnostic("PROCESS", "Queued notification processing failed (${error.javaClass.simpleName})", false)
+                }
+            }
+        }
     }
 
     override fun onListenerConnected() {
@@ -197,13 +219,9 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         }
 
         // 7. Evaluate and process against configured VEIL rules
-        serviceScope.launch {
-            try {
-                transportCaptureJob.join()
-                processIncomingProtectedNotification(sbn, parsed, replyActionPair)
-            } catch (e: Exception) {
-                emitDiagnostic("PROCESS", "Notification processing failed (${e.javaClass.simpleName})", false)
-            }
+        val queued = notificationQueue.trySend(QueuedNotification(sbn, parsed, replyActionPair, transportCaptureJob))
+        if (queued.isFailure) {
+            emitDiagnostic("QUEUE", "Notification processing queue is full; this event was not processed", false)
         }
     }
 
@@ -313,7 +331,8 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         }
 
         // --- MATCH CONFIRMED: APPLY PRIVACY TRANSFORMATION ---
-        val targetConversation = matchedRule.contactName.lowercase().trim()
+        val sourcePackage = sbn.packageName.orEmpty()
+        val targetConversation = "${sourcePackage.lowercase()}::${matchedRule.contactName.lowercase().trim()}"
 
         // Also register live reply action under the matched rule's contactName if different from sender
         if (replyActionPair != null && sbn.key != null && matchedRule.contactName.isNotBlank() &&
@@ -331,9 +350,10 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         // Stable event identification and deduplication: prevent duplicate notification events
         val isDuplicate = withContext(Dispatchers.IO) {
             val hasKey = !parsed.notificationKey.isNullOrBlank() &&
-                database.protectedEventDao().hasEventWithNotificationKey(parsed.notificationKey) > 0
-            val hasRecentContent = database.protectedEventDao().isRecentDuplicate(
+                database.protectedEventDao().hasEventWithNotificationKeyAndContent(parsed.notificationKey, sourcePackage, parsed.message) > 0
+            val hasRecentContent = database.protectedEventDao().isRecentDuplicateForPlatform(
                 conversationId = targetConversation,
+                sourcePackage = sourcePackage,
                 realMessage = parsed.message,
                 minTimestamp = parsed.timestamp - 10000L
             ) > 0
@@ -408,6 +428,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             conversationId = targetConversation
         )).copy(
             timestamp = parsed.timestamp,
+            sourcePackage = sourcePackage,
             decoySender = finalDecoySender,
             decoyMessage = finalDecoyMessage,
             isCall = parsed.isCall,
