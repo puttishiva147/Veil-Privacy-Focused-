@@ -6,6 +6,7 @@ import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.model.ProtectionRule
 import com.veil.privacy.model.SelectedContact
 import com.veil.privacy.privacy.RuleMatchingEngine
+import com.veil.privacy.vupl.VUPLRuntime
 import com.veil.privacy.storage.VeilInbox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -179,9 +180,10 @@ class VeilNotificationListener : BaseNotificationListenerService() {
      */
     private suspend fun processIncomingProtectedNotification(
         sbn: StatusBarNotification,
-        parsed: ParsedNotificationInfo,
+        rawParsed: ParsedNotificationInfo,
         replyActionPair: Pair<android.app.Notification.Action, android.app.RemoteInput>? = null
     ) {
+        val parsed = rawParsed.copy(message = VUPLRuntime.decodeIncoming(this, rawParsed.message))
         // Fetch all active, enabled protection rules and contacts from Room database
         val allRules = withContext(Dispatchers.IO) {
             val rules = database.protectionRuleDao().getEnabledRulesSync().toMutableList()
