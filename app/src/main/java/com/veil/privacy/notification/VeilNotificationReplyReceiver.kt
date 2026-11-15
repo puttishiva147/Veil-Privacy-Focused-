@@ -47,15 +47,18 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
         val transportManager = VeilTransportManager(context)
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val sourcePackage = transportManager.selectAvailableTransport(contactName)
-                    ?: VeilDatabase.getInstance(context).protectedEventDao()
-                        .getMessagesForConversationSync(conversationId)
-                        .lastOrNull { it.sourcePackage in listOf(
-                            SupportedApp.PKG_WHATSAPP,
-                            SupportedApp.PKG_WHATSAPP_BUSINESS,
-                            SupportedApp.PKG_INSTAGRAM,
-                            SupportedApp.PKG_SNAPCHAT
-                        ) }?.sourcePackage
+                val conversationSourcePackage = VeilDatabase.getInstance(context).protectedEventDao()
+                    .getMessagesForConversationSync(conversationId)
+                    .lastOrNull { it.sourcePackage in listOf(
+                        SupportedApp.PKG_WHATSAPP,
+                        SupportedApp.PKG_WHATSAPP_BUSINESS,
+                        SupportedApp.PKG_INSTAGRAM,
+                        SupportedApp.PKG_SNAPCHAT
+                    ) }?.sourcePackage
+                val sourcePackage = conversationSourcePackage?.takeIf {
+                    NotificationReplyRegistry.getLiveReplyAction(contactName, it) != null
+                } ?: transportManager.selectAvailableTransport(contactName)
+                    ?: conversationSourcePackage
                     ?: SupportedApp.PKG_WHATSAPP
 
                 val result = transportManager.queueOutgoing(
