@@ -34,6 +34,8 @@ object VUPL {
         internal val keyToCode: LinkedHashMap<String, String>,
         internal val codeToKey: HashMap<String, String>
     ) {
+        internal val phrases: List<String> = keyToCode.keys.asSequence().filter { it.startsWith("p:") }
+            .map { it.substring(2) }.sortedByDescending { it.length }.toList()
         fun has(key: String): Boolean = keyToCode.containsKey(key)
         val size: Int get() = keyToCode.size
     }
@@ -80,8 +82,8 @@ object VUPL {
         return KeysFile(root.getInt("version"), keys)
     }
 
-    private fun glyphCode(dictSecretAsciiHex: ByteArray, key: String, attempt: Int): String {
-        val digest = hmac(dictSecretAsciiHex, (key + "\u0000" + attempt).toByteArray(StandardCharsets.UTF_8))
+    private fun glyphCode(dictMac: Mac, key: String, attempt: Int): String {
+        val digest = dictMac.doFinal((key + "\u0000" + attempt).toByteArray(StandardCharsets.UTF_8))
         val count = 2 + ((digest[0].toInt() and 0xff) % 3)
         val sb = StringBuilder()
         for (i in 0 until count) {
@@ -99,13 +101,14 @@ object VUPL {
         // IMPORTANT: TypeScript uses digest().toString("hex") and then uses that STRING as HMAC key.
         val dictSecret = hex(dictDigest).toByteArray(StandardCharsets.UTF_8)
         val aes = hmac(secret, "VUPL-AES".toByteArray(StandardCharsets.UTF_8))
+        val dictMac = Mac.getInstance("HmacSHA256").apply { init(SecretKeySpec(dictSecret, "HmacSHA256")) }
         val k2c = LinkedHashMap<String, String>(keys.keys.size)
         val c2k = HashMap<String, String>(keys.keys.size)
         for (key in keys.keys) {
             var attempt = 0
             var code: String
             do {
-                code = glyphCode(dictSecret, key, attempt)
+                code = glyphCode(dictMac, key, attempt)
                 attempt++
             } while (c2k.containsKey(code))
             k2c[key] = code
@@ -218,8 +221,7 @@ object VUPL {
     fun tokenize(text: String, dict: Dictionary): List<String> {
         val out = ArrayList<String>()
         val graphemeAt = graphemes(text)
-        val phrases = dict.keyToCode.keys.asSequence().filter { it.startsWith("p:") }
-            .map { it.substring(2) }.sortedByDescending { it.length }.toList()
+        val phrases = dict.phrases
 
         fun pick(ch: String) {
             val key = listOf("ws:", "s:", "c:", "e:").asSequence()
