@@ -22,6 +22,7 @@ import com.veil.privacy.storage.VeilPrefs
 import com.veil.privacy.ui.adapter.ProtectedChatAdapter
 import com.veil.privacy.util.InsetsUtils
 import com.veil.privacy.util.VeilDialogs
+import com.veil.privacy.vupl.VUPLRuntime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -498,43 +499,34 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         val action = NotificationReplyRegistry.getLiveReplyAction(contactName)
         val isLive = action != null
         val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(action.sourcePackage) else "Messaging app"
-
         if (!isLive) {
-            VeilDialogs.showConfirmationDialog(
-                context = this,
-                title = "Active Notification Required",
-                message = "Android's RemoteInput notification reply mechanism requires an active notification from $targetApp in your notification tray.\n\nBecause no live notification token is currently pending, would you like to open the app directly to send your message?",
-                confirmText = "Open App",
-                onConfirm = { openWhatsAppChatDirectly(replyText) }
-            )
+            VeilDialogs.showConfirmationDialog(context = this, title = "Active Notification Required",
+                message = "Android RemoteInput requires an active notification from $targetApp. Would you like to open the app directly to send your message?",
+                confirmText = "Open App", onConfirm = { openWhatsAppChatDirectly(replyText) })
             return
         }
-
-        // Dispatch via Notification RemoteInput
-        val dispatched = NotificationReplyRegistry.sendReply(this, contactName, replyText)
-
-        if (dispatched) {
-            binding.etReplyInput.text?.clear()
-
-            // Record outgoing message in conversation thread
-            lifecycleScope.launch(Dispatchers.IO) {
-                val outgoingEvent = ProtectedEvent(
-                    sourcePackage = action?.sourcePackage
-                        ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
-                    realSender = "You",
-                    realMessage = replyText,
-                    isOutgoing = true,
-                    replyStatus = "DISPATCHED_NOT_CONFIRMED",
-                    conversationId = conversationId,
-                    timestamp = System.currentTimeMillis()
-                )
-                database.protectedEventDao().insert(outgoingEvent)
+        lifecycleScope.launch {
+            val wireText = try { VUPLRuntime.encodeOutgoing(this@ProtectedChatConversationActivity, replyText) }
+            catch (error: Exception) {
+                Toast.makeText(this@ProtectedChatConversationActivity, "VUPL encoding failed: " + error.localizedMessage, Toast.LENGTH_LONG).show()
+                return@launch
             }
-
-            Toast.makeText(this, "Reply action handed to $targetApp. Delivery/read status is not available to VEIL.", Toast.LENGTH_LONG).show()
-        } else {
-            Toast.makeText(this, "Failed to send: notification action token expired", Toast.LENGTH_LONG).show()
-            updateReplyTokenStatus()
+            val dispatched = NotificationReplyRegistry.sendReply(this@ProtectedChatConversationActivity, contactName, wireText)
+            if (dispatched) {
+                binding.etReplyInput.text?.clear()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val outgoingEvent = ProtectedEvent(
+                        sourcePackage = action?.sourcePackage ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
+                        realSender = "You", realMessage = replyText, isOutgoing = true,
+                        replyStatus = "DISPATCHED_NOT_CONFIRMED", conversationId = conversationId,
+                        timestamp = System.currentTimeMillis())
+                    database.protectedEventDao().insert(outgoingEvent)
+                }
+                Toast.makeText(this@ProtectedChatConversationActivity, "Reply handed to $targetApp through the active notification action.", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this@ProtectedChatConversationActivity, "Failed to send: notification action token expired", Toast.LENGTH_LONG).show()
+                updateReplyTokenStatus()
+            }
         }
     }
 
@@ -557,13 +549,14 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             }
 
             try {
+                val wireText = if (prefilledText.isNotBlank()) VUPLRuntime.encodeOutgoing(this@ProtectedChatConversationActivity, prefilledText) else ""
                 if ((targetPackage == supported.PKG_WHATSAPP ||
                         targetPackage == supported.PKG_WHATSAPP_BUSINESS) &&
                     contactPhoneNumber.isNotBlank()
                 ) {
                     val phoneDigits = ProtectedContact.extractDigits(contactPhoneNumber)
                     if (phoneDigits.isNotBlank()) {
-                        val encodedText = if (prefilledText.isNotBlank()) "&text=" + Uri.encode(prefilledText) else ""
+                        val encodedText = if (wireText.isNotBlank()) "&text=" + Uri.encode(wireText) else ""
                         val uri = Uri.parse("https://api.whatsapp.com/send?phone=$phoneDigits$encodedText")
                         startActivity(Intent(Intent.ACTION_VIEW, uri).setPackage(targetPackage))
                         return@launch
