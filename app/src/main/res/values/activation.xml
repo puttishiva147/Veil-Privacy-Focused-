@@ -2,7 +2,7 @@
 <resources>
     <!-- Set VEIL_API_BASE_URL in this resource to the deployed HTTPS Next.js licensing API origin. -->
     <string name="veil_api_base_url" translatable="false"></string>
-    <string name="veil_activation_website" translatable="false">https://puttishiva147.github.io/VEIL-Web/</string>
+    <string name="veil_activation_website" translatable="false">https://veil-public-website.netlify.app/trial</string>
     <string name="activation_title">Activate VEIL</string>
     <string name="activation_description">Get your activation code from the official VEIL website. Enter it here to verify this device and unlock the application.</string>
     <string name="activation_get_code">GET ACTIVATION CODE ON WEBSITE</string>
