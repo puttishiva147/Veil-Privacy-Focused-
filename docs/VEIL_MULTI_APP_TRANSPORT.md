@@ -16,7 +16,7 @@ Supported transport package IDs:
 
 1. A user writes a message in VEIL Protected Chat.
 2. `VeilTransportManager` asks the VEIL language codec to encode it.
-3. The encoded tokens are wrapped in a versioned `VUPL1:` transport packet.
+3. The encoded tokens are wrapped in a versioned `YUPL1:` transport packet.
 4. VEIL selects an app for which Android has exposed a live notification `RemoteInput` reply action for that contact.
 5. VEIL submits the packet through that app's existing `PendingIntent`.
 6. Android accepting the `PendingIntent` is recorded as `DISPATCHED_NOT_CONFIRMED`; VEIL cannot infer delivery or read status.
@@ -27,7 +27,7 @@ If the dictionary is not installed, the message is stored locally as `WAITING_FO
 
 1. `VeilNotificationListener` receives a supported-app notification.
 2. The notification parser extracts the visible sender and message text.
-3. VEIL looks for a valid `VUPL1:` packet.
+3. VEIL looks for a valid `YUPL1:` packet.
 4. The packet is validated and stored in the Room transport queue.
 5. The installed dictionary decodes the token payload.
 6. The decoded text is added to the existing Protected Chats history.
