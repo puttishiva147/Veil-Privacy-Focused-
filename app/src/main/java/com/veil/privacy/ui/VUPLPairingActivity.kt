@@ -3,7 +3,6 @@ package com.veil.privacy.ui
 import android.app.Activity
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.view.Gravity
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.ImageView
@@ -16,7 +15,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.BarcodeEncoder
-import com.journeyapps.barcodescanner.IntentIntegrator
+import com.google.zxing.integration.android.IntentIntegrator
 import com.veil.privacy.vupl.PairSecretStore
 import com.veil.privacy.vupl.VUPL
 import com.veil.privacy.vupl.VUPLRuntime
