@@ -46,7 +46,9 @@ class VeilApplication : Application() {
 
         // Register lifecycle callbacks for mandatory, zero-timeout app lock
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
-            override fun onActivityCreated(activity: android.app.Activity, savedInstanceState: android.os.Bundle?) {}
+            override fun onActivityCreated(activity: android.app.Activity, savedInstanceState: android.os.Bundle?) {
+                activity.window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+            }
 
             override fun onActivityStarted(activity: android.app.Activity) {
                 if (startedActivityCount == 0 && isAppInBackground) {
