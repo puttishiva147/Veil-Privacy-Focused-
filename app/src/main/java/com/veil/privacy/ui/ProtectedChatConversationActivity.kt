@@ -497,19 +497,20 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private fun handleSendReply(replyText: String) {
         lifecycleScope.launch {
-            val sourcePackage = withContext(Dispatchers.IO) {
-                NotificationReplyRegistry.getLiveReplyAction(contactName)?.sourcePackage
-                    ?: database.protectedEventDao()
+            val transportManager = VeilTransportManager(this@ProtectedChatConversationActivity)
+            val sourcePackage = transportManager.selectAvailableTransport(contactName)
+                ?: withContext(Dispatchers.IO) {
+                    database.protectedEventDao()
                         .getMessagesForConversationSync(conversationId)
                         .lastOrNull { it.sourcePackage in listOf(
                             com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
                             com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM,
                             com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT
                         ) }?.sourcePackage
-                    ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
-            }
+                }
+                ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
 
-            val result = VeilTransportManager(this@ProtectedChatConversationActivity).queueOutgoing(
+            val result = transportManager.queueOutgoing(
                 conversationId = conversationId,
                 contactName = contactName,
                 sourcePackage = sourcePackage,
