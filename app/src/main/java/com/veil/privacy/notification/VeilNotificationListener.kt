@@ -3,6 +3,7 @@ package com.veil.privacy.notification
 import android.service.notification.StatusBarNotification
 import com.veil.privacy.model.ParsedNotificationInfo
 import com.veil.privacy.licensing.LicenseTokenStore
+import com.veil.privacy.licensing.LicenseRepository
 import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.model.ProtectionRule
 import com.veil.privacy.model.SelectedContact
@@ -18,6 +19,8 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Production Android NotificationListenerService for VEIL.
@@ -35,6 +38,8 @@ class VeilNotificationListener : BaseNotificationListenerService() {
     private val ruleMatchingEngine = RuleMatchingEngine()
     private lateinit var inbox: VeilInbox
     private lateinit var notificationManager: VeilNotificationManager
+    // Serialize refresh attempts when several notifications arrive after the 15-minute token expires.
+    private val licenseRefreshMutex = Mutex()
 
     private data class QueuedNotification(
         val notification: StatusBarNotification,
@@ -122,11 +127,31 @@ class VeilNotificationListener : BaseNotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
+        if (sbn == null) return
         if (!LicenseTokenStore.hasLocallyValidSession(this)) {
-            emitDiagnostic("LICENSE", "Notification processing blocked: valid activation required", false)
+            serviceScope.launch {
+                val refreshed = try {
+                    licenseRefreshMutex.withLock {
+                        if (LicenseTokenStore.hasLocallyValidSession(this@VeilNotificationListener)) {
+                            true
+                        } else {
+                            LicenseRepository.verifyAndRefresh(this@VeilNotificationListener)
+                        }
+                    }
+                } catch (error: Exception) {
+                    emitDiagnostic("LICENSE", "Online license refresh failed (${error.javaClass.simpleName})", false)
+                    false
+                }
+                if (refreshed) {
+                    emitDiagnostic("LICENSE", "License renewed by the server; resuming notification processing")
+                    // Retry this notification only after the server has confirmed entitlement.
+                    onNotificationPosted(sbn)
+                } else {
+                    emitDiagnostic("LICENSE", "Notification processing blocked: online license verification failed", false)
+                }
+            }
             return
         }
-        if (sbn == null) return
 
         val pkg = sbn.packageName ?: return
         val ownPackage = packageName
