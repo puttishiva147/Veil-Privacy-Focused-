@@ -82,8 +82,8 @@ class VeilTransportManager(
                     lastError = "Waiting for VEIL dictionary file"
                 )
             )
-            return SendResult(id, TransportMessage.WAITING_FOR_DICTIONARY, "Saved locally; dictionary required")
             saveChatEvent("VEIL_TRANSPORT:$id", conversationId, contactName, sourcePackage, plainText, true, TransportMessage.WAITING_FOR_DICTIONARY)
+            return SendResult(id, TransportMessage.WAITING_FOR_DICTIONARY, "Saved locally; dictionary required")
         }
 
         return encodeAndDispatch(id, conversationId, contactName, sourcePackage, plainText)
@@ -126,6 +126,7 @@ class VeilTransportManager(
                         lastError = "No active reply action from selected app"
                     )
                 )
+                saveChatEvent("VEIL_TRANSPORT:$id", conversationId, contactName, sourcePackage, plainText, true, TransportMessage.WAITING_FOR_REPLY_ACTION)
                 return SendResult(id, TransportMessage.WAITING_FOR_REPLY_ACTION, "Open the selected app conversation and wait for its reply-enabled notification")
             }
 
@@ -212,6 +213,9 @@ class VeilTransportManager(
                             updatedAt = System.currentTimeMillis(),
                             lastError = ""
                         ))
+                        withContext(Dispatchers.IO) {
+                            database.protectedEventDao().updateTransportEvent("VEIL_TRANSPORT:${queued.id}", plainText, TransportMessage.RECEIVED)
+                        }
                         decodedCount++
                     } else {
                         dao.upsert(queued.copy(
