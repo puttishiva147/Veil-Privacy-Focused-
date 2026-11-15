@@ -183,6 +183,11 @@ class VeilTransportManager(
                     updatedAt = System.currentTimeMillis(),
                     lastError = if (accepted) "" else "No active reply action from selected app"
                 ))
+                withContext(Dispatchers.IO) {
+                    database.protectedEventDao().updateTransportEvent(
+                        "VEIL_TRANSPORT:${queued.id}", queued.originalText, nextStatus
+                    )
+                }
                 SendResult(
                     queued.id,
                     nextStatus,
@@ -222,6 +227,7 @@ class VeilTransportManager(
 
     /** Called by the notification listener for every supported app notification. */
     suspend fun captureIncoming(sourcePackage: String, sender: String, notificationText: String): Boolean {
+        if (sourcePackage !in supportedTransports().map { it.first }) return false
         val packet = VeilTransportPacket.extract(notificationText) ?: return false
         val conversationId = sender.lowercase().trim() + "@" + sourcePackage
         val existing = dao.getById(packet.messageId)
