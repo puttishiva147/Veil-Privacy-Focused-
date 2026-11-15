@@ -307,7 +307,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         if (phoneDigits.isNotBlank()) {
             try {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://api.whatsapp.com/send?phone=$phoneDigits"))
-                intent.setPackage("com.whatsapp")
+                intent.setPackage(targetPackage)
                 startActivity(intent)
             } catch (_: Exception) {
                 openWhatsAppChatDirectly()
@@ -464,6 +464,14 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun shareMediaOrStickerToWhatsApp(imageUri: Uri) {
+        val targetPackage = when (sourcePackage) {
+            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP -> com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS -> com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS
+            else -> {
+                Toast.makeText(this, "Media and sticker sharing is currently supported only for WhatsApp and WhatsApp Business.", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
         try {
             val mimeType = contentResolver.getType(imageUri)?.takeIf { it.startsWith("image/") || it.startsWith("video/") }
                 ?: "image/*"
@@ -476,7 +484,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             }
             startActivity(Intent.createChooser(shareIntent, "Share media to WhatsApp"))
         } catch (_: android.content.ActivityNotFoundException) {
-            Toast.makeText(this, "WhatsApp is not installed or cannot accept this media", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "The selected WhatsApp app is not installed or cannot accept this media", Toast.LENGTH_LONG).show()
         } catch (_: Exception) {
             Toast.makeText(this, "Could not share this media with WhatsApp", Toast.LENGTH_LONG).show()
         }
