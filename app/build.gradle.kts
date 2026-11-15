@@ -97,7 +97,7 @@ val generateVUPLKeys by tasks.registering {
   }
 }
 
-android.sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/vuplAssets"))
+android.sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/vuplAssets").get().asFile)
 tasks.named("preBuild").configure { dependsOn(generateVUPLKeys) }
 
 dependencies {
