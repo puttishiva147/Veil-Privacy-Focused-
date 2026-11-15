@@ -1,3 +1,8 @@
+import java.io.ByteArrayInputStream
+import java.security.MessageDigest
+import java.util.Base64
+import java.util.zip.InflaterInputStream
+
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
 
 plugins {
@@ -16,8 +21,8 @@ android {
     applicationId = "com.veil.privacy"
     minSdk = 26
     targetSdk = 35
-    versionCode = 41
-    versionName = "4.5.7"
+    versionCode = 42
+    versionName = "4.6.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -41,7 +46,8 @@ android {
   buildTypes {
     release {
       isCrunchPngs = false
-      isMinifyEnabled = false
+      isMinifyEnabled = true
+      isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("release")
     }
@@ -71,7 +77,32 @@ secrets {
 
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
 
+val generateVUPLKeys by tasks.registering {
+  val compressedKeys = rootProject.file("tools/vupl/veil_keys_v1.json.zlib.b64")
+  val generatedAssets = layout.buildDirectory.dir("generated/vuplAssets")
+  inputs.file(compressedKeys)
+  outputs.file(generatedAssets.map { it.file("veil_keys_v1.json") })
+  doLast {
+    val compressed = Base64.getMimeDecoder().decode(compressedKeys.readText())
+    val target = generatedAssets.get().file("veil_keys_v1.json").asFile
+    target.parentFile.mkdirs()
+    InflaterInputStream(ByteArrayInputStream(compressed)).use { input ->
+      target.outputStream().use { output -> input.copyTo(output) }
+    }
+    val digest = MessageDigest.getInstance("SHA-256").digest(target.readBytes())
+      .joinToString("") { "%02x".format(it) }
+    check(target.length() == 1367633L && digest == "ea416c4efe5022bdad61833aa1fbf3f54a7475b9645f9d5110800c7f88a49510") {
+      "VUPL key list does not match the supplied veil_keys_v1.json"
+    }
+  }
+}
+
+android.sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/vuplAssets"))
+tasks.named("preBuild").configure { dependsOn(generateVUPLKeys) }
+
 dependencies {
+  implementation("androidx.security:security-crypto:1.1.0")
+  implementation("com.journeyapps:zxing-android-embedded:4.3.0")
   implementation(libs.androidx.biometric)
   implementation(libs.androidx.appcompat)
   implementation(libs.material)
