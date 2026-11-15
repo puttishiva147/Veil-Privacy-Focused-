@@ -222,28 +222,48 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun updateReplyTokenStatus() {
-        val action = NotificationReplyRegistry.getLiveReplyAction(contactName)
-        val isLive = action != null
-        val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(action.sourcePackage) else "Messaging app"
+        lifecycleScope.launch {
+            val sourcePackage = withContext(Dispatchers.IO) {
+                database.protectedEventDao()
+                    .getMessagesForConversationSync(conversationId)
+                    .lastOrNull { it.sourcePackage in listOf(
+                        com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
+                        com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS,
+                        com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM,
+                        com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT
+                    ) }?.sourcePackage
+            }
+            val action = if (sourcePackage != null) {
+                NotificationReplyRegistry.getLiveReplyAction(contactName, sourcePackage)
+            } else {
+                NotificationReplyRegistry.getLiveReplyAction(contactName)
+            }
+            val isLive = action != null
+            val targetApp = action?.let {
+                com.veil.privacy.model.SupportedApp.getAppDisplayName(it.sourcePackage)
+            } ?: sourcePackage?.let {
+                com.veil.privacy.model.SupportedApp.getAppDisplayName(it)
+            } ?: "Messaging app"
 
-        if (isLive) {
-            binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_secure)
-            binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_secure)
-            binding.ivContactProfileIndicator.contentDescription = "Protected Profile • Live Reply Active"
-            binding.tvChatStatusSubtitle.text = "PROTECTED CHAT • LIVE REPLY ACTIVE"
-            binding.tvReplyStatusTitle.text = "🟢 $targetApp reply action ready"
-            binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this, R.color.veil_accent_secure))
-            binding.tvReplyStatusDesc.text = "Active notification from $targetApp captured. Replies typed below will be dispatched through Android's RemoteInput mechanism directly to $targetApp."
-            binding.tvReplyDisclaimerPill.text = "RemoteInput Ready"
-        } else {
-            binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_amber)
-            binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_titanium)
-            binding.ivContactProfileIndicator.contentDescription = "Protected Profile"
-            binding.tvChatStatusSubtitle.text = "PROTECTED CHAT • REPLY TOKEN INACTIVE"
-            binding.tvReplyStatusTitle.text = "⚠️ No active notification reply token"
-            binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this, R.color.veil_accent_amber))
-            binding.tvReplyStatusDesc.text = "A notification must be currently active in Android's notification bar to dispatch inline replies. You can also open the messaging app directly."
-            binding.tvReplyDisclaimerPill.text = "Token Inactive"
+            if (isLive) {
+                binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this@ProtectedChatConversationActivity, R.color.veil_accent_secure)
+                binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this@ProtectedChatConversationActivity, R.color.veil_accent_secure)
+                binding.ivContactProfileIndicator.contentDescription = "Protected Profile • Live Reply Active"
+                binding.tvChatStatusSubtitle.text = "PROTECTED CHAT • LIVE REPLY ACTIVE"
+                binding.tvReplyStatusTitle.text = "$targetApp reply action ready"
+                binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this@ProtectedChatConversationActivity, R.color.veil_accent_secure))
+                binding.tvReplyStatusDesc.text = "A reply-enabled notification from this conversation is available. VEIL will send only through this app's active Android RemoteInput action."
+                binding.tvReplyDisclaimerPill.text = "RemoteInput Ready"
+            } else {
+                binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this@ProtectedChatConversationActivity, R.color.veil_accent_amber)
+                binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this@ProtectedChatConversationActivity, R.color.veil_accent_titanium)
+                binding.ivContactProfileIndicator.contentDescription = "Protected Profile"
+                binding.tvChatStatusSubtitle.text = "PROTECTED CHAT • REPLY TOKEN INACTIVE"
+                binding.tvReplyStatusTitle.text = "No active reply action"
+                binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this@ProtectedChatConversationActivity, R.color.veil_accent_amber))
+                binding.tvReplyStatusDesc.text = "A fresh reply-enabled notification from $targetApp is required. VEIL keeps coded messages queued until Android exposes a usable reply action; delivery is never assumed."
+                binding.tvReplyDisclaimerPill.text = "Message Queue"
+            }
         }
     }
 
