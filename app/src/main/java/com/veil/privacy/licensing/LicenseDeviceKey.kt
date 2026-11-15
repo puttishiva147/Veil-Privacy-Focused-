@@ -21,6 +21,10 @@ object LicenseDeviceKey {
  fun signNonce(nonce:String):String{ensureKey();val privateKey=keyStore().getKey(KEY_ALIAS,null) as java.security.PrivateKey;val signer=Signature.getInstance("SHA256withRSA");signer.initSign(privateKey);signer.update(nonce.toByteArray(Charsets.UTF_8));return Base64.encodeToString(signer.sign(),Base64.NO_WRAP)}
  fun fingerprintHash(context:Context):String{
   val androidId=Settings.Secure.getString(context.contentResolver,Settings.Secure.ANDROID_ID)?.takeIf{it.isNotBlank()}?:throw IllegalStateException("Android device fingerprint is unavailable.")
+  return fingerprintHashFromAndroidId(androidId)
+ }
+ fun fingerprintHashFromAndroidId(androidId:String):String {
+  require(androidId.isNotBlank()){"Android device fingerprint is unavailable."}
   val digest=MessageDigest.getInstance("SHA-256").digest(androidId.toByteArray(Charsets.UTF_8))
   return digest.joinToString(""){byte->"%02x".format(byte.toInt() and 0xff)}
  }
