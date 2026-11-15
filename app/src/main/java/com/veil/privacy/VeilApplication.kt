@@ -2,6 +2,8 @@ package com.veil.privacy
 
 import android.app.Application
 import com.veil.privacy.notification.VeilNotificationManager
+import com.veil.privacy.communication.BuiltinYuplLanguageCodec
+import com.veil.privacy.communication.VeilLanguageCodecProvider
 import com.veil.privacy.licensing.LicenseTokenStore
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
@@ -19,6 +21,9 @@ class VeilApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Install the built-in, versioned YUPL codec before notification transport starts.
+        VeilLanguageCodecProvider.install(BuiltinYuplLanguageCodec())
+
         // Initialize preferences and the lightweight notification channel
         VeilPrefs.getInstance(this)
         VeilNotificationManager.getInstance(this).createNotificationChannel()
