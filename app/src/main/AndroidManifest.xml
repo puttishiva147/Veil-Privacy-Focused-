@@ -39,6 +39,10 @@
 
         <!-- Mandatory server-verified license gate. Not externally launchable. -->
         <activity
+            android:name=".ui.ReferralActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.LicenseGateActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
