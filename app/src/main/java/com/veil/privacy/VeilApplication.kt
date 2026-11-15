@@ -4,6 +4,7 @@ import android.app.Application
 import com.veil.privacy.notification.VeilNotificationManager
 import com.veil.privacy.communication.VeilLanguageCodecProvider
 import com.veil.privacy.licensing.LicenseTokenStore
+import com.veil.privacy.licensing.LicenseRepository
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
 import com.veil.privacy.util.NotificationUtils
@@ -41,8 +42,16 @@ class VeilApplication : Application() {
                 // MainActivity owns the visible retry state if startup storage fails.
                 return@launch
             }
+            // Access tokens are intentionally short-lived. Revalidate on cold start so a
+            // background shield is not silently disabled after the 15-minute token expires.
+            val licenseValid = try {
+                LicenseRepository.verifyAndRefresh(applicationContext)
+            } catch (_: Exception) {
+                false
+            }
             withContext(Dispatchers.Main) {
-                if (LicenseTokenStore.hasLocallyValidSession(this@VeilApplication) &&
+                if (licenseValid &&
+                    LicenseTokenStore.hasLocallyValidSession(this@VeilApplication) &&
                     prefs.isVeilEnabled && prefs.isPersistentShieldEnabled &&
                     NotificationUtils.isNotificationAccessGranted(this@VeilApplication)
                 ) {
