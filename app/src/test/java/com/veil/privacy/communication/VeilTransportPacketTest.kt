@@ -10,14 +10,14 @@ class VeilTransportPacketTest {
     fun packetRoundTripsWithNotificationTextAroundIt() {
         val packet = VeilTransportPacket.encode(
             messageId = "msg-123",
-            dictionaryVersion = 7,
+            dictionaryVersion = 1,
             encodedPayload = "⟁mix-9-token"
         )
 
         val decoded = VeilTransportPacket.extract("A sender: $packet (tap to reply)")
 
         assertEquals("msg-123", decoded?.messageId)
-        assertEquals(7, decoded?.dictionaryVersion)
+        assertEquals(1, decoded?.dictionaryVersion)
         assertEquals("⟁mix-9-token", decoded?.encodedPayload)
     }
 
