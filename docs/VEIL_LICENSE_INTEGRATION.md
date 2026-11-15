@@ -18,10 +18,10 @@
 ## Activation protocol
 
 1. Android generates a 2048-bit RSA key pair in Android Keystore.
-2. Android sends its PEM public key to `POST /api/v1/activation/challenge`.
+2. Android sends its PEM public key and SHA-256 hash of the app-scoped Android ID to `POST /api/v1/activation/challenge`.
 3. The backend returns a one-time nonce bound to the public-key fingerprint.
 4. Android signs the nonce with the non-exportable private key using SHA256withRSA.
-5. Android submits the 12-digit code, public key, nonce and signature to `POST /api/v1/activation/activate`.
+5. Android submits the 12-digit code, public key, device fingerprint hash, nonce and signature to `POST /api/v1/activation/activate`.
 6. The backend validates the code digest, expiry, status, one-device binding, challenge expiry and signature.
 7. The backend returns a short-lived bearer token. Android stores the token and code encrypted using Android Keystore AES-GCM.
 8. On app entry, Android calls `POST /api/v1/licenses/status`; the backend rechecks the license and device and returns a fresh short-lived token.
