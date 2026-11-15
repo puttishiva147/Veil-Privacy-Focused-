@@ -504,6 +504,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
                         .getMessagesForConversationSync(conversationId)
                         .lastOrNull { it.sourcePackage in listOf(
                             com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
+                            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS,
                             com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM,
                             com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT
                         ) }?.sourcePackage
