@@ -99,6 +99,7 @@ val generateVUPLKeys by tasks.registering {
 
 android.sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/vuplAssets").get().asFile)
 tasks.named("preBuild").configure { dependsOn(generateVUPLKeys) }
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Assets") }.configureEach { dependsOn(generateVUPLKeys) }
 
 dependencies {
   implementation("androidx.security:security-crypto:1.1.0")
