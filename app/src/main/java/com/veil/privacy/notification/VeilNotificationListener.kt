@@ -153,6 +153,15 @@ class VeilNotificationListener : BaseNotificationListenerService() {
                 sourcePackage = pkg
             )
             emitDiagnostic("REMOTE_INPUT", "Live Android RemoteInput inline reply action captured and registered")
+
+            // A new reply token may unblock messages already queued for this exact app/contact.
+            serviceScope.launch {
+                try {
+                    VeilTransportManager(this@VeilNotificationListener).retryWaitingForReplyActions()
+                } catch (error: Exception) {
+                    emitDiagnostic("TRANSPORT_TX", "Queued reply retry failed (${error.javaClass.simpleName})", false)
+                }
+            }
         }
 
         val callActionsPair = NotificationReplyRegistry.findCallActions(sbn.notification)
