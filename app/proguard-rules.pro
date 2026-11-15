@@ -30,9 +30,4 @@
 -keep @com.squareup.moshi.JsonClass class * { *; }
 -keepclassmembers class * { @com.squareup.moshi.Json <fields>; }
 
-# Keep Android framework entry points and transport serialization contracts stable.
--keep class com.veil.privacy.notification.VeilNotificationListener { *; }
--keep class com.veil.privacy.notification.VeilNotificationReplyReceiver { *; }
--keep class com.veil.privacy.service.VeilProtectionService { *; }
--keep class com.veil.privacy.licensing.** { *; }
--keep class com.veil.privacy.communication.VeilTransportPacket { *; }
+# Android manifest components are retained automatically; licensing and transport classes remain obfuscatable.
