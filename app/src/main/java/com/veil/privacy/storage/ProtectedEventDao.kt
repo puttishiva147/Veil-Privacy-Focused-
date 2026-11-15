@@ -26,6 +26,9 @@ interface ProtectedEventDao {
     @Query("SELECT * FROM protected_events WHERE id = :id LIMIT 1")
     fun getByIdSync(id: Long): ProtectedEvent?
 
+    @Query("SELECT conversationId FROM protected_events WHERE sourcePackage = :sourcePackage AND realSender = :sender AND isOutgoing = 0 ORDER BY timestamp DESC LIMIT 1")
+    fun getLatestConversationIdForSender(sourcePackage: String, sender: String): String?
+
     @Query("SELECT * FROM protected_events WHERE originalNotificationKey = :packetKey LIMIT 1")
     fun getTransportEventByKey(packetKey: String): ProtectedEvent?
 
