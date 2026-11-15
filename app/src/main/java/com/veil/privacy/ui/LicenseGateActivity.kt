@@ -26,7 +26,7 @@ class LicenseGateActivity:AppCompatActivity(){
  private fun renderGate(){val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER;setPadding(dp(28),dp(32),dp(28),dp(32));setBackgroundColor(Color.rgb(9,10,12))}
   val logo=TextView(this).apply{text="VEIL";textSize=34f;letterSpacing=.24f;setTextColor(Color.WHITE);typeface=Typeface.create("sans-serif",Typeface.BOLD);gravity=Gravity.CENTER}
   val title=TextView(this).apply{text="Secure activation";textSize=22f;setTextColor(Color.WHITE);typeface=Typeface.DEFAULT_BOLD;gravity=Gravity.CENTER;setPadding(0,dp(18),0,dp(8))}
-  val subtitle=TextView(this).apply{text="Enter your 12-digit activation code to access VEIL. Get a free 5-day trial or purchase a subscription from the official website.";textSize=14f;setTextColor(Color.LTGRAY);gravity=Gravity.CENTER}
+  val subtitle=TextView(this).apply{text="Enter your 12-digit activation code to access VEIL. Get a free trial or purchase a subscription from the official website.";textSize=14f;setTextColor(Color.LTGRAY);gravity=Gravity.CENTER}
   codeInput=EditText(this).apply{hint="12-digit activation code";inputType=InputType.TYPE_CLASS_NUMBER;filters=arrayOf(InputFilter.LengthFilter(12));textSize=20f;letterSpacing=.12f;setTextColor(Color.WHITE);setHintTextColor(Color.GRAY);setSingleLine(true);gravity=Gravity.CENTER;setPadding(dp(12),dp(14),dp(12),dp(14));setBackgroundColor(Color.rgb(29,32,36))}
   activateButton=Button(this).apply{text="Activate VEIL";isAllCaps=false;setTextColor(Color.BLACK);setBackgroundColor(Color.rgb(216,243,106));setOnClickListener{activate()}}
   progress=ProgressBar(this).apply{visibility=View.GONE}
