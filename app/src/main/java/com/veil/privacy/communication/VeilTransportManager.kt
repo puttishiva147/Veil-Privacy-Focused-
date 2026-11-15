@@ -51,7 +51,7 @@ class VeilTransportManager(
      * Queues a message. Until the official dictionary is loaded, it remains local and is
      * not sent as plaintext or as a fabricated code.
      */
-    fun queueOutgoing(
+    suspend fun queueOutgoing(
         conversationId: String,
         contactName: String,
         sourcePackage: String,
@@ -85,7 +85,7 @@ class VeilTransportManager(
     }
 
     /** Retry queued messages after the official dictionary implementation is installed. */
-    fun processDictionaryQueue(): List<SendResult> {
+    suspend fun processDictionaryQueue(): List<SendResult> {
         if (!codec.isReady) return emptyList()
         return dao.getByStatus(TransportMessage.WAITING_FOR_DICTIONARY)
             .filter { it.direction == TransportMessage.DIRECTION_OUTGOING }
@@ -94,7 +94,7 @@ class VeilTransportManager(
             }
     }
 
-    private fun encodeAndDispatch(
+    private suspend fun encodeAndDispatch(
         id: String,
         conversationId: String,
         contactName: String,
@@ -160,7 +160,7 @@ class VeilTransportManager(
     }
 
     /** Called by the notification listener for every supported app notification. */
-    fun captureIncoming(sourcePackage: String, sender: String, notificationText: String): Boolean {
+    suspend fun captureIncoming(sourcePackage: String, sender: String, notificationText: String): Boolean {
         val packet = VeilTransportPacket.extract(notificationText) ?: return false
         val conversationId = sender.lowercase().trim() + "@" + sourcePackage
         val existing = dao.getById(packet.messageId)
