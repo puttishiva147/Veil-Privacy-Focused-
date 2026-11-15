@@ -135,12 +135,14 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
         // Capture VEIL packets independently of contact-protection rules.
         // The language dictionary can be installed later; packets remain queued locally.
-        try {
-            if (VeilTransportManager(this).captureIncoming(pkg, parsed.sender, parsed.message)) {
-                emitDiagnostic("TRANSPORT_RX", "VEIL packet captured from ${com.veil.privacy.model.SupportedApp.getAppDisplayName(pkg)}")
+        serviceScope.launch {
+            try {
+                if (VeilTransportManager(this@VeilNotificationListener).captureIncoming(pkg, parsed.sender, parsed.message)) {
+                    emitDiagnostic("TRANSPORT_RX", "VEIL packet captured from ${com.veil.privacy.model.SupportedApp.getAppDisplayName(pkg)}")
+                }
+            } catch (error: Exception) {
+                emitDiagnostic("TRANSPORT_RX", "Packet capture failed (${error.javaClass.simpleName})", false)
             }
-        } catch (error: Exception) {
-            emitDiagnostic("TRANSPORT_RX", "Packet capture failed (${error.javaClass.simpleName})", false)
         }
 
         // 5. Capture live RemoteInput reply action if exposed by messaging app
