@@ -10,6 +10,7 @@ import com.veil.privacy.R
 import com.veil.privacy.communication.VeilTransportManager
 import com.veil.privacy.model.SupportedApp
 import com.veil.privacy.model.TransportMessage
+import com.veil.privacy.storage.VeilDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,10 +44,20 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
 
         // Queue through VEIL's language/transport pipeline. Never send this reply as plaintext.
         val transportManager = VeilTransportManager(context)
-        val sourcePackage = transportManager.selectAvailableTransport(contactName)
-            ?: NotificationReplyRegistry.getLiveReplyAction(contactName)?.sourcePackage
-            ?: SupportedApp.PKG_WHATSAPP
         CoroutineScope(Dispatchers.IO).launch {
+            val sourcePackage = transportManager.selectAvailableTransport(contactName)
+                ?: withContext(Dispatchers.IO) {
+                    VeilDatabase.getInstance(context).protectedEventDao()
+                        .getMessagesForConversationSync(conversationId)
+                        .lastOrNull { it.sourcePackage in listOf(
+                            SupportedApp.PKG_WHATSAPP,
+                            SupportedApp.PKG_WHATSAPP_BUSINESS,
+                            SupportedApp.PKG_INSTAGRAM,
+                            SupportedApp.PKG_SNAPCHAT
+                        ) }?.sourcePackage
+                }
+                ?: SupportedApp.PKG_WHATSAPP
+
             val result = transportManager.queueOutgoing(
                 conversationId = conversationId,
                 contactName = contactName,
