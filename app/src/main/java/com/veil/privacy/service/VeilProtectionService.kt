@@ -296,8 +296,18 @@ class VeilProtectionService : Service() {
     private fun startWatchdog() {
         watchdogJob?.cancel()
         watchdogJob = serviceScope.launch {
+            var lastLicenseRefreshAt = System.currentTimeMillis()
             while (isActive) {
                 delay(20_000L) // Check every 20 seconds
+
+                if (System.currentTimeMillis() - lastLicenseRefreshAt >= 5 * 60_000L) {
+                    val licenseValid = com.veil.privacy.licensing.LicenseRepository.verifyAndRefresh(this@VeilProtectionService)
+                    if (!licenseValid) {
+                        stopSelf()
+                        return@launch
+                    }
+                    lastLicenseRefreshAt = System.currentTimeMillis()
+                }
 
                 // 1. Check listener status
                 if (prefs.isVeilEnabled && NotificationUtils.isNotificationAccessGranted(this@VeilProtectionService)) {
