@@ -189,4 +189,13 @@ Avoid committing secrets, generated build output, signing materials, or private 
 
 No repository license file was found during this README update. Until a license is added by the project owner, do not assume that the source is licensed for redistribution or reuse. Add a license only after choosing the terms you want to apply.
 
+---
 
+## Ownership and credits
+
+- **Project owner / creator:** Shiva Putti
+- **GitHub:** [@puttishiva147](https://github.com/puttishiva147)
+- **Repository:** [puttishiva147/Veil-Privacy-Focused-](https://github.com/puttishiva147/Veil-Privacy-Focused-)
+- **Documentation reviewed:** 15 November 2026
+
+Repository creation time and latest source update are maintained by GitHub repository metadata and commit history. The documentation review date above is not a substitute for either timestamp. Third-party libraries, APIs, trademarks and platform components retain their respective owners' rights and licence terms.
