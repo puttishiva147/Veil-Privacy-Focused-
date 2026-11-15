@@ -38,6 +38,7 @@
         </activity>
 
         <!-- Internal Activities (Not Exported for Security) -->
+        <activity android:name=".ui.VUPLPairingActivity" android:exported="false" />
         <activity
             android:name=".ui.DashboardActivity"
             android:exported="false"
