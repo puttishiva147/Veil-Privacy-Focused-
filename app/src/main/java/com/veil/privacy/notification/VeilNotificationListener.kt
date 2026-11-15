@@ -2,6 +2,7 @@ package com.veil.privacy.notification
 
 import android.service.notification.StatusBarNotification
 import com.veil.privacy.model.ParsedNotificationInfo
+import com.veil.privacy.licensing.LicenseTokenStore
 import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.model.ProtectionRule
 import com.veil.privacy.model.SelectedContact
@@ -90,6 +91,10 @@ class VeilNotificationListener : BaseNotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
+        if (!LicenseTokenStore.hasLocallyValidSession(this)) {
+            emitDiagnostic("LICENSE", "Notification processing blocked: valid activation required", false)
+            return
+        }
         if (sbn == null) return
 
         val pkg = sbn.packageName ?: return
