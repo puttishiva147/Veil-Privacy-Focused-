@@ -1,8 +1,8 @@
 package com.veil.privacy.communication
 
 /**
- * Adapter contract for the VEIL-owned universal language dictionary.
- * The dictionary file will provide the concrete implementation later.
+ * Adapter contract for the versioned VEIL YUPL language codec.
+ * BuiltinYuplLanguageCodec provides dictionary version 1.
  */
 interface VeilLanguageCodec {
     val isReady: Boolean
