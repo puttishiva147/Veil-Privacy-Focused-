@@ -17,7 +17,7 @@ class BuiltinYuplLanguageCodec : VeilLanguageCodec {
 
     private val wordSymbols = linkedMapOf(
         "hello" to "⟡", "hi" to "☾", "yes" to "✓", "no" to "⊗",
-        "ok" to "⌁", "okay" to "⌁", "thanks" to "∴", "thank" to "∵",
+        "ok" to "⌁", "okay" to "⌃", "thanks" to "∴", "thank" to "∵",
         "please" to "⟐", "love" to "♡", "friend" to "◇", "good" to "⊙",
         "bad" to "⧫", "meet" to "⌖", "call" to "⌘", "wait" to "⏳",
         "where" to "⌗", "you" to "⋆", "i" to "ι", "we" to "∩",
@@ -27,7 +27,7 @@ class BuiltinYuplLanguageCodec : VeilLanguageCodec {
         "tomorrow" to "☼", "today" to "☀", "sorry" to "∿", "safe" to "⛨",
         "send" to "➤", "message" to "✉", "water" to "≈", "food" to "♨",
         "work" to "⚒", "my" to "∽", "your" to "∾", "what" to "⋈",
-        "when" to "⋉", "why" to "⋊", "please" to "⟐", "love" to "♡"
+        "when" to "⋉", "why" to "⋊"
     )
     private val symbolWords = wordSymbols.entries.associate { it.value to it.key }
     private val phrases = listOf(
