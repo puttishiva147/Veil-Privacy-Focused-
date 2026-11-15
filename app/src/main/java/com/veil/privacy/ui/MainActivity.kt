@@ -54,7 +54,12 @@ class MainActivity : AppCompatActivity() {
                     VeilDatabase.getInstance(applicationContext)
                 }
                 VeilNotificationManager.getInstance(applicationContext).createNotificationChannel()
-                com.veil.privacy.service.VeilProtectionService.startService(applicationContext)
+                val prefs = VeilPrefs.getInstance(applicationContext)
+                if (prefs.isVeilEnabled && prefs.isPersistentShieldEnabled &&
+                    com.veil.privacy.util.NotificationUtils.isNotificationAccessGranted(applicationContext)
+                ) {
+                    com.veil.privacy.service.VeilProtectionService.startService(applicationContext)
+                }
 
                 val targetClass = when {
                     !SecurityManager.isSecuritySetupCompleted(this@MainActivity) ->
