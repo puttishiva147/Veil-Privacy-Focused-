@@ -21,7 +21,7 @@ data class VeilTransportPacket(
     companion object {
         private const val MAGIC = "VEIL-TRANSPORT"
         private const val FORMAT_VERSION = 1
-        private const val PREFIX = "VUPL1:"
+        private const val PREFIX = "YUPL1:"
         private const val MAX_PACKET_BYTES = 2 * 1024
 
         fun encode(messageId: String, dictionaryVersion: Int, encodedPayload: String): String {
@@ -47,7 +47,7 @@ data class VeilTransportPacket(
 
         /** Extracts one complete VEIL packet from notification text or an app message body. */
         fun extract(text: String): VeilTransportPacket? {
-            val match = Regex("VUPL1:([A-Za-z0-9_-]+)").find(text) ?: return null
+            val match = Regex("YUPL1:([A-Za-z0-9_-]+)").find(text) ?: return null
             return decode(match.value)
         }
 
