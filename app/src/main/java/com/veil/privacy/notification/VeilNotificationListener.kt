@@ -331,7 +331,6 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         }
 
         // --- MATCH CONFIRMED: APPLY PRIVACY TRANSFORMATION ---
-        val sourcePackage = sbn.packageName.orEmpty()
         val targetConversation = "${sourcePackage.lowercase()}::${matchedRule.contactName.lowercase().trim()}"
 
         // Also register live reply action under the matched rule's contactName if different from sender
