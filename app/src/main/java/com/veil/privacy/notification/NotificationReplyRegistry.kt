@@ -44,6 +44,26 @@ object NotificationReplyRegistry {
     // Keyed by normalized contact name (lowercase trimmed)
     private val liveActionsByContact = ConcurrentHashMap<String, LiveReplyAction>()
     private val liveCallsByContact = ConcurrentHashMap<String, LiveCallAction>()
+
+    // Contact names are not globally unique across messaging apps. Keep each live token
+    // isolated by both source package and normalized contact name.
+    private fun actionKey(contactName: String, sourcePackage: String): String =
+        "${sourcePackage.trim().lowercase()}::${normalize(contactName)}"
+
+    private fun <T> findUnambiguousContactAction(
+        actions: ConcurrentHashMap<String, T>,
+        contactName: String,
+        sourcePackage: String?,
+        sourceOf: (T) -> String,
+        contactOf: (T) -> String
+    ): T? {
+        val normalized = normalize(contactName)
+        if (!sourcePackage.isNullOrBlank()) return actions[actionKey(normalized, sourcePackage)]
+        val matches = actions.values.filter { normalize(contactOf(it)) == normalized }
+        // A legacy caller without platform identity must fail closed rather than dispatch
+        // a reply into a different app when the same display name exists on multiple platforms.
+        return matches.singleOrNull()
+    }
     // Keyed by notificationKey to allow swift removal when notification is cleared
     private val keyToContactMap = ConcurrentHashMap<String, String>()
 
@@ -108,17 +128,19 @@ object NotificationReplyRegistry {
             answerIntent = answerIntent,
             declineIntent = declineIntent
         )
-        liveCallsByContact[normalizedName] = liveCall
+        liveCallsByContact[actionKey(contactName, sourcePackage)] = liveCall
         keyToContactMap[notificationKey] = normalizedName
 
     }
 
-    fun getLiveCallAction(contactName: String): LiveCallAction? {
-        val normalized = normalize(contactName)
-        val call = liveCallsByContact[normalized] ?: return null
+    fun getLiveCallAction(contactName: String, sourcePackage: String? = null): LiveCallAction? {
+        val call = findUnambiguousContactAction(
+            liveCallsByContact, contactName, sourcePackage,
+            { it.sourcePackage }, { it.contactName }
+        ) ?: return null
         // Call actions expire after 5 minutes
         if (System.currentTimeMillis() - call.capturedAt > 5 * 60 * 1000L) {
-            liveCallsByContact.remove(normalized)
+            liveCallsByContact.remove(actionKey(call.contactName, call.sourcePackage))
             return null
         }
         return call
@@ -143,7 +165,7 @@ object NotificationReplyRegistry {
             remoteInput = remoteInput,
             resultKey = remoteInput.resultKey
         )
-        liveActionsByContact[normalizedName] = liveAction
+        liveActionsByContact[actionKey(contactName, sourcePackage)] = liveAction
         keyToContactMap[notificationKey] = normalizedName
 
     }
@@ -151,12 +173,14 @@ object NotificationReplyRegistry {
     /**
      * Checks if a live notification reply action is currently available for this contact.
      */
-    fun isReplyActionLive(contactName: String): Boolean {
-        val normalized = normalize(contactName)
-        val action = liveActionsByContact[normalized] ?: return false
+    fun isReplyActionLive(contactName: String, sourcePackage: String? = null): Boolean {
+        val action = findUnambiguousContactAction(
+            liveActionsByContact, contactName, sourcePackage,
+            { it.sourcePackage }, { it.contactName }
+        ) ?: return false
         // Actions older than 2 hours are discarded to avoid stale PendingIntents
         if (System.currentTimeMillis() - action.capturedAt > 2 * 3600 * 1000L) {
-            liveActionsByContact.remove(normalized)
+            liveActionsByContact.remove(actionKey(action.contactName, action.sourcePackage))
             keyToContactMap.remove(action.notificationKey)
             return false
         }
@@ -166,9 +190,12 @@ object NotificationReplyRegistry {
     /**
      * Gets the live action details if available.
      */
-    fun getLiveReplyAction(contactName: String): LiveReplyAction? {
-        val normalized = normalize(contactName)
-        return if (isReplyActionLive(normalized)) liveActionsByContact[normalized] else null
+    fun getLiveReplyAction(contactName: String, sourcePackage: String? = null): LiveReplyAction? {
+        val action = findUnambiguousContactAction(
+            liveActionsByContact, contactName, sourcePackage,
+            { it.sourcePackage }, { it.contactName }
+        ) ?: return null
+        return if (isReplyActionLive(contactName, action.sourcePackage)) action else null
     }
 
     /**
@@ -176,8 +203,9 @@ object NotificationReplyRegistry {
      *
      * @return true if the reply was successfully handed over to the Android OS for delivery, false if token is expired/missing.
      */
-    fun sendReply(context: Context, contactName: String, replyText: String): Boolean {
-        val action = getLiveReplyAction(contactName) ?: run {
+    fun sendReply(context: Context, contactName: String, replyText: String, sourcePackage: String? = null): Boolean {
+        if (replyText.isBlank()) return false
+        val action = getLiveReplyAction(contactName, sourcePackage) ?: run {
 
             return false
         }

@@ -191,4 +191,26 @@ class NotificationParserTest {
         assertNotNull(simResult)
         assertEquals("Test Sender", simResult?.sender)
     }
+
+    @Test
+    fun testClassifiesSnapchatSnapEventsAsMediaEventsNotOrdinaryText() {
+        val notification = NotificationCompat.Builder(context, "test")
+            .setContentTitle("Alex")
+            .setContentText("Alex sent you a Snap")
+            .build()
+
+        val result = parser.parseNotification(
+            notification = notification,
+            packageName = com.veil.privacy.model.SupportedApp.PKG_SNAPCHAT,
+            notificationKey = "snap_event_1",
+            postTime = 9000L,
+            ownPackageName = "com.veil.privacy"
+        )
+
+        assertNotNull(result)
+        assertEquals("Snap received — open Snapchat to view the media", result?.message)
+        assertTrue(result?.isMediaOrAttachment == true)
+        assertEquals(com.veil.privacy.model.NotificationType.MEDIA_ATTACHMENT, result?.getNotificationType())
+    }
+
 }
