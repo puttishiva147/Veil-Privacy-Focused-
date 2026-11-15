@@ -43,7 +43,7 @@ class BuiltinYuplLanguageCodec : VeilLanguageCodec {
     override fun encode(plainText: String): String {
         if (plainText.isEmpty()) return "Y1;"
         val normalized = plainText.lowercase(Locale.ROOT)
-        phraseIds[normalized]?.let { return "Y1;p" + it.toString(36).padStart(2, '0') }
+        if (plainText == normalized) phraseIds[normalized]?.let { return "Y1;p" + it.toString(36).padStart(2, '0') }
         val tokens = segments.findAll(plainText).map { match -> encodeSegment(match.value) }.toList()
         return "Y1;" + tokens.joinToString(".")
     }
