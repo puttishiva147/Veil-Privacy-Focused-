@@ -26,6 +26,12 @@ interface ProtectedEventDao {
     @Query("SELECT * FROM protected_events WHERE id = :id LIMIT 1")
     fun getByIdSync(id: Long): ProtectedEvent?
 
+    @Query("SELECT * FROM protected_events WHERE originalNotificationKey = :packetKey LIMIT 1")
+    fun getTransportEventByKey(packetKey: String): ProtectedEvent?
+
+    @Query("UPDATE protected_events SET realMessage = :message, replyStatus = :status WHERE originalNotificationKey = :packetKey")
+    fun updateTransportEvent(packetKey: String, message: String, status: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(event: ProtectedEvent): Long
 
