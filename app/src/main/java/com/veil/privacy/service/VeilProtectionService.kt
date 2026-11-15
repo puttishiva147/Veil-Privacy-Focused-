@@ -300,7 +300,7 @@ class VeilProtectionService : Service() {
             while (isActive) {
                 delay(20_000L) // Check every 20 seconds
 
-                if (System.currentTimeMillis() - lastLicenseRefreshAt >= 5 * 60_000L) {
+                if (System.currentTimeMillis() - lastLicenseRefreshAt >= 2 * 60_000L) {
                     val licenseValid = com.veil.privacy.licensing.LicenseRepository.verifyAndRefresh(this@VeilProtectionService)
                     if (!licenseValid) {
                         stopSelf()
