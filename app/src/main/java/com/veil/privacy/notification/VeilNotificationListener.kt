@@ -5,6 +5,7 @@ import com.veil.privacy.model.ParsedNotificationInfo
 import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.model.ProtectionRule
 import com.veil.privacy.model.SelectedContact
+import com.veil.privacy.communication.VeilTransportManager
 import com.veil.privacy.privacy.RuleMatchingEngine
 import com.veil.privacy.storage.VeilInbox
 import kotlinx.coroutines.Dispatchers
@@ -131,6 +132,16 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         }
 
         emitDiagnostic("PARSE", "Notification content parsed successfully")
+
+        // Capture VEIL packets independently of contact-protection rules.
+        // The language dictionary can be installed later; packets remain queued locally.
+        try {
+            if (VeilTransportManager(this).captureIncoming(pkg, parsed.sender, parsed.message)) {
+                emitDiagnostic("TRANSPORT_RX", "VEIL packet captured from ${com.veil.privacy.model.SupportedApp.getAppDisplayName(pkg)}")
+            }
+        } catch (error: Exception) {
+            emitDiagnostic("TRANSPORT_RX", "Packet capture failed (${error.javaClass.simpleName})", false)
+        }
 
         // 5. Capture live RemoteInput reply action if exposed by messaging app
         val replyActionPair = NotificationReplyRegistry.findReplyAction(sbn.notification)
