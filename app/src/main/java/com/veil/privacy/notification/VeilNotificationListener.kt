@@ -72,6 +72,13 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         super.onListenerConnected()
         isConnected = true
         emitDiagnostic("ENGINE", "VeilNotificationListener connected to Android OS", true)
+        serviceScope.launch {
+            try {
+                VeilTransportManager(this@VeilNotificationListener).processPendingQueues()
+            } catch (error: Exception) {
+                emitDiagnostic("TRANSPORT", "Pending YUPL queue recovery failed (" + error.javaClass.simpleName + ")", false)
+            }
+        }
     }
 
     override fun onListenerDisconnected() {
@@ -142,7 +149,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             // A new reply token may unblock messages already queued for this exact app/contact.
             serviceScope.launch {
                 try {
-                    VeilTransportManager(this@VeilNotificationListener).retryWaitingForReplyActions()
+                    VeilTransportManager(this@VeilNotificationListener).processPendingQueues()
                 } catch (error: Exception) {
                     emitDiagnostic("TRANSPORT_TX", "Queued reply retry failed (${error.javaClass.simpleName})", false)
                 }
