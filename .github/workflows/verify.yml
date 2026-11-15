@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: veil-verify-${{ github.head_ref || github.ref }}
+  group: veil-verify-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
