@@ -677,7 +677,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Invite friends & earn 15 days"
+                        android:text="Invite friends &amp; earn 15 days"
                         android:textColor="@color/veil_text_high"
                         android:textSize="14sp"
                         android:textStyle="bold" />
