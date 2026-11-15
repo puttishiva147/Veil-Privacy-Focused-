@@ -248,7 +248,10 @@ class VeilTransportManager(
     suspend fun captureIncoming(sourcePackage: String, sender: String, notificationText: String): Boolean {
         if (sourcePackage !in supportedTransports().map { it.first }) return false
         val packet = VeilTransportPacket.extract(notificationText) ?: return false
-        val conversationId = sender.lowercase().trim() + "@" + sourcePackage
+        val existingConversationId = withContext(Dispatchers.IO) {
+            database.protectedEventDao().getLatestConversationIdForSender(sourcePackage, sender)
+        }
+        val conversationId = existingConversationId ?: sender.lowercase().trim()
         val existing = dao.getById(packet.messageId)
         if (existing != null) return true
 
@@ -273,7 +276,7 @@ class VeilTransportManager(
         )
         saveChatEvent(
             "VEIL_TRANSPORT:${packet.messageId}",
-            sender.lowercase().trim(),
+            conversationId,
             sender,
             sourcePackage,
             decoded ?: "VEIL message received - waiting for dictionary",
