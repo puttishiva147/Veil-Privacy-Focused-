@@ -23,7 +23,9 @@ class VeilTransportPacketTest {
     @Test
     fun packetRejectsTamperedPayload() {
         val packet = VeilTransportPacket.encode("msg-456", 2, "encoded-token")
-        val changed = packet.dropLast(1) + if (packet.last() == 'A') "B" else "A"
+        val index = packet.indexOf(':') + 1
+        val replacement = if (packet[index] == 'A') 'B' else 'A'
+        val changed = packet.substring(0, index) + replacement + packet.substring(index + 1)
 
         assertNull(VeilTransportPacket.decode(changed))
     }
