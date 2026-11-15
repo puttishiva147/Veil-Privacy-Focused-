@@ -169,6 +169,10 @@ class VeilTransportManager(
                     lastError = error.message ?: error.javaClass.simpleName
                 )
             )
+            saveChatEvent(
+                "VEIL_TRANSPORT:$id", conversationId, contactName, sourcePackage,
+                plainText, true, TransportMessage.FAILED
+            )
             SendResult(id, TransportMessage.FAILED, error.message ?: "Encoding or dispatch failed")
         }
     }
