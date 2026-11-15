@@ -1,6 +1,7 @@
 package com.veil.privacy.notification
 
 import android.service.notification.StatusBarNotification
+import com.veil.privacy.activation.ActivationManager
 import com.veil.privacy.model.ParsedNotificationInfo
 import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.model.ProtectionRule
@@ -90,6 +91,8 @@ class VeilNotificationListener : BaseNotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
+        // Android may keep notification access enabled after license expiry. Fail closed.
+        if (!ActivationManager.isLicenseActive) return
         if (sbn == null) return
 
         val pkg = sbn.packageName ?: return
@@ -182,6 +185,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         parsed: ParsedNotificationInfo,
         replyActionPair: Pair<android.app.Notification.Action, android.app.RemoteInput>? = null
     ) {
+        if (!ActivationManager.isLicenseActive) return
         // Fetch all active, enabled protection rules and contacts from Room database
         val allRules = withContext(Dispatchers.IO) {
             val rules = database.protectionRuleDao().getEnabledRulesSync().toMutableList()

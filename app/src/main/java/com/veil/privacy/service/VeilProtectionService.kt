@@ -11,6 +11,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import com.veil.privacy.BuildConfig
+import com.veil.privacy.activation.ActivationManager
 import com.veil.privacy.R
 import com.veil.privacy.notification.VeilNotificationListener
 import com.veil.privacy.notification.VeilNotificationManager
@@ -291,8 +292,21 @@ class VeilProtectionService : Service() {
     private fun startWatchdog() {
         watchdogJob?.cancel()
         watchdogJob = serviceScope.launch {
+            var licenseRefreshTicks = 0
             while (isActive) {
                 delay(20_000L) // Check every 20 seconds
+                licenseRefreshTicks++
+                if (licenseRefreshTicks >= 15) { // Revalidate every five minutes.
+                    licenseRefreshTicks = 0
+                    val licensed = withContext(Dispatchers.IO) {
+                        try { ActivationManager(this@VeilProtectionService).refresh() }
+                        catch (_: Exception) { false }
+                    }
+                    if (!licensed) {
+                        stopSelf()
+                        return@launch
+                    }
+                }
 
                 // 1. Check listener status
                 if (prefs.isVeilEnabled && NotificationUtils.isNotificationAccessGranted(this@VeilProtectionService)) {
