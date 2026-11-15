@@ -642,6 +642,62 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Referral rewards -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:layout_marginBottom="8dp"
+            android:letterSpacing="0.15"
+            android:text="INVITE & EARN"
+            android:textColor="@color/veil_text_low"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/veil_surface_card"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/veil_hairline"
+            app:strokeWidth="0dp">
+            <LinearLayout
+                android:id="@+id/btnReferralRewards"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Invite friends & earn 15 days"
+                        android:textColor="@color/veil_text_high"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Share your referral code after a successful paid activation"
+                        android:textColor="@color/veil_text_medium"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textColor="@color/veil_text_low"
+                    android:textSize="18sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Section 4: Data Security -->
         <TextView
             android:layout_width="wrap_content"
