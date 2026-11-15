@@ -83,7 +83,7 @@ class VUPLInstrumentedTest {
             val sb = StringBuilder()
             repeat(random.nextInt(40)) {
                 val cp = random.nextInt(0x110000)
-                if (cp !in 0xD800..0xDFFF) sb.appendCodePoint(cp)
+                sb.appendCodePoint(cp)
             }
             val value = sb.toString()
             assertEquals(value, VUPL.decode(VUPL.encode(value, dict), dict).text)
