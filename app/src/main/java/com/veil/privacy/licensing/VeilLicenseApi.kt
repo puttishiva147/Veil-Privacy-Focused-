@@ -7,6 +7,7 @@ import android.security.keystore.KeyProperties
 import android.util.Base64
 import com.squareup.moshi.Json
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -34,13 +35,13 @@ import javax.crypto.spec.GCMParameterSpec
  */
 interface VeilLicenseApi {
     @POST("api/v1/activation/challenge")
-    suspend fun createChallenge(@Body request: ActivationChallengeRequest): ApiEnvelope<ActivationChallengeData>
+    suspend fun createChallenge(@Body request: ActivationChallengeRequest): ActivationChallengeData
 
     @POST("api/v1/activation/activate")
-    suspend fun activate(@Body request: ActivationRequest): ApiEnvelope<ActivationData>
+    suspend fun activate(@Body request: ActivationRequest): ActivationData
 
     @POST("api/v1/licenses/status")
-    suspend fun status(@Header("Authorization") bearer: String): ApiEnvelope<LicenseStatusData>
+    suspend fun status(@Header("Authorization") bearer: String): LicenseStatusData
 }
 
 data class ActivationChallengeRequest(
@@ -78,12 +79,6 @@ data class LicenseStatusData(
     @Json(name = "licenseType") val licenseType: String,
     @Json(name = "expiresAt") val expiresAt: String,
     @Json(name = "referralCode") val referralCode: String?
-)
-
-data class ApiEnvelope<T>(
-    @Json(name = "success") val success: Boolean = false,
-    @Json(name = "data") val data: T? = null,
-    @Json(name = "error") val error: String? = null
 )
 
 class VeilDeviceIdentity(private val context: Context) {
@@ -199,7 +194,7 @@ class VeilLicenseRepository(
         val fingerprint = identity.fingerprintHash()
         val challenge = api.createChallenge(
             ActivationChallengeRequest(publicKey, fingerprint)
-        ).requireData()
+        )
         require(challenge.expiresInSeconds > 0) { "Activation challenge expired. Try again." }
         val result = api.activate(
             ActivationRequest(
@@ -209,14 +204,14 @@ class VeilLicenseRepository(
                 signature = identity.signNonce(challenge.nonce),
                 deviceFingerprintHash = fingerprint
             )
-        ).requireData()
+        )
         tokenStore.save(result.accessToken)
         return result
     }
 
     suspend fun refreshStatus(): LicenseStatusData {
         val token = tokenStore.read() ?: throw IllegalStateException("VEIL activation is required.")
-        val result = api.status("Bearer $token").requireData()
+        val result = api.status("Bearer $token")
         if (!result.active) {
             tokenStore.clear()
             throw IllegalStateException("VEIL license is inactive.")
@@ -226,11 +221,6 @@ class VeilLicenseRepository(
     }
 
     fun clearActivation() = tokenStore.clear()
-}
-
-private fun <T> ApiEnvelope<T>.requireData(): T {
-    if (!success || data == null) throw IllegalStateException(error ?: "VEIL licensing service returned an invalid response.")
-    return data
 }
 
 object VeilLicenseApiFactory {
@@ -246,7 +236,7 @@ object VeilLicenseApiFactory {
             .readTimeout(20, TimeUnit.SECONDS)
             .writeTimeout(20, TimeUnit.SECONDS)
             .build()
-        val moshi = Moshi.Builder().build()
+        val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(client)
