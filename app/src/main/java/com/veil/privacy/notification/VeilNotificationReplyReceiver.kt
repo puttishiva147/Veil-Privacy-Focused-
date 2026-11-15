@@ -7,6 +7,7 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput
 import com.veil.privacy.R
+import com.veil.privacy.licensing.LicenseTokenStore
 import com.veil.privacy.communication.VeilTransportManager
 import com.veil.privacy.model.SupportedApp
 import com.veil.privacy.model.TransportMessage
@@ -32,6 +33,7 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        if (!LicenseTokenStore.hasLocallyValidSession(context)) return
         if (intent.action != ACTION_REPLY) return
 
         val results = RemoteInput.getResultsFromIntent(intent) ?: return
