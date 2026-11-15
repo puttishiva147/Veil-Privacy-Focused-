@@ -19,8 +19,6 @@ import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.Signature
-import java.security.spec.RSAKeyGenParameterSpec
-import java.security.interfaces.RSAPublicKey
 import java.util.concurrent.TimeUnit
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -105,7 +103,7 @@ class VeilDeviceIdentity(private val context: Context) {
         }
         val publicKey = keyStore.getCertificate(alias).publicKey.encoded
         val base64 = Base64.encodeToString(publicKey, Base64.NO_WRAP)
-        return "-----BEGIN PUBLIC KEY-----\\n$base64\\n-----END PUBLIC KEY-----"
+        return "-----BEGIN PUBLIC KEY-----\n$base64\n-----END PUBLIC KEY-----"
     }
 
     fun signNonce(nonce: String): String {
@@ -123,7 +121,7 @@ class VeilDeviceIdentity(private val context: Context) {
             ?: throw IllegalStateException("Android device identifier is unavailable")
         val digest = MessageDigest.getInstance("SHA-256")
             .digest(androidId.toByteArray(Charsets.UTF_8))
-        return digest.joinToString("") { "%02x".format(it) }
+        return digest.joinToString("") { byte -> (byte.toInt() and 0xff).toString(16).padStart(2, '0') }
     }
 }
 
