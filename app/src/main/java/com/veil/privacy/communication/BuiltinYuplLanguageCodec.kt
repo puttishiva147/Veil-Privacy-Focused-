@@ -44,6 +44,11 @@ class BuiltinYuplLanguageCodec : VeilLanguageCodec {
         if (plainText.isEmpty()) return "Y1;"
         val normalized = plainText.lowercase(Locale.ROOT)
         if (plainText == normalized) phraseIds[normalized]?.let { return "Y1;p" + it.toString(36).padStart(2, '0') }
+        // Preserve non-ASCII sequences as one lossless fallback token. This avoids grapheme-cluster splits in Indic scripts, combining marks and emoji modifiers.
+        if (plainText.any { it.code > 0x7f }) {
+            val bytes = plainText.toByteArray(StandardCharsets.UTF_8)
+            return "Y1;x" + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+        }
         val tokens = segments.findAll(plainText).map { match -> encodeSegment(match.value) }.toList()
         return "Y1;" + tokens.joinToString(".")
     }
