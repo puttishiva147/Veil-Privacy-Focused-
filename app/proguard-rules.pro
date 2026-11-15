@@ -19,3 +19,15 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+
+# Preserve runtime metadata required by Room and Moshi adapters.
+-keepattributes RuntimeVisibleAnnotations,RuntimeInvisibleAnnotations,AnnotationDefault,Signature,InnerClasses,EnclosingMethod
+-keep class **_Impl { *; }
+-keep @androidx.room.Entity class * { *; }
+-keep @androidx.room.Dao interface * { *; }
+-keepclassmembers class * { @androidx.room.* <fields>; @androidx.room.* <methods>; }
+-keep @com.squareup.moshi.JsonClass class * { *; }
+-keepclassmembers class * { @com.squareup.moshi.Json <fields>; }
+
+# Android manifest components are retained automatically; licensing and transport classes remain obfuscatable.

@@ -199,3 +199,24 @@ No repository license file was found during this README update. Until a license 
 - **Documentation reviewed:** 15 November 2026
 
 Repository creation time and latest source update are maintained by GitHub repository metadata and commit history. The documentation review date above is not a substitute for either timestamp. Third-party libraries, APIs, trademarks and platform components retain their respective owners' rights and licence terms.
+
+
+## Licensing and activation (4.6.0 / versionCode 42)
+
+VEIL Android now requires a server-verified 12-digit activation code before entering the main application. The app has no user sign-up, email login or password login. Eligible users request a five-day trial code from the separate VEIL website; paid subscriptions and renewals are handled there. The proposed monthly price is ₹49 and remains admin-configurable. Eligible first paid referrals add 15 days to the inviter's existing subscription.
+
+The website and licensing backend are maintained in a separate repository: https://github.com/puttishiva147/VEIL-Web. No website source or server secrets belong in this Android repository.
+
+Configure the public API origin through `VEIL_LICENSE_API_BASE_URL` in the local `.env` (or the build environment), ending in `/api/v1`. The checked-in `.env.example` contains a placeholder only. If the API origin is not configured, activation fails closed. Production builds must use the deployed HTTPS website origin.
+
+Device binding uses an RSA key pair generated in Android Keystore. The private key is non-exportable; the public key proves possession during activation. Short-lived bearer tokens and the activation code are stored encrypted with an Android Keystore AES-GCM key. The app revalidates online and blocks notification processing and reply transport when its local authorization expires or the server rejects the license.
+
+## YUPL notification transport
+
+YUPL v1 is a deterministic, lossless reversible language codec with a built-in version-1 dictionary and Unicode fallback. Its packet frame is carried through existing supported messaging-app notification `RemoteInput` reply actions; it does not use a separate messaging API or VEIL messaging server. If no live reply action exists, the message remains queued and is not reported as delivered.
+
+**Security limitation:** YUPL v1 is encoding/obfuscation, not cryptographic encryption. Its built-in dictionary can be reverse-engineered, Base64URL fallback is reversible, and the SHA-256 frame digest is not sender authentication. Do not claim end-to-end encryption. See [YUPL v1 specification](docs/YUPL_V1_SPEC.md) and [multi-app transport notes](docs/VEIL_MULTI_APP_TRANSPORT.md).
+
+## Android project boundaries
+
+This repository contains only Android application source, Android build/release configuration and Android-specific documentation. The separate website repository owns subscription checkout, license issuance, payment verification and admin controls.

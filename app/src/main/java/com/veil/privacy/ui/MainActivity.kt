@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import com.veil.privacy.R
 import com.veil.privacy.databinding.ActivityMainBinding
 import com.veil.privacy.notification.VeilNotificationManager
+import com.veil.privacy.licensing.LicenseRepository
 import com.veil.privacy.security.SecurityManager
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
@@ -40,11 +41,25 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
+                val licensed = withContext(Dispatchers.IO) {
+                    LicenseRepository.verifyAndRefresh(applicationContext)
+                }
+                if (!licensed) {
+                    startActivity(Intent(this@MainActivity, LicenseGateActivity::class.java))
+                    finish()
+                    return@launch
+                }
                 withContext(Dispatchers.IO) {
                     VeilPrefs.getInstance(applicationContext).performSecurityMigrationIfNeeded()
                     VeilDatabase.getInstance(applicationContext)
                 }
                 VeilNotificationManager.getInstance(applicationContext).createNotificationChannel()
+                val prefs = VeilPrefs.getInstance(applicationContext)
+                if (prefs.isVeilEnabled && prefs.isPersistentShieldEnabled &&
+                    com.veil.privacy.util.NotificationUtils.isNotificationAccessGranted(applicationContext)
+                ) {
+                    com.veil.privacy.service.VeilProtectionService.startService(applicationContext)
+                }
 
                 val targetClass = when {
                     !SecurityManager.isSecuritySetupCompleted(this@MainActivity) ->

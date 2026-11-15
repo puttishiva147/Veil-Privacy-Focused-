@@ -13,6 +13,7 @@ import androidx.core.app.ServiceCompat
 import com.veil.privacy.BuildConfig
 import com.veil.privacy.R
 import com.veil.privacy.notification.VeilNotificationListener
+import com.veil.privacy.licensing.LicenseTokenStore
 import com.veil.privacy.notification.VeilNotificationManager
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
@@ -106,6 +107,10 @@ class VeilProtectionService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action ?: ACTION_START
+        if (action != ACTION_STOP && !LicenseTokenStore.hasLocallyValidSession(this)) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
 
         when (action) {
             ACTION_STOP -> {
@@ -291,8 +296,18 @@ class VeilProtectionService : Service() {
     private fun startWatchdog() {
         watchdogJob?.cancel()
         watchdogJob = serviceScope.launch {
+            var lastLicenseRefreshAt = System.currentTimeMillis()
             while (isActive) {
                 delay(20_000L) // Check every 20 seconds
+
+                if (System.currentTimeMillis() - lastLicenseRefreshAt >= 2 * 60_000L) {
+                    val licenseValid = com.veil.privacy.licensing.LicenseRepository.verifyAndRefresh(this@VeilProtectionService)
+                    if (!licenseValid) {
+                        stopSelf()
+                        return@launch
+                    }
+                    lastLicenseRefreshAt = System.currentTimeMillis()
+                }
 
                 // 1. Check listener status
                 if (prefs.isVeilEnabled && NotificationUtils.isNotificationAccessGranted(this@VeilProtectionService)) {
