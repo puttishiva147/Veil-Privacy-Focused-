@@ -6,6 +6,7 @@ import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.model.ProtectionRule
 import com.veil.privacy.model.SelectedContact
 import com.veil.privacy.communication.VeilTransportManager
+import com.veil.privacy.communication.VeilTransportPacket
 import com.veil.privacy.privacy.RuleMatchingEngine
 import com.veil.privacy.storage.VeilInbox
 import kotlinx.coroutines.Dispatchers
@@ -111,7 +112,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             emitDiagnostic("PARSE", "Notification payload had no extractable message content", false)
             return
         }
-        serviceScope.launch {
+        val transportCaptureJob = serviceScope.launch {
             try {
                 if (VeilTransportManager(this@VeilNotificationListener).captureIncoming(pkg, parsed.sender, parsed.message)) {
                     emitDiagnostic("TRANSPORT_RX", "VEIL packet captured from ${com.veil.privacy.model.SupportedApp.getAppDisplayName(pkg)}")
@@ -186,6 +187,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         // 7. Evaluate and process against configured VEIL rules
         serviceScope.launch {
             try {
+                transportCaptureJob.join()
                 processIncomingProtectedNotification(sbn, parsed, replyActionPair)
             } catch (e: Exception) {
                 emitDiagnostic("PROCESS", "Notification processing failed (${e.javaClass.simpleName})", false)
@@ -372,7 +374,15 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             }
         }
 
-        val protectedEvent = ProtectedEvent(
+        val transportEvent = VeilTransportPacket.extract(parsed.message)?.let { packet ->
+            withContext(Dispatchers.IO) {
+                database.protectedEventDao().getTransportEventByKey("VEIL_TRANSPORT:${packet.messageId}")
+            }
+        }
+
+        // Reuse the transport event instead of creating a duplicate chat bubble for the same packet.
+        // Keep its VEIL_TRANSPORT key so deferred dictionary decoding can still update this row.
+        val protectedEvent = (transportEvent ?: ProtectedEvent(
             timestamp = parsed.timestamp,
             sourcePackage = parsed.packageName,
             realSender = parsed.sender,
@@ -383,6 +393,12 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             originalNotificationKey = parsed.notificationKey,
             isOutgoing = false,
             replyStatus = "RECEIVED",
+            conversationId = targetConversation
+        )).copy(
+            timestamp = parsed.timestamp,
+            decoySender = finalDecoySender,
+            decoyMessage = finalDecoyMessage,
+            isCall = parsed.isCall,
             conversationId = targetConversation
         )
 
