@@ -526,59 +526,31 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             Toast.makeText(this, "Type a message before sending", Toast.LENGTH_SHORT).show()
             return
         }
-
-        // Resolve this thread's platform before selecting a live RemoteInput token. Contact
-        // names can repeat across apps, so never dispatch using contact name alone.
         lifecycleScope.launch {
-            val conversationSourcePackage = sourcePackage
-            val action = NotificationReplyRegistry.getLiveReplyAction(contactName, conversationSourcePackage)
-            val targetApp = conversationSourcePackage.let {
-                com.veil.privacy.model.SupportedApp.getAppDisplayName(it)
-            } ?: "Messaging app"
-
-            if (action == null) {
-                VeilDialogs.showInfoDialog(
-                    context = this@ProtectedChatConversationActivity,
-                    title = "Direct Reply Unavailable",
-                    message = "VEIL cannot find an active, platform-matching Android notification reply action for $targetApp. No message was sent. Open the source app to continue, or wait for a new notification that supports inline replies."
+            val result = withContext(Dispatchers.IO) {
+                VeilTransportManager(this@ProtectedChatConversationActivity).queueOutgoing(
+                    conversationId = conversationId,
+                    contactName = contactName,
+                    sourcePackage = sourcePackage,
+                    plainText = replyText
                 )
-                return@launch
             }
-
-            val dispatched = NotificationReplyRegistry.sendReply(
-                this@ProtectedChatConversationActivity,
-                contactName,
-                replyText,
-                action.sourcePackage
-            )
-
-            if (dispatched) {
+            if (result.status != com.veil.privacy.model.TransportMessage.FAILED) {
                 binding.etReplyInput.text?.clear()
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val outgoingEvent = ProtectedEvent(
-                        sourcePackage = action.sourcePackage,
-                        realSender = "You",
-                        realMessage = replyText,
-                        isOutgoing = true,
-                        replyStatus = "DISPATCHED_NOT_CONFIRMED",
-                        conversationId = conversationId,
-                        timestamp = System.currentTimeMillis()
-                    )
-                    database.protectedEventDao().insert(outgoingEvent)
-                }
-                Toast.makeText(
-                    this@ProtectedChatConversationActivity,
-                    "Reply handed to $targetApp. Delivery/read status is not confirmed by VEIL.",
-                    Toast.LENGTH_LONG
-                ).show()
-            } else {
-                Toast.makeText(
-                    this@ProtectedChatConversationActivity,
-                    "Reply was not sent: the platform's notification action is unavailable or expired.",
-                    Toast.LENGTH_LONG
-                ).show()
-                updateReplyTokenStatus()
             }
+            updateReplyTokenStatus()
+            val statusMessage = when (result.status) {
+                com.veil.privacy.model.TransportMessage.WAITING_FOR_DICTIONARY ->
+                    "Saved in VEIL. Waiting for the YUPL dictionary; this message has not been sent yet."
+                com.veil.privacy.model.TransportMessage.WAITING_FOR_REPLY_ACTION ->
+                    "Encoded and queued. Waiting for a new $sourcePackage notification with an inline reply action."
+                com.veil.privacy.model.TransportMessage.DISPATCHED_NOT_CONFIRMED ->
+                    "YUPL packet handed to the source app. Delivery/read status is not confirmed."
+                com.veil.privacy.model.TransportMessage.FAILED ->
+                    "Message was not sent: ${result.detail}"
+                else -> result.detail
+            }
+            Toast.makeText(this@ProtectedChatConversationActivity, statusMessage, Toast.LENGTH_LONG).show()
         }
     }
 
