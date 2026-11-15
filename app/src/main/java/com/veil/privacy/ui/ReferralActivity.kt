@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.veil.privacy.BuildConfig
 import com.veil.privacy.licensing.LicenseApi
+import com.veil.privacy.licensing.LicenseRepository
 import com.veil.privacy.licensing.LicenseTokenStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,7 +31,7 @@ class ReferralActivity:AppCompatActivity(){
   root.addView(back);root.addView(title);root.addView(desc);root.addView(codeView,LinearLayout.LayoutParams(-1,-2));root.addView(copy);root.addView(share);root.addView(statusView)
   setContentView(root)
  }
- private fun loadReferral(){lifecycleScope.launch{try{val token=LicenseTokenStore.token(this@ReferralActivity)?:throw IllegalStateException("Please reopen VEIL to verify your subscription.");val data=withContext(Dispatchers.IO){LicenseApi.referralInfo(token)};referralCode=data.getString("referralCode");codeView.text=referralCode;statusView.text=(if(data.optBoolean("referralsEnabled",true)) "Reward per eligible referral: ${data.optInt("rewardDaysPerReferral",15)} days" else "Referral programme is temporarily paused") + "\nSuccessful referrals: ${data.optInt("qualifiedReferrals")}\nFree days earned: ${data.optInt("earnedDays")}\nSubscription expires: ${data.optString("expiresAt")}"}catch(e:Exception){codeView.text="Referral details unavailable";statusView.text=e.localizedMessage?:"Please try again."}}}
+ private fun loadReferral(){lifecycleScope.launch{try{val valid=LicenseRepository.verifyAndRefresh(this@ReferralActivity);if(!valid)throw IllegalStateException("Your VEIL subscription could not be verified. Please connect to the internet and try again.");val token=LicenseTokenStore.token(this@ReferralActivity)?:throw IllegalStateException("Your activation session has expired.");val data=withContext(Dispatchers.IO){LicenseApi.referralInfo(token)};referralCode=data.getString("referralCode");codeView.text=referralCode;statusView.text=(if(data.optBoolean("referralsEnabled",true)) "Reward per eligible referral: ${data.optInt("rewardDaysPerReferral",15)} days" else "Referral programme is temporarily paused") + "\nSuccessful referrals: ${data.optInt("qualifiedReferrals")}\nFree days earned: ${data.optInt("earnedDays")}\nSubscription expires: ${data.optString("expiresAt")}"}catch(e:Exception){codeView.text="Referral details unavailable";statusView.text=e.localizedMessage?:"Please try again."}}}
  private fun shareInvite(){if(referralCode.isBlank())return;val api=BuildConfig.VEIL_LICENSE_API_BASE_URL;val site=if(api.contains("/api/v1"))api.substringBefore("/api/v1") else "";if(site.isBlank()){Toast.makeText(this,"VEIL website address is not configured.",Toast.LENGTH_LONG).show();return};val message="Join VEIL and start your 5-day free trial: $site/trial\nWhen you purchase your first paid subscription, use my invite link: $site/subscribe?ref=$referralCode\nMy referral reward is earned only after your first paid activation.";startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_TEXT,message)},"Invite with VEIL"))}
  private fun dp(value:Int):Int=(value*resources.displayMetrics.density).toInt()
 }
