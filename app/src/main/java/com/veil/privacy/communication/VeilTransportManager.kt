@@ -272,7 +272,7 @@ class VeilTransportManager(
                 direction = TransportMessage.DIRECTION_INCOMING,
                 originalText = decoded.orEmpty(),
                 encodedPayload = packet.encodedPayload,
-                packet = "VUPL1 packet received",
+                packet = "YUPL1 packet received",
                 dictionaryVersion = packet.dictionaryVersion,
                 status = if (decoded != null) TransportMessage.RECEIVED else TransportMessage.WAITING_FOR_DICTIONARY,
                 lastError = if (decoded == null) "Dictionary missing or version mismatch" else ""
