@@ -229,6 +229,14 @@ class VeilTransportManager(
         return decodedCount
     }
 
+    /** Run after the dictionary is installed or refreshed. */
+    suspend fun processPendingQueues(): List<SendResult> {
+        val encoded = processDictionaryQueue()
+        val dispatched = retryWaitingForReplyActions()
+        decodePendingIncoming()
+        return encoded + dispatched
+    }
+
     /** Called by the notification listener for every supported app notification. */
     suspend fun captureIncoming(sourcePackage: String, sender: String, notificationText: String): Boolean {
         if (sourcePackage !in supportedTransports().map { it.first }) return false
