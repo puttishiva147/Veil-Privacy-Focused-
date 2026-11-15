@@ -19,7 +19,7 @@ import java.util.UUID
  */
 class VeilTransportManager(
     private val context: Context,
-    private val codec: VeilLanguageCodec = DictionaryPendingCodec()
+    private val codec: VeilLanguageCodec = VeilLanguageCodecProvider.get()
 ) {
     private val database = VeilDatabase.getInstance(context)
     private val dao = database.transportMessageDao()
