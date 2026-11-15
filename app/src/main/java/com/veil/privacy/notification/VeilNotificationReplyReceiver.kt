@@ -55,10 +55,8 @@ class VeilNotificationReplyReceiver : BroadcastReceiver() {
                         SupportedApp.PKG_INSTAGRAM,
                         SupportedApp.PKG_SNAPCHAT
                     ) }?.sourcePackage
-                val sourcePackage = conversationSourcePackage?.takeIf {
-                    NotificationReplyRegistry.getLiveReplyAction(contactName, it) != null
-                } ?: transportManager.selectAvailableTransport(contactName)
-                    ?: conversationSourcePackage
+                val sourcePackage = conversationSourcePackage
+                    ?: transportManager.selectAvailableTransport(contactName)
                     ?: SupportedApp.PKG_WHATSAPP
 
                 val result = transportManager.queueOutgoing(
