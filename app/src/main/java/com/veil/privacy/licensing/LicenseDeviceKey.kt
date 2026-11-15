@@ -1,11 +1,14 @@
 package com.veil.privacy.licensing
+import android.content.Context
+import android.provider.Settings
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import java.security.KeyPairGenerator
 import java.security.KeyStore
+import java.security.MessageDigest
 import java.security.Signature
-/** Device identity is a non-exportable RSA key held by Android Keystore. */
+/** Device identity uses a non-exportable RSA key plus a hashed app-scoped Android ID for trial abuse prevention. */
 object LicenseDeviceKey {
  private const val KEY_ALIAS="com.veil.privacy.license.device.v1"
  private fun keyStore():KeyStore=KeyStore.getInstance("AndroidKeyStore").apply{load(null)}
@@ -16,4 +19,9 @@ object LicenseDeviceKey {
  }
  fun publicKeyPem():String{ensureKey();val bytes=keyStore().getCertificate(KEY_ALIAS).publicKey.encoded;val encoded=Base64.encodeToString(bytes,Base64.NO_WRAP);return "-----BEGIN PUBLIC KEY-----\n$encoded\n-----END PUBLIC KEY-----"}
  fun signNonce(nonce:String):String{ensureKey();val privateKey=keyStore().getKey(KEY_ALIAS,null) as java.security.PrivateKey;val signer=Signature.getInstance("SHA256withRSA");signer.initSign(privateKey);signer.update(nonce.toByteArray(Charsets.UTF_8));return Base64.encodeToString(signer.sign(),Base64.NO_WRAP)}
+ fun fingerprintHash(context:Context):String{
+  val androidId=Settings.Secure.getString(context.contentResolver,Settings.Secure.ANDROID_ID)?.takeIf{it.isNotBlank()}?:throw IllegalStateException("Android device fingerprint is unavailable.")
+  val digest=MessageDigest.getInstance("SHA-256").digest(androidId.toByteArray(Charsets.UTF_8))
+  return digest.joinToString(""){"%02x".format(it)}
+ }
 }
