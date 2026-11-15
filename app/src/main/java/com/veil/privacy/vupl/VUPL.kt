@@ -5,6 +5,8 @@ import android.icu.text.UnicodeSet
 import android.util.Base64
 import org.json.JSONObject
 import java.nio.charset.StandardCharsets
+import java.nio.CharBuffer
+import java.nio.charset.CodingErrorAction
 import java.security.SecureRandom
 import java.util.Locale
 import javax.crypto.Cipher
@@ -112,9 +114,19 @@ object VUPL {
         return PairState(Dictionary(keys.version, k2c, c2k), aes)
     }
 
+    private fun utf8(value: String): ByteArray {
+        val encoder = StandardCharsets.UTF_8.newEncoder()
+            .onMalformedInput(CodingErrorAction.REPLACE)
+            .onUnmappableCharacter(CodingErrorAction.REPLACE)
+            .replaceWith(byteArrayOf(0xEF.toByte(), 0xBF.toByte(), 0xBD.toByte()))
+        val buffer = encoder.encode(CharBuffer.wrap(value))
+        return ByteArray(buffer.remaining()).also { buffer.get(it) }
+    }
+
     fun crc32(value: String): String {
         val crc = CRC32()
-        crc.update(value.toByteArray(StandardCharsets.UTF_8))
+        // JavaScript TextEncoder replaces isolated UTF-16 surrogates with U+FFFD.
+        crc.update(utf8(value))
         return crc.value.toString(16).padStart(8, '0')
     }
 
