@@ -2,7 +2,7 @@ package com.veil.privacy.communication
 
 /**
  * Adapter contract for the versioned VEIL YUPL language codec.
- * BuiltinYuplLanguageCodec provides dictionary version 1.
+ * The owner's supplied, versioned dictionary file is authoritative. Production stays pending until it is installed.
  */
 interface VeilLanguageCodec {
     val isReady: Boolean
@@ -11,7 +11,7 @@ interface VeilLanguageCodec {
     fun decode(encodedText: String): String
 }
 
-/** Safe placeholder until the official VEIL dictionary file is supplied and loaded. */
+/** Safe production state until the official VEIL dictionary file is supplied and loaded. */
 class DictionaryPendingCodec : VeilLanguageCodec {
     override val isReady: Boolean = false
     override val dictionaryVersion: Int = 0
