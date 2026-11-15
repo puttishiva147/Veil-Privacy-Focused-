@@ -26,7 +26,7 @@
 7. The backend returns a short-lived bearer token. Android stores the token and code encrypted using Android Keystore AES-GCM.
 8. On app entry, Android calls `POST /api/v1/licenses/status`; the backend rechecks the license and device and returns a fresh short-lived token.
 
-The current token lifetime is 15 minutes. The foreground app and protection service revalidate; failure is closed. No local premium flag is authoritative.
+The current token lifetime is 15 minutes. The foreground app and protection service revalidate every two minutes; failure clears the local entitlement and is closed. Online revocation is therefore enforced on the next successful check, with a target polling interval of two minutes. No local premium flag is authoritative.
 
 ## Android build configuration
 
