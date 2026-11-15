@@ -1,6 +1,6 @@
 # YUPL v1 — VEIL Universal Language Protocol
 
-**Status:** Implemented codec and notification transport foundation. This is not an encryption specification.
+**Status:** Notification transport foundation is implemented. The codec contract and a development fixture exist, but production dictionary installation is intentionally pending the owner's authoritative language file. This is not an encryption specification.
 
 ## Scope
 
@@ -8,7 +8,7 @@ YUPL v1 is a deterministic, lossless text encoding used by VEIL-to-VEIL messages
 
 ## Codec format
 
-The built-in dictionary version is **1**. The language payload starts with `Y1;`.
+The current development fixture uses dictionary version **1** and payload prefix `Y1;`. It is not the production dictionary. The production version and mappings must be derived from the owner's supplied file; do not enable the fixture as a fallback.
 
 - Exact lowercase phrases in the built-in phrase table use a compact phrase token `pNN`.
 - Known words use a dedicated Unicode symbol plus a case marker: `l` lowercase, `u` uppercase, `t` title case.
@@ -16,7 +16,7 @@ The built-in dictionary version is **1**. The language payload starts with `Y1;`
 - Tokens are separated by a period. Base64URL does not contain a period, so token boundaries are unambiguous.
 - Unknown or malformed token forms are rejected. The decoder never silently substitutes text.
 
-The fallback makes arbitrary Unicode round-trip correctly, including Hindi, Telugu, Tamil, Arabic and emoji. It also means the payload is reversible and must not be treated as cryptographic secrecy.
+The development fixture's fallback makes arbitrary Unicode round-trip correctly, including Hindi, Telugu, Tamil, Arabic and emoji. The authoritative dictionary must be tested for the same lossless property before activation. The payload is reversible and must not be treated as cryptographic secrecy.
 
 ## Outer transport frame
 
@@ -63,4 +63,4 @@ Do not describe YUPL v1 as end-to-end encrypted. A future encrypted YUPL version
 
 ## Verification
 
-Unit tests cover deterministic encoding, exact round-trip, phrase and word tokens, case preservation, punctuation, whitespace, unknown words, multilingual Unicode, emoji and malformed payload rejection. Android integration still requires real-device testing against each target app's notification/RemoteInput behavior.
+Unit tests cover the development fixture's deterministic encoding, exact round-trip, phrase and word tokens, case preservation, punctuation, whitespace, unknown words, multilingual Unicode, emoji and malformed payload rejection. These tests do not certify the owner's future dictionary file. After it is supplied, add file parser/validation tests and repeat the full round-trip suite against the authoritative data. Android integration still requires real-device testing against each target app's notification/RemoteInput behavior.
