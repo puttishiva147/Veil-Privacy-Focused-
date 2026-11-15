@@ -10,9 +10,9 @@
 
 - The main VEIL UI is not reachable without a valid 12-digit activation code.
 - No app sign-up, email login, password login or guest bypass.
-- The website issues either a five-day TRIAL code or a PAID subscription code.
+- The website issues either an admin-configurable TRIAL code (five-day default) or a PAID subscription code.
 - The same activation UI accepts both license categories; the backend determines type and expiry.
-- The referral invitation code is separate from the activation code. A qualifying first paid activation adds 15 days to the inviter's existing license.
+- The referral invitation code is separate from the activation code. A qualifying first paid activation adds the website's configured reward (15-day default) to the inviter's existing license.
 - Paid renewals retain the existing activation code and extend the existing license server-side.
 
 ## Activation protocol
