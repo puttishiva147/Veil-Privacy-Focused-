@@ -90,7 +90,7 @@ val generateVUPLKeys by tasks.registering {
       target.outputStream().use { output -> input.copyTo(output) }
     }
     val digest = MessageDigest.getInstance("SHA-256").digest(target.readBytes())
-      .joinToString("") { "%02x".format(it) }
+      .joinToString("") { "%02x".format(it.toInt() and 0xff) }
     check(target.length() == 1367633L && digest == "ea416c4efe5022bdad61833aa1fbf3f54a7475b9645f9d5110800c7f88a49510") {
       "VUPL key list does not match the supplied veil_keys_v1.json"
     }
