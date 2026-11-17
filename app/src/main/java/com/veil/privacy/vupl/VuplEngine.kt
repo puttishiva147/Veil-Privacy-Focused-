@@ -56,13 +56,16 @@ class VuplEngine private constructor(
             val secret = hexToBytes(secretHex)
             val dictSecret = hmac(secret, "VUPL-DICT".toByteArray()).joinToString("") { "%02x".format(it) }
             val aes = hmac(secret, "VUPL-AES".toByteArray())
+            val dictMac = Mac.getInstance("HmacSHA256").apply {
+                init(SecretKeySpec(dictSecret.toByteArray(StandardCharsets.UTF_8), "HmacSHA256"))
+            }
             val forward = LinkedHashMap<String, String>(keys.length())
             val reverse = HashMap<String, String>(keys.length())
             for (i in 0 until keys.length()) {
                 val key = keys.getString(i)
                 var attempt = 0
                 var code: String
-                do { code = generateCode(dictSecret, key, attempt++) } while (reverse.containsKey(code))
+                do { code = generateCode(dictMac, key, attempt++) } while (reverse.containsKey(code))
                 forward[key] = code
                 reverse[code] = key
             }
