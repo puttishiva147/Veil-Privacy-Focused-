@@ -200,6 +200,11 @@ class SettingsActivity : AppCompatActivity() {
             showPrivacyInfoDialog()
         }
 
+        // VUPL local device pairing
+        binding.btnVuplPairing.setOnClickListener {
+            startActivity(Intent(this, VuplPairingActivity::class.java))
+        }
+
         // About VEIL
         binding.btnAboutVeil.setOnClickListener {
             showAboutDialog()

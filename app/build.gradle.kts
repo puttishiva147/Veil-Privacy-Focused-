@@ -16,8 +16,8 @@ android {
     applicationId = "com.veil.privacy"
     minSdk = 26
     targetSdk = 35
-    versionCode = 41
-    versionName = "4.5.7"
+    versionCode = 42
+    versionName = "4.5.8"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -72,6 +72,7 @@ secrets {
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
 
 dependencies {
+  implementation("com.journeyapps:zxing-android-embedded:4.3.0")
   implementation(libs.androidx.biometric)
   implementation(libs.androidx.appcompat)
   implementation(libs.material)
@@ -117,3 +118,17 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
 }
+
+
+/**
+ * The VUPL public dictionary is regenerated from the checked-in canonical builder.
+ * The builder pins the expected ordered-entry count so Unicode database drift fails
+ * the build rather than silently changing pair compatibility.
+ */
+val generateVuplKeys by tasks.registering(Exec::class) {
+  workingDir(rootProject.projectDir)
+  commandLine("python3", "tools/build_vupl_keys.py")
+  inputs.file(rootProject.file("tools/build_vupl_keys.py"))
+  outputs.file(project.file("src/main/assets/veil_keys_v1.json"))
+}
+tasks.named("preBuild").configure { dependsOn(generateVuplKeys) }

@@ -799,6 +799,47 @@
                     android:layout_height="1dp"
                     android:background="@color/veil_hairline" />
 
+                <!-- VUPL local device pairing -->
+                <LinearLayout
+                    android:id="@+id/btnVuplPairing"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="VUPL Device Pairing"
+                            android:textColor="@color/veil_text_high"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Pair VEIL phones locally using a QR secret"
+                            android:textColor="@color/veil_text_medium"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textColor="@color/veil_text_low"
+                        android:textSize="18sp" />
+                </LinearLayout>
+
                 <!-- System Architecture -->
                 <LinearLayout
                     android:id="@+id/btnAboutVeil"

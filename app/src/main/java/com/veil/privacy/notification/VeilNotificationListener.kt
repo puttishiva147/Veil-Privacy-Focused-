@@ -7,6 +7,7 @@ import com.veil.privacy.model.ProtectionRule
 import com.veil.privacy.model.SelectedContact
 import com.veil.privacy.privacy.RuleMatchingEngine
 import com.veil.privacy.storage.VeilInbox
+import com.veil.privacy.vupl.VuplEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -124,12 +125,14 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         emitDiagnostic("DETECT", "Captured supported-app notification")
 
         // 4. Parse incoming notification exposed by Android
-        val parsed = notificationParser.parse(sbn, ownPackage, preferences.isProtectAnyApp)
-        if (parsed == null) {
+        val rawParsed = notificationParser.parse(sbn, ownPackage, preferences.isProtectAnyApp)
+        if (rawParsed == null) {
             emitDiagnostic("PARSE", "Notification payload had no extractable message content", false)
             return
         }
 
+        // Decode before the message enters VEIL's existing protected-chat pipeline.
+        val parsed = decodeVuplNotification(rawParsed, pkg)
         emitDiagnostic("PARSE", "Notification content parsed successfully")
 
         // 5. Capture live RemoteInput reply action if exposed by messaging app
@@ -171,6 +174,28 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             } catch (e: Exception) {
                 emitDiagnostic("PROCESS", "Notification processing failed (${e.javaClass.simpleName})", false)
             }
+        }
+    }
+
+    private fun decodeVuplNotification(
+        parsed: ParsedNotificationInfo,
+        sourcePackage: String
+    ): ParsedNotificationInfo {
+        val isWhatsApp = sourcePackage == WHATSAPP_PACKAGE || sourcePackage == WHATSAPP_BUSINESS_PACKAGE
+        if (!isWhatsApp || !parsed.message.trim().startsWith("VEILX/2|")) return parsed
+
+        val engine = VuplEngine.getPaired(this)
+        if (engine == null) {
+            emitDiagnostic("VUPL", "Encrypted message received, but this device has no VUPL pairing", false)
+            return parsed.copy(message = "[Encrypted VUPL message — pair this device to read it]")
+        }
+        return try {
+            val readable = engine.receiveMessage(parsed.message.trim())
+            emitDiagnostic("VUPL", "Incoming VUPL message decrypted and decoded")
+            parsed.copy(message = readable)
+        } catch (error: Exception) {
+            emitDiagnostic("VUPL", "Incoming VUPL message could not be decrypted (${error.javaClass.simpleName})", false)
+            parsed.copy(message = "[Encrypted VUPL message — unable to decrypt]")
         }
     }
 

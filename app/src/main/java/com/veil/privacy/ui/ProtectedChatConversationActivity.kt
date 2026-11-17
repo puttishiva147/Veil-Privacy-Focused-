@@ -22,6 +22,7 @@ import com.veil.privacy.storage.VeilPrefs
 import com.veil.privacy.ui.adapter.ProtectedChatAdapter
 import com.veil.privacy.util.InsetsUtils
 import com.veil.privacy.util.VeilDialogs
+import com.veil.privacy.vupl.VuplEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -223,17 +224,25 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     private fun updateReplyTokenStatus() {
         val action = NotificationReplyRegistry.getLiveReplyAction(contactName)
         val isLive = action != null
-        val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(action.sourcePackage) else "Messaging app"
+        val sourcePackage = action?.sourcePackage.orEmpty()
+        val isWhatsApp = sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
+            sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS
+        val vuplActive = isWhatsApp && VuplEngine.getPaired(this) != null
+        val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage) else "Messaging app"
 
         if (isLive) {
             binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_secure)
             binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_secure)
-            binding.ivContactProfileIndicator.contentDescription = "Protected Profile • Live Reply Active"
-            binding.tvChatStatusSubtitle.text = "PROTECTED CHAT • LIVE REPLY ACTIVE"
-            binding.tvReplyStatusTitle.text = "🟢 $targetApp reply action ready"
+            binding.ivContactProfileIndicator.contentDescription = if (vuplActive) "VUPL encrypted chat active" else "Protected Profile • Live Reply Active"
+            binding.tvChatStatusSubtitle.text = if (vuplActive) "VUPL SECURE CHAT • LIVE REPLY ACTIVE" else "PROTECTED CHAT • LIVE REPLY ACTIVE"
+            binding.tvReplyStatusTitle.text = if (vuplActive) "🔐 VUPL encrypted reply ready" else "🟢 $targetApp reply action ready"
             binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this, R.color.veil_accent_secure))
-            binding.tvReplyStatusDesc.text = "Active notification from $targetApp captured. Replies typed below will be dispatched through Android's RemoteInput mechanism directly to $targetApp."
-            binding.tvReplyDisclaimerPill.text = "RemoteInput Ready"
+            binding.tvReplyStatusDesc.text = if (vuplActive) {
+                "Write normally here. VEIL encrypts the message before WhatsApp RemoteInput sends it; the paired receiver's VEIL decodes it."
+            } else {
+                "Active notification from $targetApp captured. Replies typed below will be dispatched through Android's RemoteInput mechanism."
+            }
+            binding.tvReplyDisclaimerPill.text = if (vuplActive) "VUPL Active" else "RemoteInput Ready"
         } else {
             binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_amber)
             binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_titanium)
@@ -503,24 +512,43 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             VeilDialogs.showConfirmationDialog(
                 context = this,
                 title = "Active Notification Required",
-                message = "Android's RemoteInput notification reply mechanism requires an active notification from $targetApp in your notification tray.\n\nBecause no live notification token is currently pending, would you like to open the app directly to send your message?",
+                message = "Android's RemoteInput notification reply mechanism requires an active notification from $targetApp in your notification tray. You can open the source chat instead; VEIL will prepare a VUPL-encrypted message for WhatsApp when this device is paired.",
                 confirmText = "Open App",
                 onConfirm = { openWhatsAppChatDirectly(replyText) }
             )
             return
         }
 
-        // Dispatch via Notification RemoteInput
-        val dispatched = NotificationReplyRegistry.sendReply(this, contactName, replyText)
+        val sourcePackage = action!!.sourcePackage
+        val isWhatsApp = sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
+            sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS
+
+        // Keep the VEIL UI/history readable. Only the text handed to WhatsApp RemoteInput is encrypted.
+        val transportText = if (isWhatsApp) {
+            val engine = VuplEngine.getPaired(this)
+            if (engine == null) {
+                Toast.makeText(this, "Pair this VEIL device with the receiver first. No plaintext was sent.", Toast.LENGTH_LONG).show()
+                startActivity(Intent(this, VuplPairingActivity::class.java))
+                return
+            }
+            try {
+                engine.sendMessage(replyText)
+            } catch (error: Exception) {
+                Toast.makeText(this, "VUPL encryption failed. Message was not sent.", Toast.LENGTH_LONG).show()
+                return
+            }
+        } else {
+            replyText
+        }
+
+        val dispatched = NotificationReplyRegistry.sendReply(this, contactName, transportText)
 
         if (dispatched) {
             binding.etReplyInput.text?.clear()
 
-            // Record outgoing message in conversation thread
             lifecycleScope.launch(Dispatchers.IO) {
                 val outgoingEvent = ProtectedEvent(
-                    sourcePackage = action?.sourcePackage
-                        ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
+                    sourcePackage = sourcePackage,
                     realSender = "You",
                     realMessage = replyText,
                     isOutgoing = true,
@@ -531,7 +559,8 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
                 database.protectedEventDao().insert(outgoingEvent)
             }
 
-            Toast.makeText(this, "Reply action handed to $targetApp. Delivery/read status is not available to VEIL.", Toast.LENGTH_LONG).show()
+            val status = if (isWhatsApp) "VUPL-encrypted reply handed to WhatsApp" else "Reply action handed to $targetApp"
+            Toast.makeText(this, "$status. Delivery/read status is not available to VEIL.", Toast.LENGTH_LONG).show()
         } else {
             Toast.makeText(this, "Failed to send: notification action token expired", Toast.LENGTH_LONG).show()
             updateReplyTokenStatus()
@@ -563,7 +592,23 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
                 ) {
                     val phoneDigits = ProtectedContact.extractDigits(contactPhoneNumber)
                     if (phoneDigits.isNotBlank()) {
-                        val encodedText = if (prefilledText.isNotBlank()) "&text=" + Uri.encode(prefilledText) else ""
+                        val wireText = if (prefilledText.isBlank()) {
+                            ""
+                        } else {
+                            val engine = VuplEngine.getPaired(this@ProtectedChatConversationActivity)
+                            if (engine == null) {
+                                Toast.makeText(this@ProtectedChatConversationActivity, "Pair this VEIL device first. No plaintext was prepared for WhatsApp.", Toast.LENGTH_LONG).show()
+                                startActivity(Intent(this@ProtectedChatConversationActivity, VuplPairingActivity::class.java))
+                                return@launch
+                            }
+                            try {
+                                engine.sendMessage(prefilledText)
+                            } catch (_: Exception) {
+                                Toast.makeText(this@ProtectedChatConversationActivity, "VUPL encryption failed. Message was not prepared.", Toast.LENGTH_LONG).show()
+                                return@launch
+                            }
+                        }
+                        val encodedText = if (wireText.isNotBlank()) "&text=" + Uri.encode(wireText) else ""
                         val uri = Uri.parse("https://api.whatsapp.com/send?phone=$phoneDigits$encodedText")
                         startActivity(Intent(Intent.ACTION_VIEW, uri).setPackage(targetPackage))
                         return@launch
