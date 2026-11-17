@@ -108,6 +108,7 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity android:name=".ui.VuplPairingActivity" android:exported="false" />
+        <activity android:name=".ui.VuplMessengerActivity" android:exported="false" />
 
         <!-- Notification Listener Service -->
         <service
