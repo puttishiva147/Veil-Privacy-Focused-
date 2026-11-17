@@ -43,7 +43,26 @@ class VuplEngine private constructor(
             "!#$%&*+<>?@^_~".forEach { add(it.toString()) }
         }
 
+        @Volatile private var cachedSecretHex: String? = null
+        @Volatile private var cachedEngine: VuplEngine? = null
+
         fun createPairSecret(): String = ByteArray(32).also(random::nextBytes).joinToString("") { "%02x".format(it) }
+
+        /** Reuses the expensive ordered-dictionary index for notification and chat operations. */
+        fun getPaired(context: Context): VuplEngine? {
+            val secret = try { VuplSecretStore.load(context) } catch (_: Exception) { null } ?: return null
+            return try {
+                synchronized(this) {
+                    if (cachedSecretHex == secret && cachedEngine != null) return cachedEngine
+                    openPair(context, secret).also {
+                        cachedSecretHex = secret
+                        cachedEngine = it
+                    }
+                }
+            } catch (_: Exception) {
+                null
+            }
+        }
 
         fun openPair(context: Context, secretHex: String): VuplEngine {
             require(secretHex.matches(Regex("(?i)[0-9a-f]{64}"))) { "Pair secret must be 32 bytes (64 hex characters)" }
