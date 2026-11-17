@@ -235,7 +235,7 @@ class VuplEngine private constructor(
                     check(mode != 0) { "Stray end marker" }
                     if (mode == 2) {
                         val n = cp.toString().toLongOrNull() ?: error("Bad code point")
-                        require(n in 0..0x10FFFF && n !in 0xD800..0xDFFF) { "Bad code point" }
+                        require(n in 0..0x10FFFF) { "Bad code point" }
                         out.append(String(Character.toChars(n.toInt())))
                     }
                     mode = 0
