@@ -39,7 +39,7 @@ class VuplPairingActivity : AppCompatActivity() {
             textSize = 14f
             setTextColor(android.graphics.Color.DKGRAY)
             gravity = Gravity.CENTER
-            text = "Pair two VEIL devices in person. Never share this QR through chat."
+            text = "Pair two VEIL devices in person. This key enables encrypted messages inside VEIL Chat. Never share this QR through chat."
             setPadding(0, 20, 0, 16)
         }
         root.addView(status)
@@ -59,10 +59,6 @@ class VuplPairingActivity : AppCompatActivity() {
                     .setOrientationLocked(false)
                     .initiateScan()
             }
-        })
-        root.addView(Button(this).apply {
-            text = "Open VUPL Messenger"
-            setOnClickListener { startActivity(android.content.Intent(this@VuplPairingActivity, VuplMessengerActivity::class.java)) }
         })
         root.addView(Button(this).apply { text = "Back"; setOnClickListener { finish() } })
         setContentView(root)
