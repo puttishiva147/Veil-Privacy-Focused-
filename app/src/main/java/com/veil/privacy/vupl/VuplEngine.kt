@@ -97,9 +97,14 @@ class VuplEngine private constructor(
         }
     }
 
-    private fun isLetterOrNumber(cp: Int) =
-        Character.isLetterOrDigit(cp) || Character.getType(cp) == Character.NON_SPACING_MARK.toInt() ||
-            Character.getType(cp) == Character.COMBINING_SPACING_MARK.toInt()
+    private fun isLetterOrNumber(cp: Int) = Character.isLetterOrDigit(cp)
+
+    private fun isMark(cp: Int): Boolean {
+        val type = Character.getType(cp)
+        return type == Character.NON_SPACING_MARK.toInt() ||
+            type == Character.COMBINING_SPACING_MARK.toInt() ||
+            type == Character.ENCLOSING_MARK.toInt()
+    }
 
     private fun isEmojiCluster(s: String): Boolean =
         s.codePoints().anyMatch { cp ->
@@ -145,7 +150,7 @@ class VuplEngine private constructor(
             }
 
             val cp = text.codePointAt(i)
-            if (Character.isLetter(cp) || Character.getType(cp) == Character.NON_SPACING_MARK.toInt()) {
+            if (Character.isLetter(cp) || isMark(cp)) {
                 var end = i
                 while (end < text.length) {
                     val c = text.codePointAt(end)
