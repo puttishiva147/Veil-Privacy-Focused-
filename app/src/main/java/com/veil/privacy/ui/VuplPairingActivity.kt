@@ -60,6 +60,10 @@ class VuplPairingActivity : AppCompatActivity() {
                     .initiateScan()
             }
         })
+        root.addView(Button(this).apply {
+            text = "Open VUPL Messenger"
+            setOnClickListener { startActivity(android.content.Intent(this@VuplPairingActivity, VuplMessengerActivity::class.java)) }
+        })
         root.addView(Button(this).apply { text = "Back"; setOnClickListener { finish() } })
         setContentView(root)
         updateStatus()
