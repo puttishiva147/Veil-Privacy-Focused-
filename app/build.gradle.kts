@@ -117,3 +117,17 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
 }
+
+
+/**
+ * The VUPL public dictionary is regenerated from the checked-in canonical builder.
+ * The builder pins the expected ordered-entry count so Unicode database drift fails
+ * the build rather than silently changing pair compatibility.
+ */
+val generateVuplKeys by tasks.registering(Exec::class) {
+  workingDir(rootProject.projectDir)
+  commandLine("python3", "tools/build_vupl_keys.py")
+  inputs.file(rootProject.file("tools/build_vupl_keys.py"))
+  outputs.file(project.file("src/main/assets/veil_keys_v1.json"))
+}
+tasks.named("preBuild").configure { dependsOn(generateVuplKeys) }
