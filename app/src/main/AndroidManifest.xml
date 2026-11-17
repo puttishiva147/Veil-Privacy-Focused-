@@ -108,13 +108,6 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity android:name=".ui.VuplPairingActivity" android:exported="false" />
-        <activity android:name=".ui.VuplMessengerActivity" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-            </intent-filter>
-        </activity>
 
         <!-- Notification Listener Service -->
         <service
