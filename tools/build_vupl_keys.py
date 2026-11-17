@@ -21,7 +21,7 @@ def build():
     for ch in "0123456789.-": add("d",ch)
     for ch in " \n\t\r": add("ws",ch)
     for c in range(32,0x110000):
-        if 0xD800<=c<=0xDFFF or not assigned(c): continue
+        if 0xD800<=c<=0xDFFF or 0x2EBF0<=c<=0x2EE5D or c in (0x2FFC,0x2FFD,0x2FFE,0x2FFF,0x31EF) or not assigned(c): continue
         ch=chr(c); cat=ud.category(ch)
         if cat[0] in "LMN": add("c",ch)
         elif cat[0] in "PS": add("s",ch)
