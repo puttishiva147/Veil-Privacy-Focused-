@@ -224,17 +224,25 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     private fun updateReplyTokenStatus() {
         val action = NotificationReplyRegistry.getLiveReplyAction(contactName)
         val isLive = action != null
-        val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(action.sourcePackage) else "Messaging app"
+        val sourcePackage = action?.sourcePackage.orEmpty()
+        val isWhatsApp = sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
+            sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS
+        val vuplActive = isWhatsApp && VuplEngine.getPaired(this) != null
+        val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage) else "Messaging app"
 
         if (isLive) {
             binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_secure)
             binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_secure)
-            binding.ivContactProfileIndicator.contentDescription = "Protected Profile • Live Reply Active"
-            binding.tvChatStatusSubtitle.text = "PROTECTED CHAT • LIVE REPLY ACTIVE"
-            binding.tvReplyStatusTitle.text = "🟢 $targetApp reply action ready"
+            binding.ivContactProfileIndicator.contentDescription = if (vuplActive) "VUPL encrypted chat active" else "Protected Profile • Live Reply Active"
+            binding.tvChatStatusSubtitle.text = if (vuplActive) "VUPL SECURE CHAT • LIVE REPLY ACTIVE" else "PROTECTED CHAT • LIVE REPLY ACTIVE"
+            binding.tvReplyStatusTitle.text = if (vuplActive) "🔐 VUPL encrypted reply ready" else "🟢 $targetApp reply action ready"
             binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this, R.color.veil_accent_secure))
-            binding.tvReplyStatusDesc.text = "Active notification from $targetApp captured. Replies typed below will be dispatched through Android's RemoteInput mechanism directly to $targetApp."
-            binding.tvReplyDisclaimerPill.text = "RemoteInput Ready"
+            binding.tvReplyStatusDesc.text = if (vuplActive) {
+                "Write normally here. VEIL encrypts the message before WhatsApp RemoteInput sends it; the paired receiver's VEIL decodes it."
+            } else {
+                "Active notification from $targetApp captured. Replies typed below will be dispatched through Android's RemoteInput mechanism."
+            }
+            binding.tvReplyDisclaimerPill.text = if (vuplActive) "VUPL Active" else "RemoteInput Ready"
         } else {
             binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_amber)
             binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_titanium)
