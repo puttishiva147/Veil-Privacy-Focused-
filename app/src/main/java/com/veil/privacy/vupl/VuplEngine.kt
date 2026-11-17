@@ -186,7 +186,12 @@ class VuplEngine private constructor(
             "Hans" to Character.UnicodeScript.HAN, "Kore" to Character.UnicodeScript.HANGUL,
             "Cyrl" to Character.UnicodeScript.CYRILLIC
         )
-        val found = names.filter { (_, s) -> text.codePoints().anyMatch { Character.UnicodeScript.of(it) == s } }.map { it.first }
+        val found = names.filter { (name, s) ->
+            text.codePoints().anyMatch {
+                val actual = Character.UnicodeScript.of(it)
+                actual == s || (name == "Jpan" && actual == Character.UnicodeScript.KATAKANA)
+            }
+        }.map { it.first }
         return found.joinToString("+").ifEmpty { "Zyyy" }
     }
 
