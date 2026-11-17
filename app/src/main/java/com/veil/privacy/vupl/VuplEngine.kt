@@ -70,7 +70,7 @@ class VuplEngine private constructor(
         }
 
         private fun generateCode(secretHex: String, key: String, attempt: Int): String {
-            val h = hmac(hexToBytes(secretHex), (key + "\u0000" + attempt).toByteArray(StandardCharsets.UTF_8))
+            val h = hmac(secretHex.toByteArray(StandardCharsets.UTF_8), (key + "\u0000" + attempt).toByteArray(StandardCharsets.UTF_8))
             val n = 2 + ((h[0].toInt() and 255) % 3)
             return buildString { repeat(n) { i ->
                 val a = h[1 + 2 * i].toInt() and 255
