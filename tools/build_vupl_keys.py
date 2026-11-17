@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Rebuild the canonical VUPL v1 ordered dictionary from the supplied source generator."""
-import json, os, unicodedata as ud
+import hashlib, json, os, unicodedata as ud
 EN="""I you he she it we they me him her us them my your his its our their a an the and or but if then so because of in on at to from by with for about as is are was were be been am do does did have has had will would can could should may might must not no yes this that these those here there what who whom when where why how which all any some each every more most much many few one two three four five six seven eight nine ten hello hi hey bye goodbye good bad great nice fine okay ok please sorry thanks thank welcome love like want need know think see look come go get give make take say tell ask call help work play eat drink sleep wake live friend family mother father brother sister son daughter man woman boy girl child people name day night morning evening afternoon today tomorrow yesterday now later soon always never again very too also just only still already home house school office city country world time year month week hour minute money food water phone message chat video call app new old big small long short high low hot cold happy sad angry tired busy free ready sure right wrong true false first last next before after up down out over under between again online offline private secure code language"""
 HI="नमस्ते नमस्कार धन्यवाद शुक्रिया कृपया माफ़ कीजिए हाँ नहीं आप तुम मैं हम वह यह क्या कौन कब कहाँ क्यों कैसे कैसा कैसी कैसे हैं है हूँ हो था थी थे और या लेकिन में से को का की के पर साथ अच्छा बुरा सुबह शाम रात आज कल दोस्त परिवार प्यार घर काम पानी खाना समय नाम भाई बहन माँ पिता बेटा बेटी लोग शुभ"
 MR="तू तुम्ही मी आम्ही कसा कशी कसे आहेस आहे आहात काय कोण कधी कुठे का नमस्कार धन्यवाद होय नाही चांगला सकाळ संध्याकाळ रात्र आज उद्या मित्र कुटुंब प्रेम घर काम पाणी जेवण नाव"
@@ -47,4 +47,7 @@ if __name__=="__main__":
     os.makedirs("app/src/main/assets", exist_ok=True)
     with open("app/src/main/assets/veil_keys_v1.json","w",encoding="utf-8") as f:
         json.dump({"protocol":"VEIL/1","version":1,"count":len(keys),"keys":keys},f,ensure_ascii=False,separators=(",",":"))
+    digest=hashlib.sha256(open("app/src/main/assets/veil_keys_v1.json","rb").read()).hexdigest()
+    if digest!="ea416c4efe5022bdad61833aa1fbf3f54a7475b9645f9d5110800c7f88a49510":
+        raise SystemExit(f"VUPL v1 dictionary checksum mismatch: {digest}")
     print(f"Generated canonical VUPL dictionary: {len(keys)} ordered entries (Unicode {ud.unidata_version})")
