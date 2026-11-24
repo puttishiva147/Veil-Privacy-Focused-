@@ -40,6 +40,19 @@ jobs:
           echo "$SDK_ROOT/build-tools/36.0.0" >> "$GITHUB_PATH"
       - name: Run unit tests
         run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
+      - name: Run VUPL instrumented tests on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          ram-size: 2048M
+          heap-size: 512M
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: adb wait-for-device && ./gradlew --no-daemon --stacktrace :app:connectedDebugAndroidTest
       - name: Run Android lint
         run: ./gradlew --no-daemon --stacktrace :app:lintDebug
       - name: Create ephemeral CI release keystore

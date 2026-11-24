@@ -97,6 +97,7 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         binding.btnBack.setOnClickListener { finish() }
+        binding.btnVUPLPairing.setOnClickListener { startActivity(Intent(this, VUPLPairingActivity::class.java)) }
 
         // Master switch
         binding.switchVeilEnabled.setOnCheckedChangeListener { _, isChecked ->
