@@ -88,7 +88,14 @@ class VuplEngine private constructor(
                 forward[key] = code
                 reverse[code] = key
             }
-            return VuplEngine(version, forward, reverse, aes)
+            return VuplEngine(version, forward, reverse, aes).also { engine ->
+                // Pair setup already paid the dictionary derivation cost. Retain the validated
+                // engine for this process so the first chat send does not rebuild 157k entries.
+                synchronized(this) {
+                    cachedSecretHex = secretHex.lowercase(Locale.ROOT)
+                    cachedEngine = engine
+                }
+            }
         }
 
         private fun generateCode(mac: Mac, key: String, attempt: Int): String {
