@@ -321,11 +321,12 @@ object VuplSecretStore {
 
     fun save(context: Context, secretHex: String) {
         require(secretHex.matches(Regex("(?i)[0-9a-f]{64}")))
+        val normalizedSecret = secretHex.lowercase(Locale.ROOT)
         val iv = ByteArray(12).also(SecureRandom()::nextBytes)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, wrappingKey(), GCMParameterSpec(128, iv))
         cipher.updateAAD("VEIL-VUPL-PAIR/1".toByteArray())
-        val encrypted = cipher.doFinal(secretHex.toByteArray())
+        val encrypted = cipher.doFinal(normalizedSecret.toByteArray(StandardCharsets.UTF_8))
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putString("iv", Base64.encodeToString(iv, Base64.NO_WRAP))
             .putString("secret", Base64.encodeToString(encrypted, Base64.NO_WRAP)).apply()
