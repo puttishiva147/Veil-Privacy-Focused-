@@ -147,4 +147,48 @@ class NotificationReplyRegistryTest {
         NotificationReplyRegistry.removeByKey("key_12345")
         assertFalse("Should report false once notification removed", NotificationReplyRegistry.isReplyActionLive("Rahul"))
     }
+
+    @Test
+    fun sameContactNameOnDifferentPlatformsNeverSelectsWrongReplyAction() {
+        val remoteInput = RemoteInput.Builder("platform_reply_key").setLabel("Reply").build()
+
+        fun register(platform: String, requestCode: Int) {
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                requestCode,
+                Intent("com.veil.test.REPLY.$requestCode"),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val action = Notification.Action.Builder(null, "Reply", pendingIntent)
+                .addRemoteInput(remoteInput)
+                .build()
+            NotificationReplyRegistry.register(
+                contactName = "Alex",
+                notificationKey = "notification-$requestCode",
+                action = action,
+                remoteInput = remoteInput,
+                sourcePackage = platform
+            )
+        }
+
+        register("com.whatsapp", 61)
+        register("org.telegram.messenger", 62)
+
+        assertEquals(
+            "com.whatsapp",
+            NotificationReplyRegistry.getLiveReplyAction("Alex", "com.whatsapp")?.sourcePackage
+        )
+        assertEquals(
+            "org.telegram.messenger",
+            NotificationReplyRegistry.getLiveReplyAction("Alex", "org.telegram.messenger")?.sourcePackage
+        )
+        assertNull(
+            "A caller without platform identity must fail closed when names collide",
+            NotificationReplyRegistry.getLiveReplyAction("Alex")
+        )
+        assertFalse(
+            "A platform-ambiguous reply must not be dispatched",
+            NotificationReplyRegistry.sendReply(context, "Alex", "Hello")
+        )
+    }
 }

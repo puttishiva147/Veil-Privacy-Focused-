@@ -2,6 +2,9 @@ package com.veil.privacy
 
 import android.app.Application
 import com.veil.privacy.notification.VeilNotificationManager
+import com.veil.privacy.communication.VeilLanguageCodecProvider
+import com.veil.privacy.licensing.LicenseTokenStore
+import com.veil.privacy.licensing.LicenseRepository
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
 import com.veil.privacy.util.NotificationUtils
@@ -18,6 +21,10 @@ class VeilApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Do not activate a bundled/demo dictionary. The owner's supplied dictionary file
+        // is authoritative; messages stay queued until that exact version is installed.
+        VeilLanguageCodecProvider.resetToPending()
+
         // Initialize preferences and the lightweight notification channel
         VeilPrefs.getInstance(this)
         VeilNotificationManager.getInstance(this).createNotificationChannel()
@@ -35,8 +42,17 @@ class VeilApplication : Application() {
                 // MainActivity owns the visible retry state if startup storage fails.
                 return@launch
             }
+            // Access tokens are intentionally short-lived. Revalidate on cold start so a
+            // background shield is not silently disabled after the 15-minute token expires.
+            val licenseValid = try {
+                LicenseRepository.verifyAndRefresh(applicationContext)
+            } catch (_: Exception) {
+                false
+            }
             withContext(Dispatchers.Main) {
-                if (prefs.isVeilEnabled && prefs.isPersistentShieldEnabled &&
+                if (licenseValid &&
+                    LicenseTokenStore.hasLocallyValidSession(this@VeilApplication) &&
+                    prefs.isVeilEnabled && prefs.isPersistentShieldEnabled &&
                     NotificationUtils.isNotificationAccessGranted(this@VeilApplication)
                 ) {
                     com.veil.privacy.service.VeilProtectionService.startService(this@VeilApplication)
@@ -70,6 +86,15 @@ class VeilApplication : Application() {
             }
 
             override fun onActivityResumed(activity: android.app.Activity) {
+                if (activity !is com.veil.privacy.ui.MainActivity &&
+                    activity !is com.veil.privacy.ui.LicenseGateActivity &&
+                    !LicenseTokenStore.hasLocallyValidSession(activity)
+                ) {
+                    val licenseIntent = android.content.Intent(activity, com.veil.privacy.ui.LicenseGateActivity::class.java)
+                    activity.startActivity(licenseIntent)
+                    activity.finish()
+                    return
+                }
                 // Secondary safeguard: if security is setup and session is locked, enforce AuthLockActivity
                 if (com.veil.privacy.security.SecurityManager.isSecuritySetupCompleted(activity) && !VeilPrefs.isSessionUnlocked) {
                     if (activity !is com.veil.privacy.ui.AuthLockActivity &&

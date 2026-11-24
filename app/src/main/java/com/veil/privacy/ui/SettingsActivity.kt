@@ -97,6 +97,9 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         binding.btnBack.setOnClickListener { finish() }
+        binding.btnReferralRewards.setOnClickListener {
+            startActivity(Intent(this, ReferralActivity::class.java))
+        }
 
         // Master switch
         binding.switchVeilEnabled.setOnCheckedChangeListener { _, isChecked ->

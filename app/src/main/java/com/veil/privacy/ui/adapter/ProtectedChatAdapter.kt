@@ -169,10 +169,13 @@ class ProtectedChatAdapter : ListAdapter<ProtectedEvent, RecyclerView.ViewHolder
         fun bind(event: ProtectedEvent) {
             tvMessage.text = event.realMessage
             tvTime.text = formatTimestamp(event.timestamp)
-            tvStatus.text = if (event.replyStatus == "SENT_VIA_REMOTE_INPUT") {
-                "✓ Sent via RemoteInput"
-            } else {
-                "Sent"
+            tvStatus.text = when (event.replyStatus) {
+                "SENT_VIA_REMOTE_INPUT" -> "✓ Sent via RemoteInput"
+                "WAITING_FOR_DICTIONARY" -> "Saved · waiting for dictionary"
+                "WAITING_FOR_REPLY_ACTION" -> "Queued · waiting for app reply"
+                "DISPATCHED_NOT_CONFIRMED" -> "Handed to Android · not confirmed"
+                "FAILED" -> "Failed to send"
+                else -> "Saved in VEIL"
             }
         }
     }

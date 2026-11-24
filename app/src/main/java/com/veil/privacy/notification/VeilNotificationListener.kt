@@ -2,17 +2,25 @@ package com.veil.privacy.notification
 
 import android.service.notification.StatusBarNotification
 import com.veil.privacy.model.ParsedNotificationInfo
+import com.veil.privacy.licensing.LicenseTokenStore
+import com.veil.privacy.licensing.LicenseRepository
 import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.model.ProtectionRule
 import com.veil.privacy.model.SelectedContact
+import com.veil.privacy.communication.VeilTransportManager
+import com.veil.privacy.communication.VeilTransportPacket
 import com.veil.privacy.privacy.RuleMatchingEngine
 import com.veil.privacy.storage.VeilInbox
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Production Android NotificationListenerService for VEIL.
@@ -30,6 +38,18 @@ class VeilNotificationListener : BaseNotificationListenerService() {
     private val ruleMatchingEngine = RuleMatchingEngine()
     private lateinit var inbox: VeilInbox
     private lateinit var notificationManager: VeilNotificationManager
+    // Serialize refresh attempts when several notifications arrive after the 15-minute token expires.
+    private val licenseRefreshMutex = Mutex()
+
+    private data class QueuedNotification(
+        val notification: StatusBarNotification,
+        val parsed: ParsedNotificationInfo,
+        val replyAction: Pair<android.app.Notification.Action, android.app.RemoteInput>?,
+        val transportCaptureJob: Job
+    )
+
+    // Serialize notification transformations so bursts do not spawn competing DB/UI jobs.
+    private val notificationQueue = Channel<QueuedNotification>(Channel.BUFFERED)
 
     companion object {
         const val WHATSAPP_PACKAGE = "com.whatsapp"
@@ -63,12 +83,29 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         super.onCreate()
         inbox = VeilInbox.getInstance(this)
         notificationManager = VeilNotificationManager.getInstance(this)
+        serviceScope.launch {
+            for (queued in notificationQueue) {
+                try {
+                    queued.transportCaptureJob.join()
+                    processIncomingProtectedNotification(queued.notification, queued.parsed, queued.replyAction)
+                } catch (error: Exception) {
+                    emitDiagnostic("PROCESS", "Queued notification processing failed (${error.javaClass.simpleName})", false)
+                }
+            }
+        }
     }
 
     override fun onListenerConnected() {
         super.onListenerConnected()
         isConnected = true
         emitDiagnostic("ENGINE", "VeilNotificationListener connected to Android OS", true)
+        serviceScope.launch {
+            try {
+                VeilTransportManager(this@VeilNotificationListener).processPendingQueues()
+            } catch (error: Exception) {
+                emitDiagnostic("TRANSPORT", "Pending YUPL queue recovery failed (" + error.javaClass.simpleName + ")", false)
+            }
+        }
     }
 
     override fun onListenerDisconnected() {
@@ -84,13 +121,37 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         super.onNotificationRemoved(sbn)
-        // Notification RemoteInput and call PendingIntents are valid only while their
-        // originating notification is active. Do not show stale reply/call controls.
-        sbn?.key?.let(NotificationReplyRegistry::removeCallByKey)
+        // RemoteInput and call PendingIntents are tied to their originating notification.
+        // Remove both when Android reports that notification gone; queued messages remain local.
+        sbn?.key?.let(NotificationReplyRegistry::removeByKey)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         if (sbn == null) return
+        if (!LicenseTokenStore.hasLocallyValidSession(this)) {
+            serviceScope.launch {
+                val refreshed = try {
+                    licenseRefreshMutex.withLock {
+                        if (LicenseTokenStore.hasLocallyValidSession(this@VeilNotificationListener)) {
+                            true
+                        } else {
+                            LicenseRepository.verifyAndRefresh(this@VeilNotificationListener)
+                        }
+                    }
+                } catch (error: Exception) {
+                    emitDiagnostic("LICENSE", "Online license refresh failed (${error.javaClass.simpleName})", false)
+                    false
+                }
+                if (refreshed) {
+                    emitDiagnostic("LICENSE", "License renewed by the server; resuming notification processing")
+                    // Retry this notification only after the server has confirmed entitlement.
+                    onNotificationPosted(sbn)
+                } else {
+                    emitDiagnostic("LICENSE", "Notification processing blocked: online license verification failed", false)
+                }
+            }
+            return
+        }
 
         val pkg = sbn.packageName ?: return
         val ownPackage = packageName
@@ -103,8 +164,46 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         val isRecognized = NotificationParser.isSupportedPackage(pkg, preferences.isProtectAnyApp)
         if (!isRecognized && !isSimulation) return
 
-        // Per-platform switches are independent; disabling one social app must not
-        // disable the other three or unrelated recognized notification sources.
+        // Transport receive is independent of notification-disguise preferences.
+        // VEIL must still receive its own coded messages when privacy shielding is paused.
+        val parsed = notificationParser.parse(sbn, ownPackage, preferences.isProtectAnyApp)
+        if (parsed == null) {
+            emitDiagnostic("PARSE", "Notification payload had no extractable message content", false)
+            return
+        }
+        val transportCaptureJob = serviceScope.launch {
+            try {
+                if (VeilTransportManager(this@VeilNotificationListener).captureIncoming(pkg, parsed.sender, parsed.message)) {
+                    emitDiagnostic("TRANSPORT_RX", "VEIL packet captured from ${com.veil.privacy.model.SupportedApp.getAppDisplayName(pkg)}")
+                }
+            } catch (error: Exception) {
+                emitDiagnostic("TRANSPORT_RX", "Packet capture failed (${error.javaClass.simpleName})", false)
+            }
+        }
+
+        // 5. Capture live RemoteInput reply action if exposed by messaging app
+        val replyActionPair = NotificationReplyRegistry.findReplyAction(sbn.notification)
+        if (replyActionPair != null && sbn.key != null) {
+            NotificationReplyRegistry.register(
+                contactName = parsed.sender,
+                notificationKey = sbn.key,
+                action = replyActionPair.first,
+                remoteInput = replyActionPair.second,
+                sourcePackage = pkg
+            )
+            emitDiagnostic("REMOTE_INPUT", "Live Android RemoteInput inline reply action captured and registered")
+
+            // A new reply token may unblock messages already queued for this exact app/contact.
+            serviceScope.launch {
+                try {
+                    VeilTransportManager(this@VeilNotificationListener).processPendingQueues()
+                } catch (error: Exception) {
+                    emitDiagnostic("TRANSPORT_TX", "Queued reply retry failed (${error.javaClass.simpleName})", false)
+                }
+            }
+        }
+
+        // Per-platform switches control privacy disguise, not VEIL transport reception.
         val socialPackage = pkg == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
             pkg == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS ||
             pkg == com.veil.privacy.model.SupportedApp.PKG_INSTAGRAM ||
@@ -123,27 +222,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
 
         emitDiagnostic("DETECT", "Captured supported-app notification")
 
-        // 4. Parse incoming notification exposed by Android
-        val parsed = notificationParser.parse(sbn, ownPackage, preferences.isProtectAnyApp)
-        if (parsed == null) {
-            emitDiagnostic("PARSE", "Notification payload had no extractable message content", false)
-            return
-        }
-
         emitDiagnostic("PARSE", "Notification content parsed successfully")
-
-        // 5. Capture live RemoteInput reply action if exposed by messaging app
-        val replyActionPair = NotificationReplyRegistry.findReplyAction(sbn.notification)
-        if (replyActionPair != null && sbn.key != null) {
-            NotificationReplyRegistry.register(
-                contactName = parsed.sender,
-                notificationKey = sbn.key,
-                action = replyActionPair.first,
-                remoteInput = replyActionPair.second,
-                sourcePackage = pkg
-            )
-            emitDiagnostic("REMOTE_INPUT", "Live Android RemoteInput inline reply action captured and registered")
-        }
 
         val callActionsPair = NotificationReplyRegistry.findCallActions(sbn.notification)
         if (callActionsPair != null && sbn.key != null) {
@@ -165,12 +244,9 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         }
 
         // 7. Evaluate and process against configured VEIL rules
-        serviceScope.launch {
-            try {
-                processIncomingProtectedNotification(sbn, parsed, replyActionPair)
-            } catch (e: Exception) {
-                emitDiagnostic("PROCESS", "Notification processing failed (${e.javaClass.simpleName})", false)
-            }
+        val queued = notificationQueue.trySend(QueuedNotification(sbn, parsed, replyActionPair, transportCaptureJob))
+        if (queued.isFailure) {
+            emitDiagnostic("QUEUE", "Notification processing queue is full; this event was not processed", false)
         }
     }
 
@@ -280,7 +356,7 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         }
 
         // --- MATCH CONFIRMED: APPLY PRIVACY TRANSFORMATION ---
-        val targetConversation = matchedRule.contactName.lowercase().trim()
+        val targetConversation = "${sourcePackage.lowercase()}::${matchedRule.contactName.lowercase().trim()}"
 
         // Also register live reply action under the matched rule's contactName if different from sender
         if (replyActionPair != null && sbn.key != null && matchedRule.contactName.isNotBlank() &&
@@ -298,9 +374,10 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         // Stable event identification and deduplication: prevent duplicate notification events
         val isDuplicate = withContext(Dispatchers.IO) {
             val hasKey = !parsed.notificationKey.isNullOrBlank() &&
-                database.protectedEventDao().hasEventWithNotificationKey(parsed.notificationKey) > 0
-            val hasRecentContent = database.protectedEventDao().isRecentDuplicate(
+                database.protectedEventDao().hasEventWithNotificationKeyAndContent(parsed.notificationKey, sourcePackage, parsed.message) > 0
+            val hasRecentContent = database.protectedEventDao().isRecentDuplicateForPlatform(
                 conversationId = targetConversation,
+                sourcePackage = sourcePackage,
                 realMessage = parsed.message,
                 minTimestamp = parsed.timestamp - 10000L
             ) > 0
@@ -353,7 +430,15 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             }
         }
 
-        val protectedEvent = ProtectedEvent(
+        val transportEvent = VeilTransportPacket.extract(parsed.message)?.let { packet ->
+            withContext(Dispatchers.IO) {
+                database.protectedEventDao().getTransportEventByKey("VEIL_TRANSPORT:${packet.messageId}")
+            }
+        }
+
+        // Reuse the transport event instead of creating a duplicate chat bubble for the same packet.
+        // Keep its VEIL_TRANSPORT key so deferred dictionary decoding can still update this row.
+        val protectedEvent = (transportEvent ?: ProtectedEvent(
             timestamp = parsed.timestamp,
             sourcePackage = parsed.packageName,
             realSender = parsed.sender,
@@ -364,6 +449,13 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             originalNotificationKey = parsed.notificationKey,
             isOutgoing = false,
             replyStatus = "RECEIVED",
+            conversationId = targetConversation
+        )).copy(
+            timestamp = parsed.timestamp,
+            sourcePackage = sourcePackage,
+            decoySender = finalDecoySender,
+            decoyMessage = finalDecoyMessage,
+            isCall = parsed.isCall,
             conversationId = targetConversation
         )
 

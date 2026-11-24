@@ -17,6 +17,7 @@ import com.veil.privacy.databinding.ActivityProtectedChatConversationBinding
 import com.veil.privacy.model.ProtectedContact
 import com.veil.privacy.model.ProtectedEvent
 import com.veil.privacy.notification.NotificationReplyRegistry
+import com.veil.privacy.communication.VeilTransportManager
 import com.veil.privacy.storage.VeilDatabase
 import com.veil.privacy.storage.VeilPrefs
 import com.veil.privacy.ui.adapter.ProtectedChatAdapter
@@ -24,6 +25,7 @@ import com.veil.privacy.util.InsetsUtils
 import com.veil.privacy.util.VeilDialogs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -46,6 +48,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private var contactName: String = ""
     private var conversationId: String = ""
+    private var sourcePackage: String = com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
     private var contactPhoneNumber: String = ""
     private var isUnlockedForCurrentSession: Boolean = false
 
@@ -60,6 +63,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_CONTACT_NAME = "extra_contact_name"
         const val EXTRA_EVENT_ID = "extra_event_id"
+        const val EXTRA_SOURCE_PACKAGE = "extra_source_package"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +74,8 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         InsetsUtils.applySystemBarInsets(binding.root)
 
         contactName = intent.getStringExtra(EXTRA_CONTACT_NAME)?.trim() ?: "Protected Contact"
-        conversationId = contactName.lowercase().trim()
+        sourcePackage = intent.getStringExtra(EXTRA_SOURCE_PACKAGE) ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+        conversationId = "${sourcePackage.lowercase()}::${contactName.lowercase().trim()}"
         database = VeilDatabase.getInstance(this)
 
         setupUI()
@@ -221,7 +226,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun updateReplyTokenStatus() {
-        val action = NotificationReplyRegistry.getLiveReplyAction(contactName)
+        val action = NotificationReplyRegistry.getLiveReplyAction(contactName, sourcePackage)
         val isLive = action != null
         val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(action.sourcePackage) else "Messaging app"
 
@@ -247,7 +252,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun updateCallStatus() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall != null && (liveCall.answerIntent != null || liveCall.declineIntent != null)) {
             binding.cardLiveCallBanner.visibility = View.VISIBLE
             binding.tvLiveCallTitle.text = "Incoming Call from $contactName"
@@ -257,7 +262,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleAnswerIncomingCall() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall?.answerIntent != null) {
             try {
                 liveCall.answerIntent.send()
@@ -275,7 +280,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleDeclineIncomingCall() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall?.declineIntent != null) {
             try {
                 liveCall.declineIntent.send()
@@ -293,7 +298,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleInitiateCall() {
-        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName)
+        val liveCall = NotificationReplyRegistry.getLiveCallAction(contactName, sourcePackage)
         if (liveCall != null) {
             handleAnswerIncomingCall()
             return
@@ -303,7 +308,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         if (phoneDigits.isNotBlank()) {
             try {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://api.whatsapp.com/send?phone=$phoneDigits"))
-                intent.setPackage("com.whatsapp")
+                intent.setPackage(sourcePackage)
                 startActivity(intent)
             } catch (_: Exception) {
                 openWhatsAppChatDirectly()
@@ -460,6 +465,14 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun shareMediaOrStickerToWhatsApp(imageUri: Uri) {
+        val targetPackage = when (sourcePackage) {
+            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP -> com.veil.privacy.model.SupportedApp.PKG_WHATSAPP
+            com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS -> com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS
+            else -> {
+                Toast.makeText(this, "Media and sticker sharing is currently supported only for WhatsApp and WhatsApp Business.", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
         try {
             val mimeType = contentResolver.getType(imageUri)?.takeIf { it.startsWith("image/") || it.startsWith("video/") }
                 ?: "image/*"
@@ -472,7 +485,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
             }
             startActivity(Intent.createChooser(shareIntent, "Share media to WhatsApp"))
         } catch (_: android.content.ActivityNotFoundException) {
-            Toast.makeText(this, "WhatsApp is not installed or cannot accept this media", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "The selected WhatsApp app is not installed or cannot accept this media", Toast.LENGTH_LONG).show()
         } catch (_: Exception) {
             Toast.makeText(this, "Could not share this media with WhatsApp", Toast.LENGTH_LONG).show()
         }
@@ -480,8 +493,23 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private fun observeConversation() {
         lifecycleScope.launch {
-            database.protectedEventDao().getMessagesForConversationFlow(conversationId)
-                .collectLatest { events ->
+            database.protectedEventDao().getAllFlow()
+                .debounce(100)
+                .collectLatest { allEvents ->
+                    // Include legacy unscoped rows only for this platform; never merge another
+                    // platform's same-named contact into the current conversation.
+                    val legacyConversationId = contactName.lowercase().trim()
+                    val events = allEvents
+                        .asSequence()
+                        .filter { event ->
+                            event.conversationId == conversationId ||
+                                (event.conversationId == legacyConversationId &&
+                                    (event.sourcePackage == sourcePackage ||
+                                        (sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP &&
+                                            event.sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS)))
+                        }
+                        .sortedBy { it.timestamp }
+                        .toList()
                     chatAdapter.submitList(events) {
                         if (events.isNotEmpty()) {
                             binding.rvMessages.scrollToPosition(events.size - 1)
@@ -495,46 +523,35 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
     }
 
     private fun handleSendReply(replyText: String) {
-        val action = NotificationReplyRegistry.getLiveReplyAction(contactName)
-        val isLive = action != null
-        val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(action.sourcePackage) else "Messaging app"
-
-        if (!isLive) {
-            VeilDialogs.showConfirmationDialog(
-                context = this,
-                title = "Active Notification Required",
-                message = "Android's RemoteInput notification reply mechanism requires an active notification from $targetApp in your notification tray.\n\nBecause no live notification token is currently pending, would you like to open the app directly to send your message?",
-                confirmText = "Open App",
-                onConfirm = { openWhatsAppChatDirectly(replyText) }
-            )
+        if (replyText.isBlank()) {
+            Toast.makeText(this, "Type a message before sending", Toast.LENGTH_SHORT).show()
             return
         }
-
-        // Dispatch via Notification RemoteInput
-        val dispatched = NotificationReplyRegistry.sendReply(this, contactName, replyText)
-
-        if (dispatched) {
-            binding.etReplyInput.text?.clear()
-
-            // Record outgoing message in conversation thread
-            lifecycleScope.launch(Dispatchers.IO) {
-                val outgoingEvent = ProtectedEvent(
-                    sourcePackage = action?.sourcePackage
-                        ?: com.veil.privacy.model.SupportedApp.PKG_WHATSAPP,
-                    realSender = "You",
-                    realMessage = replyText,
-                    isOutgoing = true,
-                    replyStatus = "DISPATCHED_NOT_CONFIRMED",
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                VeilTransportManager(this@ProtectedChatConversationActivity).queueOutgoing(
                     conversationId = conversationId,
-                    timestamp = System.currentTimeMillis()
+                    contactName = contactName,
+                    sourcePackage = sourcePackage,
+                    plainText = replyText
                 )
-                database.protectedEventDao().insert(outgoingEvent)
             }
-
-            Toast.makeText(this, "Reply action handed to $targetApp. Delivery/read status is not available to VEIL.", Toast.LENGTH_LONG).show()
-        } else {
-            Toast.makeText(this, "Failed to send: notification action token expired", Toast.LENGTH_LONG).show()
+            if (result.status != com.veil.privacy.model.TransportMessage.FAILED) {
+                binding.etReplyInput.text?.clear()
+            }
             updateReplyTokenStatus()
+            val statusMessage = when (result.status) {
+                com.veil.privacy.model.TransportMessage.WAITING_FOR_DICTIONARY ->
+                    "Saved in VEIL. Waiting for the YUPL dictionary; this message has not been sent yet."
+                com.veil.privacy.model.TransportMessage.WAITING_FOR_REPLY_ACTION ->
+                    "Encoded and queued. Waiting for a new $sourcePackage notification with an inline reply action."
+                com.veil.privacy.model.TransportMessage.DISPATCHED_NOT_CONFIRMED ->
+                    "YUPL packet handed to the source app. Delivery/read status is not confirmed."
+                com.veil.privacy.model.TransportMessage.FAILED ->
+                    "Message was not sent: ${result.detail}"
+                else -> result.detail
+            }
+            Toast.makeText(this@ProtectedChatConversationActivity, statusMessage, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -542,17 +559,14 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         // Resolve the source app from the conversation's stored events. The old fallback
         // always launched WhatsApp, even when this thread came from Telegram, Instagram or Snapchat.
         lifecycleScope.launch {
-            val sourcePackage = withContext(Dispatchers.IO) {
-                database.protectedEventDao()
-                    .getMessagesForConversationSync(conversationId)
-                    .lastOrNull { it.sourcePackage.isNotBlank() }
-                    ?.sourcePackage
-            }
             val supported = com.veil.privacy.model.SupportedApp
-            val resolvedSourcePackage = sourcePackage ?: supported.PKG_WHATSAPP
-            val targetPackage = when (resolvedSourcePackage) {
-                supported.PKG_WHATSAPP, supported.PKG_WHATSAPP_BUSINESS,
-                supported.PKG_TELEGRAM, supported.PKG_INSTAGRAM, supported.PKG_SNAPCHAT -> resolvedSourcePackage
+            val resolvedSourcePackage = sourcePackage.ifBlank { supported.PKG_WHATSAPP }
+            val targetPackage = when {
+                resolvedSourcePackage == supported.PKG_WHATSAPP ||
+                    resolvedSourcePackage == supported.PKG_WHATSAPP_BUSINESS ||
+                    resolvedSourcePackage == supported.PKG_INSTAGRAM ||
+                    resolvedSourcePackage == supported.PKG_SNAPCHAT ||
+                    resolvedSourcePackage.startsWith("org.telegram.") -> resolvedSourcePackage
                 else -> supported.PKG_WHATSAPP
             }
 
@@ -590,7 +604,7 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         VeilDialogs.showConfirmationDialog(
             context = this,
             title = "Wipe Conversation",
-            message = "Are you sure you want to delete all local message logs for « $contactName »?\n\nThis will permanently remove intercepted messages from VEIL's local app storage.",
+            message = "Are you sure you want to delete all local message logs for « $contactName »?\n\nThis will permanently remove intercepted messages from VEIL's local encrypted storage.",
             confirmText = "Wipe Messages",
             onConfirm = {
                 lifecycleScope.launch(Dispatchers.IO) {
