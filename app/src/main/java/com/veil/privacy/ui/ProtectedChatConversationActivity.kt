@@ -227,31 +227,37 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
         val sourcePackage = action?.sourcePackage.orEmpty()
         val isWhatsApp = sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
             sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS
-        val vuplActive = isWhatsApp && VuplEngine.getPaired(this) != null
         val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage) else "Messaging app"
 
-        if (isLive) {
-            binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_secure)
-            binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_secure)
-            binding.ivContactProfileIndicator.contentDescription = if (vuplActive) "VUPL encrypted chat active" else "Protected Profile • Live Reply Active"
-            binding.tvChatStatusSubtitle.text = if (vuplActive) "VUPL SECURE CHAT • LIVE REPLY ACTIVE" else "PROTECTED CHAT • LIVE REPLY ACTIVE"
-            binding.tvReplyStatusTitle.text = if (vuplActive) "🔐 VUPL encrypted reply ready" else "🟢 $targetApp reply action ready"
-            binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this, R.color.veil_accent_secure))
-            binding.tvReplyStatusDesc.text = if (vuplActive) {
-                "Write normally here. VEIL encrypts the message before WhatsApp RemoteInput sends it; the paired receiver's VEIL decodes it."
-            } else {
-                "Active notification from $targetApp captured. Replies typed below will be dispatched through Android's RemoteInput mechanism."
+        lifecycleScope.launch {
+            val vuplActive = isLive && isWhatsApp && withContext(Dispatchers.IO) {
+                try { com.veil.privacy.vupl.VuplSecretStore.load(applicationContext) != null } catch (_: Exception) { false }
             }
-            binding.tvReplyDisclaimerPill.text = if (vuplActive) "VUPL Active" else "RemoteInput Ready"
-        } else {
-            binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_amber)
-            binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this, R.color.veil_accent_titanium)
-            binding.ivContactProfileIndicator.contentDescription = "Protected Profile"
-            binding.tvChatStatusSubtitle.text = "PROTECTED CHAT • REPLY TOKEN INACTIVE"
-            binding.tvReplyStatusTitle.text = "⚠️ No active notification reply token"
-            binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this, R.color.veil_accent_amber))
-            binding.tvReplyStatusDesc.text = "A notification must be currently active in Android's notification bar to dispatch inline replies. You can also open the messaging app directly."
-            binding.tvReplyDisclaimerPill.text = "Token Inactive"
+            if (isFinishing || isDestroyed) return@launch
+
+            if (isLive) {
+                binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this@ProtectedChatConversationActivity, R.color.veil_accent_secure)
+                binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this@ProtectedChatConversationActivity, R.color.veil_accent_secure)
+                binding.ivContactProfileIndicator.contentDescription = if (vuplActive) "VUPL encrypted chat active" else "Protected Profile • Live Reply Active"
+                binding.tvChatStatusSubtitle.text = if (vuplActive) "VUPL SECURE CHAT • LIVE REPLY ACTIVE" else "PROTECTED CHAT • LIVE REPLY ACTIVE"
+                binding.tvReplyStatusTitle.text = if (vuplActive) "VUPL encrypted reply ready" else "$targetApp reply action ready"
+                binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this@ProtectedChatConversationActivity, R.color.veil_accent_secure))
+                binding.tvReplyStatusDesc.text = if (vuplActive) {
+                    "Write normally here. VEIL encrypts the message before WhatsApp RemoteInput sends it; the paired receiver's VEIL decodes it."
+                } else {
+                    "Active notification from $targetApp captured. Replies typed below will be dispatched through Android's RemoteInput mechanism."
+                }
+                binding.tvReplyDisclaimerPill.text = if (vuplActive) "VUPL Active" else "RemoteInput Ready"
+            } else {
+                binding.viewLiveDot.backgroundTintList = ContextCompat.getColorStateList(this@ProtectedChatConversationActivity, R.color.veil_accent_amber)
+                binding.ivContactProfileIndicator.imageTintList = ContextCompat.getColorStateList(this@ProtectedChatConversationActivity, R.color.veil_accent_titanium)
+                binding.ivContactProfileIndicator.contentDescription = "Protected Profile"
+                binding.tvChatStatusSubtitle.text = "PROTECTED CHAT • REPLY TOKEN INACTIVE"
+                binding.tvReplyStatusTitle.text = "No active notification reply token"
+                binding.tvReplyStatusTitle.setTextColor(ContextCompat.getColor(this@ProtectedChatConversationActivity, R.color.veil_accent_amber))
+                binding.tvReplyStatusDesc.text = "A notification must be currently active in Android's notification bar to dispatch inline replies. You can also open the messaging app directly."
+                binding.tvReplyDisclaimerPill.text = "Token Inactive"
+            }
         }
     }
 
@@ -505,65 +511,63 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
 
     private fun handleSendReply(replyText: String) {
         val action = NotificationReplyRegistry.getLiveReplyAction(contactName)
-        val isLive = action != null
-        val targetApp = if (action != null) com.veil.privacy.model.SupportedApp.getAppDisplayName(action.sourcePackage) else "Messaging app"
-
-        if (!isLive) {
+        if (action == null) {
             VeilDialogs.showConfirmationDialog(
                 context = this,
                 title = "Active Notification Required",
-                message = "Android's RemoteInput notification reply mechanism requires an active notification from $targetApp in your notification tray. You can open the source chat instead; VEIL will prepare a VUPL-encrypted message for WhatsApp when this device is paired.",
+                message = "Android's RemoteInput notification reply mechanism requires an active notification from Messaging app. You can open the source chat instead; VEIL will prepare a VUPL-encrypted message for WhatsApp when this device is paired.",
                 confirmText = "Open App",
                 onConfirm = { openWhatsAppChatDirectly(replyText) }
             )
             return
         }
 
-        val sourcePackage = action!!.sourcePackage
+        val sourcePackage = action.sourcePackage
         val isWhatsApp = sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP ||
             sourcePackage == com.veil.privacy.model.SupportedApp.PKG_WHATSAPP_BUSINESS
+        val targetApp = com.veil.privacy.model.SupportedApp.getAppDisplayName(sourcePackage)
 
-        // Keep the VEIL UI/history readable. Only the text handed to WhatsApp RemoteInput is encrypted.
-        val transportText = if (isWhatsApp) {
-            val engine = VuplEngine.getPaired(this)
-            if (engine == null) {
-                Toast.makeText(this, "Pair this VEIL device with the receiver first. No plaintext was sent.", Toast.LENGTH_LONG).show()
-                startActivity(Intent(this, VuplPairingActivity::class.java))
-                return
-            }
+        lifecycleScope.launch {
+            binding.btnSendReply.isEnabled = false
             try {
-                engine.sendMessage(replyText)
+                val transportText = if (isWhatsApp) {
+                    val engine = withContext(Dispatchers.IO) { VuplEngine.getPaired(applicationContext) }
+                    if (engine == null) {
+                        Toast.makeText(this@ProtectedChatConversationActivity, "Pair this VEIL device with the receiver first. No plaintext was sent.", Toast.LENGTH_LONG).show()
+                        startActivity(Intent(this@ProtectedChatConversationActivity, VuplPairingActivity::class.java))
+                        return@launch
+                    }
+                    withContext(Dispatchers.Default) { engine.sendMessage(replyText) }
+                } else {
+                    replyText
+                }
+
+                val dispatched = NotificationReplyRegistry.sendReply(this@ProtectedChatConversationActivity, contactName, transportText)
+                if (dispatched) {
+                    binding.etReplyInput.text?.clear()
+                    withContext(Dispatchers.IO) {
+                        val outgoingEvent = ProtectedEvent(
+                            sourcePackage = sourcePackage,
+                            realSender = "You",
+                            realMessage = replyText,
+                            isOutgoing = true,
+                            replyStatus = "DISPATCHED_NOT_CONFIRMED",
+                            conversationId = conversationId,
+                            timestamp = System.currentTimeMillis()
+                        )
+                        database.protectedEventDao().insert(outgoingEvent)
+                    }
+                    val status = if (isWhatsApp) "VUPL-encrypted reply handed to WhatsApp" else "Reply action handed to $targetApp"
+                    Toast.makeText(this@ProtectedChatConversationActivity, "$status. Delivery/read status is not available to VEIL.", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this@ProtectedChatConversationActivity, "Failed to send: notification action token expired", Toast.LENGTH_LONG).show()
+                    updateReplyTokenStatus()
+                }
             } catch (error: Exception) {
-                Toast.makeText(this, "VUPL encryption failed. Message was not sent.", Toast.LENGTH_LONG).show()
-                return
+                Toast.makeText(this@ProtectedChatConversationActivity, "Message was not sent: ${error.localizedMessage ?: error.javaClass.simpleName}", Toast.LENGTH_LONG).show()
+            } finally {
+                if (!isFinishing && !isDestroyed) binding.btnSendReply.isEnabled = true
             }
-        } else {
-            replyText
-        }
-
-        val dispatched = NotificationReplyRegistry.sendReply(this, contactName, transportText)
-
-        if (dispatched) {
-            binding.etReplyInput.text?.clear()
-
-            lifecycleScope.launch(Dispatchers.IO) {
-                val outgoingEvent = ProtectedEvent(
-                    sourcePackage = sourcePackage,
-                    realSender = "You",
-                    realMessage = replyText,
-                    isOutgoing = true,
-                    replyStatus = "DISPATCHED_NOT_CONFIRMED",
-                    conversationId = conversationId,
-                    timestamp = System.currentTimeMillis()
-                )
-                database.protectedEventDao().insert(outgoingEvent)
-            }
-
-            val status = if (isWhatsApp) "VUPL-encrypted reply handed to WhatsApp" else "Reply action handed to $targetApp"
-            Toast.makeText(this, "$status. Delivery/read status is not available to VEIL.", Toast.LENGTH_LONG).show()
-        } else {
-            Toast.makeText(this, "Failed to send: notification action token expired", Toast.LENGTH_LONG).show()
-            updateReplyTokenStatus()
         }
     }
 
@@ -595,14 +599,14 @@ class ProtectedChatConversationActivity : AppCompatActivity() {
                         val wireText = if (prefilledText.isBlank()) {
                             ""
                         } else {
-                            val engine = VuplEngine.getPaired(this@ProtectedChatConversationActivity)
+                            val engine = withContext(Dispatchers.IO) { VuplEngine.getPaired(applicationContext) }
                             if (engine == null) {
                                 Toast.makeText(this@ProtectedChatConversationActivity, "Pair this VEIL device first. No plaintext was prepared for WhatsApp.", Toast.LENGTH_LONG).show()
                                 startActivity(Intent(this@ProtectedChatConversationActivity, VuplPairingActivity::class.java))
                                 return@launch
                             }
                             try {
-                                engine.sendMessage(prefilledText)
+                                withContext(Dispatchers.Default) { engine.sendMessage(prefilledText) }
                             } catch (_: Exception) {
                                 Toast.makeText(this@ProtectedChatConversationActivity, "VUPL encryption failed. Message was not prepared.", Toast.LENGTH_LONG).show()
                                 return@launch

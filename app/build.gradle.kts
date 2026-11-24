@@ -56,7 +56,16 @@ android {
     buildConfig = true
     viewBinding = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+      all {
+        // Use Maven Central's canonical endpoint for Robolectric's Android SDK artifacts.
+        // This avoids transient failures against the legacy repo1.maven.org endpoint in CI.
+        it.systemProperty("robolectric.dependency.repo.url", "https://repo.maven.apache.org/maven2")
+      }
+    }
+  }
   dependenciesInfo {
     includeInApk = false
     includeInBundle = true

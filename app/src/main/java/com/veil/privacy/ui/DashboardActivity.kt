@@ -44,6 +44,7 @@ import com.veil.privacy.util.VeilDialogs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 /**
@@ -70,6 +71,7 @@ class DashboardActivity : AppCompatActivity() {
         getSharedPreferences("veil_privacy_prefs", MODE_PRIVATE)
     }
     private var notificationsLastViewedAt: Long = 0L
+    private var listenerReconnectCheckRunning = false
 
     // Android only delivers these key events while VEIL is foreground.
 
@@ -556,6 +558,25 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
+    private fun watchForListenerReconnect() {
+        if (listenerReconnectCheckRunning || isFinishing || isDestroyed) return
+        listenerReconnectCheckRunning = true
+        lifecycleScope.launch {
+            try {
+                repeat(12) {
+                    delay(500)
+                    if (isFinishing || isDestroyed) return@launch
+                    if (NotificationUtils.isListenerConnected()) {
+                        updateNotificationListenerStatus()
+                        return@launch
+                    }
+                }
+            } finally {
+                listenerReconnectCheckRunning = false
+            }
+        }
+    }
+
     private fun updateNotificationListenerStatus() {
         // Recompute visibility on every refresh so a permission change can restore the action.
         binding.btnBannerAction.visibility = View.VISIBLE
@@ -578,7 +599,7 @@ class DashboardActivity : AppCompatActivity() {
             binding.ivBannerIcon.setImageResource(R.drawable.ic_shield_status)
             binding.ivBannerIcon.setColorFilter(ContextCompat.getColor(this, R.color.veil_accent_amber))
             binding.tvBannerTitle.text = "Notification Access Required"
-            binding.tvBannerSubtitle.text = "Tap Authorize so VEIL can intercept WhatsApp alerts"
+            binding.tvBannerSubtitle.text = "If Android says “Restricted setting”, open VEIL App info → ⋮ → Allow restricted settings, then return here and enable access."
             binding.btnBannerAction.text = "Authorize"
             binding.btnBannerAction.setOnClickListener {
                 startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
@@ -620,7 +641,8 @@ class DashboardActivity : AppCompatActivity() {
                 updateNotificationListenerStatus()
             }
         } else if (!isConnected) {
-            // Access granted, but service unbound in memory -> Rebind
+            // Access granted, but service unbound in memory -> Rebind and observe the OS callback.
+            watchForListenerReconnect()
             binding.tvListenerAccessStatus.text = "CONNECTING SERVICE..."
             binding.tvListenerAccessStatus.setTextColor(ContextCompat.getColor(this, R.color.veil_accent_amber))
             binding.btnGrantListenerAccess.visibility = View.VISIBLE
