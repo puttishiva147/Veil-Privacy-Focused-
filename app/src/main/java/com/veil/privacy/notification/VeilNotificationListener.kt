@@ -131,45 +131,44 @@ class VeilNotificationListener : BaseNotificationListenerService() {
             return
         }
 
-        // Decode before the message enters VEIL's existing protected-chat pipeline.
-        val parsed = decodeVuplNotification(rawParsed, pkg)
-        emitDiagnostic("PARSE", "Notification content parsed successfully")
-
-        // 5. Capture live RemoteInput reply action if exposed by messaging app
+        // Capture Android's short-lived action tokens immediately, then do all expensive
+        // VUPL dictionary work and database processing on the service IO scope.
         val replyActionPair = NotificationReplyRegistry.findReplyAction(sbn.notification)
-        if (replyActionPair != null && sbn.key != null) {
-            NotificationReplyRegistry.register(
-                contactName = parsed.sender,
-                notificationKey = sbn.key,
-                action = replyActionPair.first,
-                remoteInput = replyActionPair.second,
-                sourcePackage = pkg
-            )
-            emitDiagnostic("REMOTE_INPUT", "Live Android RemoteInput inline reply action captured and registered")
-        }
-
         val callActionsPair = NotificationReplyRegistry.findCallActions(sbn.notification)
-        if (callActionsPair != null && sbn.key != null) {
-            NotificationReplyRegistry.registerCall(
-                contactName = parsed.sender,
-                notificationKey = sbn.key,
-                answerIntent = callActionsPair.first,
-                declineIntent = callActionsPair.second,
-                sourcePackage = pkg
-            )
-            emitDiagnostic("CALL_ACTION", "Live call action captured")
-        }
 
-        // 6. Capture for Sensor Learning if active
-        if (preferences.isLearnModeActive) {
-            preferences.lastLearnedSender = parsed.sender
-            _learnedSenderFlow.tryEmit(parsed.sender)
-            emitDiagnostic("SENSOR", "Sender passed to Sensor Learning")
-        }
-
-        // 7. Evaluate and process against configured VEIL rules
         serviceScope.launch {
             try {
+                val parsed = decodeVuplNotification(rawParsed, pkg)
+                emitDiagnostic("PARSE", "Notification content parsed successfully")
+
+                if (replyActionPair != null && sbn.key != null) {
+                    NotificationReplyRegistry.register(
+                        contactName = parsed.sender,
+                        notificationKey = sbn.key,
+                        action = replyActionPair.first,
+                        remoteInput = replyActionPair.second,
+                        sourcePackage = pkg
+                    )
+                    emitDiagnostic("REMOTE_INPUT", "Live Android RemoteInput inline reply action captured and registered")
+                }
+
+                if (callActionsPair != null && sbn.key != null) {
+                    NotificationReplyRegistry.registerCall(
+                        contactName = parsed.sender,
+                        notificationKey = sbn.key,
+                        answerIntent = callActionsPair.first,
+                        declineIntent = callActionsPair.second,
+                        sourcePackage = pkg
+                    )
+                    emitDiagnostic("CALL_ACTION", "Live call action captured")
+                }
+
+                if (preferences.isLearnModeActive) {
+                    preferences.lastLearnedSender = parsed.sender
+                    _learnedSenderFlow.tryEmit(parsed.sender)
+                    emitDiagnostic("SENSOR", "Sender passed to Sensor Learning")
+                }
+
                 processIncomingProtectedNotification(sbn, parsed, replyActionPair)
             } catch (e: Exception) {
                 emitDiagnostic("PROCESS", "Notification processing failed (${e.javaClass.simpleName})", false)
@@ -177,19 +176,19 @@ class VeilNotificationListener : BaseNotificationListenerService() {
         }
     }
 
-    private fun decodeVuplNotification(
+    private suspend fun decodeVuplNotification(
         parsed: ParsedNotificationInfo,
         sourcePackage: String
-    ): ParsedNotificationInfo {
+    ): ParsedNotificationInfo = withContext(Dispatchers.IO) {
         val isWhatsApp = sourcePackage == WHATSAPP_PACKAGE || sourcePackage == WHATSAPP_BUSINESS_PACKAGE
-        if (!isWhatsApp || !parsed.message.trim().startsWith("VEILX/2|")) return parsed
+        if (!isWhatsApp || !parsed.message.trim().startsWith("VEILX/2|")) return@withContext parsed
 
-        val engine = VuplEngine.getPaired(this)
+        val engine = VuplEngine.getPaired(this@VeilNotificationListener)
         if (engine == null) {
             emitDiagnostic("VUPL", "Encrypted message received, but this device has no VUPL pairing", false)
-            return parsed.copy(message = "[Encrypted VUPL message — pair this device to read it]")
+            return@withContext parsed.copy(message = "[Encrypted VUPL message — pair this device to read it]")
         }
-        return try {
+        try {
             val readable = engine.receiveMessage(parsed.message.trim())
             emitDiagnostic("VUPL", "Incoming VUPL message decrypted and decoded")
             parsed.copy(message = readable)
