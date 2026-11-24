@@ -1,6 +1,8 @@
 package com.veil.privacy.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
@@ -11,7 +13,9 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
@@ -35,6 +39,17 @@ class VuplPairingActivity : AppCompatActivity() {
     private lateinit var generateButton: MaterialButton
     private lateinit var scanButton: MaterialButton
     private var busy = false
+
+    private val cameraPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            launchQrScanner()
+        } else {
+            status.text = "Camera permission is required to scan another VEIL device's pairing QR. You can grant it in Android App permissions."
+            Toast.makeText(this, "Camera permission is needed for QR scanning", Toast.LENGTH_LONG).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -156,16 +171,7 @@ class VuplPairingActivity : AppCompatActivity() {
         scanButton = MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = "Scan another device's QR"
             isAllCaps = false
-            setOnClickListener {
-                if (!busy) {
-                    IntentIntegrator(this@VuplPairingActivity)
-                        .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
-                        .setPrompt("Scan the QR shown on the other VEIL phone")
-                        .setBeepEnabled(false)
-                        .setOrientationLocked(false)
-                        .initiateScan()
-                }
-            }
+            setOnClickListener { requestQrScanner() }
         }
         page.addView(scanButton, LinearLayout.LayoutParams(-1, dp(52)).apply { topMargin = dp(10) })
 
@@ -181,6 +187,24 @@ class VuplPairingActivity : AppCompatActivity() {
             isFillViewport = true
             addView(page)
         }
+    }
+
+    private fun requestQrScanner() {
+        if (busy) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            launchQrScanner()
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    private fun launchQrScanner() {
+        IntentIntegrator(this)
+            .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+            .setPrompt("Scan the QR shown on the other VEIL phone")
+            .setBeepEnabled(false)
+            .setOrientationLocked(false)
+            .initiateScan()
     }
 
     private fun setBusy(value: Boolean, message: String? = null) {
