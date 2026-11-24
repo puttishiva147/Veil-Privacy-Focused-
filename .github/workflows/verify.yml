@@ -12,6 +12,12 @@ on:
 permissions:
   contents: read
 
+# Keep only the newest verification for a branch; repeated commits should not
+# launch several expensive Android/Robolectric builds at the same time.
+concurrency:
+  group: veil-verify-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     name: Test and build debug APK
