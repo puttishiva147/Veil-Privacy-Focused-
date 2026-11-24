@@ -578,7 +578,7 @@ class DashboardActivity : AppCompatActivity() {
             binding.ivBannerIcon.setImageResource(R.drawable.ic_shield_status)
             binding.ivBannerIcon.setColorFilter(ContextCompat.getColor(this, R.color.veil_accent_amber))
             binding.tvBannerTitle.text = "Notification Access Required"
-            binding.tvBannerSubtitle.text = "Tap Authorize so VEIL can intercept WhatsApp alerts"
+            binding.tvBannerSubtitle.text = "If Android says “Restricted setting”, open VEIL App info → ⋮ → Allow restricted settings, then return here and enable access."
             binding.btnBannerAction.text = "Authorize"
             binding.btnBannerAction.setOnClickListener {
                 startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
